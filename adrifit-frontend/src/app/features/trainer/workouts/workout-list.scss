@@ -1,0 +1,43 @@
+@use '../../page';
+
+.name-link { font-weight: 600; color: var(--orange); text-decoration: none; }
+.name-link:hover { text-decoration: underline; }
+.muted { color: var(--text-gray); font-size: 0.9rem; }
+.actions-col { width: 120px; text-align: center; }
+.row-actions { display: flex; gap: 6px; justify-content: center; }
+.icon-btn {
+  background: none; border: none; cursor: pointer; color: var(--text-gray);
+  padding: 4px; border-radius: 6px; display: inline-flex; align-items: center;
+}
+.icon-btn:hover { color: var(--orange); background: rgba(249,115,22,0.08); }
+.icon-btn.danger:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+
+/* ── Mobile cards ── */
+.mobile-cards { display: none; flex-direction: column; }
+.workout-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.workout-card:last-child { border-bottom: none; }
+.wc-main { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.wc-name {
+  font-weight: 700; font-size: 1rem;
+  color: var(--orange); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wc-name:hover { text-decoration: underline; }
+.wc-meta {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.wc-meta .tag { display: inline-flex; align-items: center; gap: 4px; }
+.wc-meta .tag mat-icon { font-size: 13px; width: 13px; height: 13px; }
+.wc-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  .desktop-table { display: none; }
+  .mobile-cards   { display: flex; }
+}

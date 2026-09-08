@@ -1,0 +1,69 @@
+<div class="auth">
+  <!-- Left brand panel -->
+  <aside class="brand-panel">
+    <a routerLink="/" class="brand">
+      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+      Adri<span class="dot">Fit</span>
+    </a>
+    <div class="brand-copy">
+      <h1>Bienvenido de nuevo a tu mejor versión.</h1>
+      <p>Accede a tu área privada para ver tu plan, enviar tu reporte semanal y seguir tu evolución.</p>
+    </div>
+    <ul class="brand-points">
+      <li><mat-icon>check_circle</mat-icon> Entrenamiento y nutrición a medida</li>
+      <li><mat-icon>check_circle</mat-icon> Seguimiento semanal con feedback</li>
+      <li><mat-icon>check_circle</mat-icon> Tu progreso, siempre contigo</li>
+    </ul>
+  </aside>
+
+  <!-- Right form panel -->
+  <main class="form-panel">
+    <div class="form-card">
+      <a routerLink="/" class="back"><mat-icon>arrow_back</mat-icon> Volver al inicio</a>
+      <h2>Iniciar sesión</h2>
+      <p class="subtitle">Introduce tus credenciales para acceder.</p>
+
+      @if (error()) {
+        <div class="alert"><mat-icon>error</mat-icon> {{ error() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label class="field">
+          <span>Usuario</span>
+          <div class="input-wrap">
+            <mat-icon>person</mat-icon>
+            <input type="text" formControlName="username" placeholder="trainer" autocomplete="username" />
+          </div>
+          @if (form.controls.username.touched && form.controls.username.invalid) {
+            <small class="err">El usuario es obligatorio.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Contraseña</span>
+          <div class="input-wrap">
+            <mat-icon>lock</mat-icon>
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+            <button type="button" class="toggle" (click)="togglePassword()">
+              <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <small class="err">La contraseña es obligatoria.</small>
+          }
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="loading()">
+          @if (loading()) { Accediendo... } @else { Acceder }
+        </button>
+      </form>
+
+      <p class="hint">Demo: <strong>trainer</strong> / <strong>trainer123</strong></p>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,59 @@
+@use '../../page';
+
+.upload-panel .panel-head { display: flex; align-items: center; justify-content: space-between; }
+
+.file-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.file-label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.file-meta { font-size: 0.82rem; color: var(--text-gray); }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 60px 24px; text-align: center; color: var(--text-gray);
+  mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.3; }
+  p { font-size: 1rem; margin: 0; }
+}
+
+/* ── List ── */
+.analyses-list { }
+
+.analysis-row {
+  display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  &:last-child { border-bottom: none; }
+  &:hover { background: rgba(var(--orange-rgb, 249,115,22), 0.03); }
+}
+
+.analysis-icon {
+  width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  background: rgba(249,115,22,0.1); flex-shrink: 0;
+  mat-icon { color: var(--orange); font-size: 22px; }
+}
+
+.analysis-info { flex: 1; min-width: 0; }
+.analysis-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.analysis-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  color: var(--text-gray); font-size: 0.8rem;
+  span { display: flex; align-items: center; gap: 3px; }
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+}
+.analysis-comment { font-size: 0.82rem; color: var(--text-gray); margin-top: 4px; font-style: italic; }
+
+.analysis-status { flex-shrink: 0; }
+.status-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+  background: rgba(234,179,8,0.12); color: #92400e; border: 1px solid rgba(234,179,8,0.3);
+  &.reviewed { background: rgba(34,197,94,0.1); color: #166534; border-color: rgba(34,197,94,0.3); }
+}
+
+.analysis-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .analysis-row { flex-wrap: wrap; }
+  .analysis-status, .analysis-actions { margin-left: 56px; }
+}

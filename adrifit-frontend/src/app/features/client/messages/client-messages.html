@@ -1,0 +1,37 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Mensajes</div>
+    <div class="subtitle">Conversación con tu entrenador</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="note">
+    <mat-icon>info</mat-icon>
+    Vista con datos de ejemplo. La mensajería en tiempo real llegará en una fase posterior.
+  </div>
+
+  <div class="chat">
+    <div class="chat-head">
+      <span class="avatar">CA</span>
+      <div>
+        <div class="name">Coach Adri</div>
+        <div class="status">En línea</div>
+      </div>
+    </div>
+    <div class="chat-body">
+      @for (m of messages; track m.text) {
+        <div class="bubble-row" [class.mine]="m.mine">
+          <div class="bubble">
+            {{ m.text }}
+            <span class="time">{{ m.time }}</span>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="chat-input">
+      <input type="text" placeholder="Escribe un mensaje..." disabled />
+      <button class="send" disabled><mat-icon>send</mat-icon></button>
+    </div>
+  </div>
+</div>

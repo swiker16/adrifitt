@@ -1,0 +1,200 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">{{ editId() ? 'Editar dieta' : 'Nueva dieta' }}</div>
+    <div class="subtitle">{{ editId() ? 'Modifica el plan nutricional' : 'Crea un nuevo plan nutricional' }}</div>
+  </div>
+  <div class="topbar-actions">
+    <a routerLink="/trainer/diets" class="btn btn-secondary">Cancelar</a>
+    <button class="btn btn-primary" [disabled]="saving()" (click)="save()">
+      <mat-icon>save</mat-icon> {{ saving() ? 'Guardando...' : 'Guardar dieta' }}
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando dieta...</div></div>
+  } @else {
+    @if (error()) {
+      <div class="error-banner"><mat-icon>error_outline</mat-icon> {{ error() }}</div>
+    }
+
+    <form [formGroup]="form">
+      <!-- ── Info básica ── -->
+      <div class="panel">
+        <div class="panel-head"><h2>Información general</h2></div>
+        <div class="panel-body form-grid">
+          <div class="field field-wide">
+            <label>Nombre <span class="req">*</span></label>
+            <input type="text" formControlName="name" placeholder="Ej: Plan hipocalórico fase 1" />
+            @if (form.get('name')?.invalid && form.get('name')?.touched) {
+              <span class="field-error">El nombre es obligatorio</span>
+            }
+          </div>
+          <div class="field">
+            <label>Objetivo</label>
+            <input type="text" formControlName="objective" placeholder="Ej: Pérdida de grasa" />
+          </div>
+          <div class="field field-wide">
+            <label>Descripción</label>
+            <textarea formControlName="description" rows="3" placeholder="Descripción general del plan..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Días ── -->
+      <div class="panel days-panel" formArrayName="days">
+        <div class="panel-head">
+          <h2>Días ({{ days.length }})</h2>
+          <button type="button" class="btn btn-primary btn-sm" (click)="addDay()">
+            <mat-icon>add</mat-icon> Añadir día
+          </button>
+        </div>
+        <div class="panel-body p0">
+
+          @if (days.length === 0) {
+            <div class="empty-hint"><mat-icon>calendar_today</mat-icon><p>Añade al menos un día para estructurar la dieta.</p></div>
+          }
+
+          <!-- Day tabs -->
+          @if (days.length > 0) {
+            <div class="day-tabs">
+              @for (day of days.controls; track $index) {
+                <button type="button" class="day-tab" [class.active]="activeDayIndex() === $index"
+                  (click)="activeDayIndex.set($index)">
+                  Día {{ $index + 1 }}
+                  @if (days.at($index).get('name')?.value) {
+                    <span class="day-tab-name">{{ days.at($index).get('name')?.value }}</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Active day content -->
+          @for (dayCtrl of days.controls; track di; let di = $index) {
+            @if (activeDayIndex() === di) {
+              <div class="day-section" [formGroupName]="di">
+                <div class="day-header">
+                  <div class="day-fields">
+                    <div class="field">
+                      <label>Nombre del día <span class="req">*</span></label>
+                      <input type="text" formControlName="name" placeholder="Ej: Lunes / Día de pierna" />
+                    </div>
+                    <div class="field field-sm">
+                      <label>Nº día</label>
+                      <input type="number" formControlName="dayNumber" min="1" placeholder="1" />
+                    </div>
+                    <div class="field field-wide">
+                      <label>Notas del día</label>
+                      <input type="text" formControlName="notes" placeholder="Notas opcionales..." />
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-day" title="Eliminar día" (click)="removeDay(di)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+
+                <!-- Meals -->
+                <div class="meals-section" formArrayName="meals">
+                  <div class="meals-header">
+                    <h4>Comidas ({{ getMeals(di).length }})</h4>
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="addMeal(di)">
+                      <mat-icon>add</mat-icon> Añadir comida
+                    </button>
+                  </div>
+
+                  @if (getMeals(di).length === 0) {
+                    <div class="empty-hint sm"><mat-icon>restaurant</mat-icon><p>Añade comidas a este día.</p></div>
+                  }
+
+                  @for (mealCtrl of getMeals(di).controls; track mi; let mi = $index) {
+                    <div class="meal-card" [formGroupName]="mi">
+                      <div class="meal-header">
+                        <div class="meal-fields">
+                          <div class="field">
+                            <label>Nombre <span class="req">*</span></label>
+                            <input type="text" formControlName="name" placeholder="Ej: Desayuno" />
+                          </div>
+                          <div class="field field-sm">
+                            <label>Hora</label>
+                            <input type="text" formControlName="time" placeholder="08:00" />
+                          </div>
+                          <div class="field field-wide">
+                            <label>Notas</label>
+                            <input type="text" formControlName="notes" placeholder="Notas opcionales..." />
+                          </div>
+                        </div>
+                        <button type="button" class="icon-btn danger" title="Eliminar comida" (click)="removeMeal(di, mi)">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+
+                      <!-- Foods -->
+                      <div class="foods-section" formArrayName="foods">
+                        @for (foodCtrl of getFoods(di, mi).controls; track fi; let fi = $index) {
+                          <div class="food-row" [formGroupName]="fi">
+                            <div class="food-main">
+                              <div class="field food-name">
+                                <input type="text" formControlName="foodName" placeholder="Alimento *" />
+                              </div>
+                              <div class="field food-qty">
+                                <input type="number" formControlName="quantity" placeholder="Cant." min="0" step="0.1" />
+                              </div>
+                              <div class="field food-unit">
+                                <input type="text" formControlName="unit" placeholder="Unidad" />
+                              </div>
+                              <div class="field food-macro">
+                                <input type="number" formControlName="calories" placeholder="Kcal" min="0" step="0.1" />
+                              </div>
+                              <div class="field food-macro">
+                                <input type="number" formControlName="proteinGrams" placeholder="P(g)" min="0" step="0.1" />
+                              </div>
+                              <div class="field food-macro">
+                                <input type="number" formControlName="carbsGrams" placeholder="HC(g)" min="0" step="0.1" />
+                              </div>
+                              <div class="field food-macro">
+                                <input type="number" formControlName="fatGrams" placeholder="G(g)" min="0" step="0.1" />
+                              </div>
+                              <div class="field food-notes">
+                                <input type="text" formControlName="notes" placeholder="Notas" />
+                              </div>
+                              <button type="button" class="icon-btn danger" title="Eliminar alimento" (click)="removeFood(di, mi, fi)">
+                                <mat-icon>close</mat-icon>
+                              </button>
+                            </div>
+                            <!-- Alternatives -->
+                            <div class="alts-section" formArrayName="alternatives">
+                              @for (altCtrl of getAlternatives(di, mi, fi).controls; track ai; let ai = $index) {
+                                <div class="alt-row" [formGroupName]="ai">
+                                  <mat-icon class="alt-icon">swap_horiz</mat-icon>
+                                  <input type="text" formControlName="alternativeName" placeholder="Alternativa" />
+                                  <input type="number" formControlName="quantity" placeholder="Cant." min="0" step="0.1" />
+                                  <input type="text" formControlName="unit" placeholder="Unidad" />
+                                  <input type="text" formControlName="notes" placeholder="Notas" />
+                                  <button type="button" class="icon-btn danger" (click)="removeAlternative(di, mi, fi, ai)">
+                                    <mat-icon>close</mat-icon>
+                                  </button>
+                                </div>
+                              }
+                              <button type="button" class="btn-alt-add" (click)="addAlternative(di, mi, fi)">
+                                <mat-icon>add</mat-icon> Alternativa
+                              </button>
+                            </div>
+                          </div>
+                        }
+                        <button type="button" class="btn-food-add" (click)="addFood(di, mi)">
+                          <mat-icon>add</mat-icon> Añadir alimento
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </form>
+  }
+</div>

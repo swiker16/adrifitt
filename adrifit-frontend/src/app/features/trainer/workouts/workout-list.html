@@ -1,0 +1,75 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Rutinas</div>
+    <div class="subtitle">Gestiona las rutinas de entrenamiento</div>
+  </div>
+  <a routerLink="/trainer/workouts/new" class="btn btn-primary">
+    <mat-icon>add</mat-icon> Nueva rutina
+  </a>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando rutinas...</div></div>
+  } @else if (error()) {
+    <div class="panel"><div class="empty"><mat-icon>error_outline</mat-icon><p>No se pudieron cargar las rutinas.</p></div></div>
+  } @else if (workouts().length === 0) {
+    <div class="panel"><div class="empty"><mat-icon>fitness_center</mat-icon><p>Aún no has creado ninguna rutina. <a routerLink="/trainer/workouts/new">Crea la primera</a>.</p></div></div>
+  } @else {
+    <div class="panel">
+      <div class="panel-body">
+        <!-- Tabla: desktop -->
+        <table class="data-table desktop-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Objetivo</th>
+              <th>Ejercicios</th>
+              <th>Creada</th>
+              <th class="actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (w of workouts(); track w.id) {
+              <tr>
+                <td><a [routerLink]="['/trainer/workouts', w.id]" class="name-link">{{ w.name }}</a></td>
+                <td class="muted">{{ w.objective || '—' }}</td>
+                <td>{{ w.exercises.length }}</td>
+                <td class="muted">{{ w.createdAt | date: 'dd/MM/yyyy' }}</td>
+                <td class="row-actions">
+                  <a [routerLink]="['/trainer/workouts', w.id, 'edit']" class="icon-btn" title="Editar"><mat-icon>edit</mat-icon></a>
+                  <button class="icon-btn" title="Duplicar" (click)="duplicate(w.id)"><mat-icon>content_copy</mat-icon></button>
+                  <button class="icon-btn danger" title="Eliminar"
+                    [disabled]="deletingId() === w.id"
+                    (click)="delete(w.id)"><mat-icon>delete</mat-icon></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <!-- Cards: móvil -->
+        <div class="mobile-cards">
+          @for (w of workouts(); track w.id) {
+            <div class="workout-card">
+              <div class="wc-main">
+                <a [routerLink]="['/trainer/workouts', w.id]" class="wc-name">{{ w.name }}</a>
+                <div class="wc-meta">
+                  @if (w.objective) { <span class="tag orange">{{ w.objective }}</span> }
+                  <span class="tag gray"><mat-icon>fitness_center</mat-icon>{{ w.exercises.length }} ejercicios</span>
+                  <span class="tag gray"><mat-icon>calendar_today</mat-icon>{{ w.createdAt | date: 'dd/MM/yy' }}</span>
+                </div>
+              </div>
+              <div class="wc-actions">
+                <a [routerLink]="['/trainer/workouts', w.id, 'edit']" class="icon-btn" title="Editar"><mat-icon>edit</mat-icon></a>
+                <button class="icon-btn" title="Duplicar" (click)="duplicate(w.id)"><mat-icon>content_copy</mat-icon></button>
+                <button class="icon-btn danger" title="Eliminar"
+                  [disabled]="deletingId() === w.id"
+                  (click)="delete(w.id)"><mat-icon>delete</mat-icon></button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

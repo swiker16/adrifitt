@@ -1,0 +1,82 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">{{ isEdit() ? 'Editar plan' : 'Nuevo plan' }}</div>
+    <div class="subtitle">Define precio, frecuencia de revisión y funcionalidades</div>
+  </div>
+</div>
+
+<div class="content">
+  <a routerLink="/trainer/plans" class="btn btn-secondary" style="margin-bottom:18px">
+    <mat-icon>arrow_back</mat-icon> Volver a planes
+  </a>
+
+  @if (error()) {
+    <div class="form-alert"><mat-icon>error</mat-icon> {{ error() }}</div>
+  }
+
+  <form class="plan-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-grid">
+      <div class="field">
+        <label>Nombre *</label>
+        <input formControlName="name" placeholder="Premium" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="err">El nombre es obligatorio.</small>
+        }
+      </div>
+      <div class="field">
+        <label>Precio mensual (€) *</label>
+        <input type="number" step="0.01" formControlName="monthlyPrice" />
+        @if (form.controls.monthlyPrice.touched && form.controls.monthlyPrice.invalid) {
+          <small class="err">Introduce un precio válido.</small>
+        }
+      </div>
+      <div class="field full">
+        <label>Descripción</label>
+        <textarea rows="3" formControlName="description" placeholder="¿Qué incluye este plan?"></textarea>
+      </div>
+      <div class="field">
+        <label>Frecuencia de revisión (días) *</label>
+        <input type="number" formControlName="reviewFrequencyDays" />
+        @if (form.controls.reviewFrequencyDays.touched && form.controls.reviewFrequencyDays.invalid) {
+          <small class="err">Mínimo 1 día.</small>
+        }
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <label class="toggle-card">
+          <input type="checkbox" formControlName="active" />
+          <div>
+            <div class="t-title">Plan activo</div>
+            <div class="t-sub">Disponible para asignar a clientes</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="toggles">
+        <label class="toggle-card">
+          <input type="checkbox" formControlName="messagingEnabled" />
+          <div><div class="t-title">Mensajería</div><div class="t-sub">Chat con el coach</div></div>
+        </label>
+        <label class="toggle-card">
+          <input type="checkbox" formControlName="analyticsEnabled" />
+          <div><div class="t-title">Analíticas</div><div class="t-sub">Gráficas de evolución</div></div>
+        </label>
+        <label class="toggle-card">
+          <input type="checkbox" formControlName="pdfExportEnabled" />
+          <div><div class="t-title">Exportar PDF</div><div class="t-sub">Descarga de informes</div></div>
+        </label>
+        <label class="toggle-card">
+          <input type="checkbox" formControlName="prioritySupport" />
+          <div><div class="t-title">Soporte prioritario</div><div class="t-sub">Respuesta preferente</div></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/trainer/plans" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Crear plan') }}
+      </button>
+    </div>
+  </form>
+</div>

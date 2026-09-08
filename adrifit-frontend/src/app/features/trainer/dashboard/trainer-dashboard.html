@@ -1,0 +1,302 @@
+<!-- ── Topbar ── -->
+<div class="dash-topbar">
+  <div class="dash-greeting">
+    <h1>¡Bienvenido, {{ username() }}! 👋</h1>
+    <p>Resumen general de tu negocio</p>
+  </div>
+  <div class="dash-topbar-right">
+    <button class="tb-icon-btn notif-btn" title="Notificaciones">
+      <mat-icon>notifications_none</mat-icon>
+      @if ((data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) > 0) {
+        <span class="notif-badge">{{ (data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) }}</span>
+      }
+    </button>
+    <div class="today-chip">
+      <mat-icon>calendar_today</mat-icon>
+      <span>{{ today | date:'EEEE, d \'de\' MMMM yyyy':'':'es' | titlecase }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Cargando tu dashboard...</p>
+    </div>
+  } @else {
+
+  <!-- ── Acciones rápidas ── -->
+  <div class="quick-actions-bar">
+    <a routerLink="/trainer/clients" [queryParams]="{ new: 1 }" class="qa-card">
+      <span class="qa-icon orange"><mat-icon>person_add</mat-icon></span>
+      <div class="qa-text"><span class="qa-title">Nuevo cliente</span><span class="qa-sub">Añadir cliente</span></div>
+    </a>
+    <a routerLink="/trainer/workouts/new" class="qa-card">
+      <span class="qa-icon green"><mat-icon>fitness_center</mat-icon></span>
+      <div class="qa-text"><span class="qa-title">Nueva rutina</span><span class="qa-sub">Crear rutina</span></div>
+    </a>
+    <a routerLink="/trainer/diets/new" class="qa-card">
+      <span class="qa-icon violet"><mat-icon>restaurant</mat-icon></span>
+      <div class="qa-text"><span class="qa-title">Nueva dieta</span><span class="qa-sub">Crear dieta</span></div>
+    </a>
+    <a routerLink="/trainer/plans/new" class="qa-card">
+      <span class="qa-icon blue"><mat-icon>workspace_premium</mat-icon></span>
+      <div class="qa-text"><span class="qa-title">Nuevo plan</span><span class="qa-sub">Crear plan</span></div>
+    </a>
+  </div>
+
+  <!-- ── KPIs ── -->
+  <div class="kpi-grid">
+
+    <a routerLink="/trainer/clients" class="kpi-card kpi-orange">
+      <div class="kpi-icon"><mat-icon>group</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.activeClients ?? 0 }}</div>
+        <div class="kpi-label">Clientes activos</div>
+        <div class="kpi-trend">+{{ data()?.newClientsThisMonth ?? 0 }} este mes</div>
+      </div>
+    </a>
+
+    <a routerLink="/trainer/clients" class="kpi-card kpi-green">
+      <div class="kpi-icon"><mat-icon>euro_symbol</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ ingresos() | number:'1.0-0' }}€</div>
+        <div class="kpi-label">Cobros próximos</div>
+        @if ((data()?.upcomingRenewalsCount ?? 0) > 0) {
+          <div class="kpi-trend orange">{{ data()?.upcomingRenewalsCount }} pendiente{{ (data()?.upcomingRenewalsCount ?? 0) > 1 ? 's' : '' }}</div>
+        }
+      </div>
+    </a>
+
+    <a routerLink="/trainer/clients" class="kpi-card kpi-red">
+      <div class="kpi-icon"><mat-icon>pending_actions</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ overdueReviews().length }}</div>
+        <div class="kpi-label">Revisiones pendientes</div>
+        @if (overdueReviews().length === 0) {
+          <div class="kpi-trend ok">Todo al día</div>
+        } @else {
+          <div class="kpi-trend orange">Requieren atención</div>
+        }
+      </div>
+    </a>
+
+    <a routerLink="/trainer/reports" class="kpi-card kpi-lime">
+      <div class="kpi-icon"><mat-icon>show_chart</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.reportsThisWeek ?? 0 }}</div>
+        <div class="kpi-label">Reportes esta semana</div>
+        <div class="kpi-trend">{{ data()?.totalReports ?? 0 }} en total</div>
+      </div>
+    </a>
+
+    <a routerLink="/trainer/workouts" class="kpi-card kpi-teal">
+      <div class="kpi-icon"><mat-icon>fitness_center</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.clientsWithoutWorkout ?? 0 }}</div>
+        <div class="kpi-label">Sin rutina activa</div>
+        @if ((data()?.clientsWithoutWorkout ?? 0) === 0) {
+          <div class="kpi-trend ok">Todos asignados</div>
+        } @else {
+          <div class="kpi-trend orange">Asignar rutina</div>
+        }
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Layout principal 2 columnas ── -->
+  <div class="dash-body">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="dash-left">
+
+      <!-- Revisiones pendientes -->
+      <div class="panel action-panel">
+        <div class="panel-head">
+          <div class="ph-left">
+            <span class="ph-emoji">⏰</span>
+            <h2>Revisiones pendientes</h2>
+          </div>
+          <span class="badge-pill red">{{ overdueReviews().length }} pendiente{{ overdueReviews().length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="panel-body p0">
+          @if (overdueReviews().length === 0) {
+            <div class="empty-sm ok"><mat-icon>check_circle</mat-icon><span>Todos al día 🎉</span></div>
+          } @else {
+            @for (r of overdueReviews(); track r.clientId) {
+              <div class="action-row" (click)="goToClient(r.clientId)">
+                <span class="ar-avatar orange">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
+                <div class="ar-info">
+                  <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
+                  <div class="ar-sub">{{ r.planName }} · Revisión prevista {{ r.nextReviewDate | date:'d MMM' }}</div>
+                </div>
+                <span class="pill pill-red" title="Días desde el último reporte">{{ r.daysSinceLastReview }}d sin reporte</span>
+                <button class="btn btn-primary btn-xs" (click)="$event.stopPropagation(); goToClient(r.clientId)">Revisar</button>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Sin rutina + Reportes sin feedback (lado a lado) -->
+      <div class="panels-row">
+        <div class="panel panel-half">
+          <div class="panel-head">
+            <div class="ph-left"><span class="ph-emoji">🏋️</span><h2>Sin rutina activa</h2></div>
+            <span class="badge-pill violet">{{ data()?.clientsWithoutWorkout ?? 0 }}</span>
+          </div>
+          <div class="panel-body p0">
+            @if ((data()?.clientsWithoutWorkouts ?? []).length === 0) {
+              <div class="empty-sm ok"><mat-icon>check_circle</mat-icon><span>Todos tienen rutina asignada 💪</span></div>
+            } @else {
+              @for (c of data()!.clientsWithoutWorkouts; track c.clientId) {
+                <div class="action-row" (click)="goToClient(c.clientId)">
+                  <span class="ar-avatar violet">{{ initials(c.clientFirstName, c.clientLastName) }}</span>
+                  <div class="ar-info">
+                    <div class="ar-name">{{ c.clientFirstName }} {{ c.clientLastName }}</div>
+                    <div class="ar-sub">{{ c.planName }}</div>
+                  </div>
+                  <button class="btn btn-primary btn-xs" (click)="$event.stopPropagation(); goToClient(c.clientId)">Asignar</button>
+                </div>
+              }
+            }
+          </div>
+        </div>
+        <div class="panel panel-half">
+          <div class="panel-head">
+            <div class="ph-left"><span class="ph-emoji">📄</span><h2>Reportes sin feedback</h2></div>
+            <span class="badge-pill yellow">{{ data()?.reportsPendingFeedback ?? 0 }}</span>
+          </div>
+          <div class="panel-body p0">
+            @if ((data()?.reportsWithoutFeedback ?? []).length === 0) {
+              <div class="empty-sm ok"><mat-icon>check_circle</mat-icon><span>¡Genial! Todos tienen feedback 👏</span></div>
+            } @else {
+              @for (r of data()!.reportsWithoutFeedback; track r.reportId) {
+                <div class="action-row" (click)="goToClient(r.clientId)">
+                  <span class="ar-avatar blue">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
+                  <div class="ar-info">
+                    <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
+                    <div class="ar-sub">{{ r.reportDate | date:'dd MMM' }} · {{ r.weight }} kg</div>
+                  </div>
+                  <button class="btn btn-secondary btn-xs" (click)="$event.stopPropagation(); goToClient(r.clientId)">Responder</button>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Próximos cobros -->
+      <div class="panel action-panel">
+        <div class="panel-head">
+          <div class="ph-left"><span class="ph-emoji">💰</span><h2>Próximos cobros <span class="ph-sub">(30 días)</span></h2></div>
+          <span class="badge-pill green">{{ data()?.upcomingRenewalsCount ?? 0 }} pendiente{{ (data()?.upcomingRenewalsCount ?? 0) !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="panel-body p0">
+          @if ((data()?.upcomingRenewals ?? []).length === 0) {
+            <div class="empty-sm ok"><mat-icon>payments</mat-icon><span>Sin cobros próximos</span></div>
+          } @else {
+            @for (r of data()!.upcomingRenewals; track r.clientId) {
+              <div class="action-row" (click)="goToClient(r.clientId)">
+                <span class="ar-avatar green">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
+                <div class="ar-info">
+                  <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
+                  <div class="ar-sub">{{ r.planName }} · {{ r.renewalDate | date:'d MMM yyyy' }}</div>
+                </div>
+                <span class="ar-amount">{{ r.amount | number:'1.0-0' }}€</span>
+                @if (r.daysUntilRenewal <= 3) {
+                  <span class="pill pill-red">{{ r.daysUntilRenewal }}d</span>
+                } @else {
+                  <span class="pill pill-gray">{{ r.daysUntilRenewal }}d</span>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Actividad reciente -->
+      <div class="panel activity-panel">
+        <div class="panel-head">
+          <div class="ph-left"><span class="ph-emoji">⚡</span><h2>Actividad reciente</h2></div>
+        </div>
+        <div class="panel-body p0">
+          @if ((data()?.recentActivity ?? []).length === 0) {
+            <div class="empty-sm"><mat-icon>timeline</mat-icon><span>Sin actividad reciente</span></div>
+          } @else {
+            <div class="timeline">
+              @for (a of data()!.recentActivity; track a.occurredAt) {
+                <div class="tl-item" (click)="goToClient(a.clientId)">
+                  <div class="tl-dot" [class]="activityColor(a.type)"><mat-icon>{{ activityIcon(a.type) }}</mat-icon></div>
+                  <div class="tl-content">
+                    <div class="tl-name">{{ a.description }}</div>
+                    <div class="tl-desc">{{ a.clientFirstName }} {{ a.clientLastName }}</div>
+                  </div>
+                  <div class="tl-time">{{ timeAgo(a.occurredAt) }}</div>
+                </div>
+              }
+            </div>
+            <div class="activity-footer"><a routerLink="/trainer/reports" class="activity-link">Ver toda la actividad →</a></div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div class="dash-right">
+
+      <!-- Calendario -->
+      <div class="panel cal-panel">
+        <div class="panel-head">
+          <div class="ph-left">
+            <span class="ph-emoji">📅</span>
+            <h2>Calendario — cobros y revisiones</h2>
+          </div>
+          <div class="cal-nav">
+            <button class="cal-nav-btn" (click)="prevMonth()"><mat-icon>chevron_left</mat-icon></button>
+            <button class="cal-today-btn" (click)="resetMonth()">Hoy</button>
+          </div>
+        </div>
+        <div class="cal-month-header">{{ calendarTitle() }}</div>
+        <div class="panel-body cal-body">
+          <div class="cal-grid">
+            @for (dow of ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM']; track dow) {
+              <div class="cal-dow">{{ dow }}</div>
+            }
+            @for (day of calendarDays(); track day.date.toISOString()) {
+              <div class="cal-cell"
+                   [class.other-month]="!day.isCurrentMonth"
+                   [class.today]="day.isToday"
+                   [class.has-events]="day.payments.length > 0 || day.reviews.length > 0">
+                <span class="cal-day-num">{{ day.dayNum }}</span>
+                @if (day.payments.length > 0) {
+                  <div class="cal-event payments-event" [title]="paymentTitle(day)">
+                    💰 Cobro · {{ day.payments[0].clientFirstName }}
+                    @if (day.payments.length > 1) { <span class="cal-more">+{{ day.payments.length - 1 }}</span> }
+                  </div>
+                }
+                @if (day.reviews.length > 0) {
+                  <div class="cal-event reviews-event" [title]="reviewTitle(day)">
+                    🔔 Revisión · {{ day.reviews[0].clientFirstName }}
+                    @if (day.reviews.length > 1) { <span class="cal-more">+{{ day.reviews.length - 1 }}</span> }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="cal-legend">
+            <span class="cal-legend-item payments">● Cobro</span>
+            <span class="cal-legend-item reviews">● Revisión</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  }
+</div>

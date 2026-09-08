@@ -1,0 +1,211 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Clientes</div>
+    <div class="subtitle">Gestiona a tus clientes y crea nuevos accesos</div>
+  </div>
+  <div class="topbar-actions">
+    @if (!showForm()) {
+      <button class="btn btn-primary" (click)="toggleForm()">
+        <mat-icon>add</mat-icon>
+        Nuevo cliente
+      </button>
+    }
+  </div>
+</div>
+
+<div class="content">
+  @if (createdInfo(); as info) {
+    <div class="created-banner">
+      <div class="cb-icon"><mat-icon>check_circle</mat-icon></div>
+      <div class="cb-body">
+        <strong>Cliente creado correctamente</strong>
+        <span>
+          Acceso para <b>{{ info.name }}</b> — usuario <code>{{ info.username }}</code>,
+          contraseña temporal <code>{{ info.password }}</code>.
+          En el futuro estas credenciales se enviarán por correo.
+        </span>
+      </div>
+      <button class="cb-close" (click)="createdInfo.set(null)" title="Cerrar"><mat-icon>close</mat-icon></button>
+    </div>
+  }
+
+  @if (showForm()) {
+    <form class="client-form" [formGroup]="form" (ngSubmit)="save()">
+      <div class="cf-head">
+        <div class="cf-icon"><mat-icon>person_add</mat-icon></div>
+        <div>
+          <h3>Nuevo cliente</h3>
+          <p>Rellena los datos básicos y asigna un plan. El cliente recibirá sus credenciales por correo.</p>
+        </div>
+      </div>
+
+      @if (formError()) {
+        <div class="form-alert"><mat-icon>error</mat-icon> {{ formError() }}</div>
+      }
+
+      <div class="cf-section">
+        <div class="cf-section-title"><mat-icon>badge</mat-icon> Datos personales</div>
+        <div class="form-grid">
+          <label class="field">
+            <span>Nombre <i>*</i></span>
+            <input formControlName="firstName" placeholder="Juan" />
+            @if (form.controls.firstName.touched && form.controls.firstName.invalid) {
+              <small class="err">El nombre es obligatorio.</small>
+            }
+          </label>
+          <label class="field">
+            <span>Apellidos <i>*</i></span>
+            <input formControlName="lastName" placeholder="Pérez García" />
+            @if (form.controls.lastName.touched && form.controls.lastName.invalid) {
+              <small class="err">Los apellidos son obligatorios.</small>
+            }
+          </label>
+          <label class="field">
+            <span>Teléfono <i>*</i></span>
+            <input formControlName="phone" placeholder="600 000 000" />
+            @if (form.controls.phone.touched && form.controls.phone.invalid) {
+              <small class="err">El teléfono es obligatorio.</small>
+            }
+          </label>
+          <label class="field">
+            <span>Fecha de nacimiento <i>*</i></span>
+            <input formControlName="birthDate" type="date" />
+            @if (form.controls.birthDate.touched && form.controls.birthDate.invalid) {
+              <small class="err">La fecha de nacimiento es obligatoria.</small>
+            }
+          </label>
+          <label class="field field-full">
+            <span>Objetivo principal <i>*</i></span>
+            <input formControlName="objective" placeholder="Ej. Perder grasa, ganar músculo, mejorar rendimiento..." />
+            @if (form.controls.objective.touched && form.controls.objective.invalid) {
+              <small class="err">El objetivo es obligatorio.</small>
+            }
+          </label>
+        </div>
+      </div>
+
+      <div class="cf-section">
+        <div class="cf-section-title"><mat-icon>alternate_email</mat-icon> Contacto y acceso</div>
+        <div class="form-grid">
+          <label class="field field-full">
+            <span>Email <i>*</i></span>
+            <input formControlName="email" type="email" placeholder="Ej. juan@gmail.com" autocomplete="off" />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small class="err">Email no válido.</small>
+            }
+          </label>
+        </div>
+        <div class="email-info"><mat-icon>info</mat-icon> El cliente recibirá un correo con un enlace para activar su cuenta y elegir su contraseña.</div>
+      </div>
+
+      <div class="cf-section">
+        <div class="cf-section-title"><mat-icon>workspace_premium</mat-icon> Asignación inicial</div>
+        <div class="plan-picker">
+          @for (p of plans(); track p.id) {
+            <button type="button" class="plan-option"
+                    [class.selected]="form.controls.planId.value === p.id"
+                    (click)="form.controls.planId.setValue(p.id); form.controls.planId.markAsTouched()">
+              <div class="po-head">
+                <span class="po-name">{{ p.name }}</span>
+                <span class="po-price">{{ p.monthlyPrice | number:'1.0-0' }}€<small>/mes</small></span>
+              </div>
+              <p class="po-desc">{{ p.description }}</p>
+              <span class="po-freq"><mat-icon>event_repeat</mat-icon> Revisión cada {{ p.reviewFrequencyDays }} días</span>
+              @if (form.controls.planId.value === p.id) {
+                <mat-icon class="po-check">check_circle</mat-icon>
+              }
+            </button>
+          }
+        </div>
+        @if (form.controls.planId.touched && form.controls.planId.invalid) {
+          <small class="err">Selecciona un plan para el cliente.</small>
+        }
+      </div>
+
+      <div class="cf-section">
+        <div class="cf-section-title"><mat-icon>sticky_note_2</mat-icon> Notas <span class="title-optional">(opcional)</span></div>
+        <textarea formControlName="notes" class="notes-area" rows="3"
+          placeholder="Añade cualquier nota importante sobre el cliente.."></textarea>
+        <small class="notes-hint">Visible solo para ti.</small>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="toggleForm()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          <mat-icon>{{ saving() ? 'hourglass_empty' : 'person_add' }}</mat-icon>
+          {{ saving() ? 'Creando...' : 'Crear cliente' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (!(showForm() && filtered().length === 0)) {
+  <div class="panel">
+    <div class="panel-body">
+      @if (loading()) {
+        <div class="loading">Cargando clientes...</div>
+      } @else if (error()) {
+        <div class="empty">
+          <mat-icon>cloud_off</mat-icon>
+          <p>No se pudieron cargar los clientes.</p>
+        </div>
+      } @else if (filtered().length === 0) {
+        <div class="empty">
+          <mat-icon>group_add</mat-icon>
+          <p>Aún no tienes clientes.</p>
+          <button class="btn btn-primary" (click)="toggleForm()"><mat-icon>add</mat-icon> Crear el primero</button>
+        </div>
+      } @else {
+        <!-- Tabla: desktop -->
+        <table class="table desktop-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Objetivo</th>
+              <th>Teléfono</th>
+              <th>Alta</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of filtered(); track c.id) {
+              <tr [routerLink]="['/trainer/clients', c.id]">
+                <td>
+                  <div class="cell-user">
+                    <span class="avatar">{{ initials(c) }}</span>
+                    <div>
+                      <div class="name">{{ c.firstName }} {{ c.lastName }}</div>
+                      <div class="sub">Cliente #{{ c.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ c.objective || '—' }}</td>
+                <td>{{ c.phone || '—' }}</td>
+                <td>{{ c.createdAt | date: 'dd/MM/yyyy' }}</td>
+                <td><mat-icon style="color: var(--text-gray)">chevron_right</mat-icon></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <!-- Cards: móvil -->
+        <div class="client-cards">
+          @for (c of filtered(); track c.id) {
+            <div class="client-card" [routerLink]="['/trainer/clients', c.id]">
+              <span class="cc-avatar">{{ initials(c) }}</span>
+              <div class="cc-info">
+                <div class="cc-name">{{ c.firstName }} {{ c.lastName }}</div>
+                <div class="cc-meta">
+                  @if (c.objective) { <span>{{ c.objective }}</span> }
+                  @if (c.phone) { <span><mat-icon>phone</mat-icon>{{ c.phone }}</span> }
+                  <span><mat-icon>calendar_today</mat-icon>{{ c.createdAt | date: 'dd/MM/yy' }}</span>
+                </div>
+              </div>
+              <mat-icon class="cc-chevron">chevron_right</mat-icon>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+  }
+</div>

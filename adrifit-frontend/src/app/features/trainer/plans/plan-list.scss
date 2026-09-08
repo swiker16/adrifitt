@@ -1,0 +1,18 @@
+@use '../../page';
+
+.feature-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-sm {
+  font-size: 0.72rem; padding: 3px 9px; border-radius: 999px;
+  background: rgba(255, 122, 26, 0.12); color: #c2410c; font-weight: 600;
+}
+.price-cell { font-family: 'Sora', sans-serif; font-weight: 700; }
+.price-cell span { font-size: 0.78rem; color: var(--text-gray); font-weight: 500; }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.mini-btn {
+  width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
+  background: #fff; display: grid; place-items: center; cursor: pointer; color: var(--text-gray);
+}
+.mini-btn:hover { color: var(--orange); border-color: var(--orange); }
+.mini-btn.danger:hover { color: #EF4444; border-color: #EF4444; }
+.mini-btn mat-icon { font-size: 19px; width: 19px; height: 19px; }
+.inactive-row { opacity: 0.55; }

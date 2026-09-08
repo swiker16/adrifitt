@@ -1,0 +1,178 @@
+<div class="landing">
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="#inicio">
+        <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+        Adri<span class="dot">Fit</span>
+      </a>
+      <nav class="main-nav">
+        <a href="#inicio">Inicio</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#testimonios">Testimonios</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <a routerLink="/login" class="btn btn-primary">Acceder</a>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section id="inicio" class="hero">
+    <div class="container hero-inner">
+      <span class="pill"><span class="ping"></span> Plazas abiertas este mes</span>
+      <h1>Entrenamiento personalizado.<br /><span class="accent">Resultados reales.</span></h1>
+      <p class="lead">
+        Planes de entrenamiento, nutrición a medida y seguimiento semanal con feedback de tu
+        entrenador personal. Todo en una plataforma diseñada para que progreses de verdad.
+      </p>
+      <div class="hero-actions">
+        <a href="#servicios" class="btn btn-primary">Ver servicios</a>
+        <a routerLink="/login" class="btn btn-ghost">Acceder al área privada</a>
+      </div>
+      <div class="hero-stats">
+        <div><strong>+250</strong><span>clientes activos</span></div>
+        <div><strong>4.9/5</strong><span>valoración media</span></div>
+        <div><strong>92%</strong><span>cumplen su objetivo</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section class="benefits container">
+    @for (b of benefits; track b.title) {
+      <article class="benefit-card">
+        <span class="benefit-icon"><mat-icon>{{ b.icon }}</mat-icon></span>
+        <h3>{{ b.title }}</h3>
+        <p>{{ b.text }}</p>
+      </article>
+    }
+  </section>
+
+  <!-- Services -->
+  <section id="servicios" class="services">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Servicios</span>
+        <h2>Elige el plan que encaja contigo</h2>
+        <p>Sin permanencia. Cambia o cancela cuando quieras.</p>
+      </div>
+      @if (plansLoading()) {
+        <div class="plans-loading">
+          <div class="plans-skeleton"></div>
+          <div class="plans-skeleton featured-skeleton"></div>
+          <div class="plans-skeleton"></div>
+        </div>
+      } @else if (apiPlans().length === 0) {
+        <div class="plans-empty">
+          <mat-icon>workspace_premium</mat-icon>
+          <p>Próximamente disponibles. Contáctanos para más información.</p>
+        </div>
+      } @else {
+        <div class="plans">
+          @for (p of apiPlans(); track p.id) {
+            <article class="plan-card" [class.featured]="isFeatured(p)">
+              @if (isFeatured(p)) { <span class="badge">Más popular</span> }
+              <h3>{{ p.name }}</h3>
+              <div class="price">{{ p.monthlyPrice | number:'1.0-0' }}€<span>/mes</span></div>
+              <ul>
+                @for (f of planFeatures(p); track f) {
+                  <li><mat-icon>check_circle</mat-icon> {{ f }}</li>
+                }
+              </ul>
+              <a routerLink="/login" class="btn" [class.btn-primary]="isFeatured(p)" [class.btn-light]="!isFeatured(p)">
+                Empezar
+              </a>
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="como-funciona" class="how">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Cómo funciona</span>
+        <h2>Tu progreso en 4 pasos</h2>
+      </div>
+      <div class="steps">
+        @for (s of steps; track s.number) {
+          <article class="step-card">
+            <span class="step-number">{{ s.number }}</span>
+            <h3>{{ s.title }}</h3>
+            <p>{{ s.text }}</p>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonios" class="testimonials">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Testimonios</span>
+        <h2>Lo que dicen nuestros clientes</h2>
+      </div>
+      <div class="testimonial-grid">
+        @for (t of testimonials; track t.name) {
+          <article class="testimonial-card">
+            <div class="stars">
+              <mat-icon>star</mat-icon><mat-icon>star</mat-icon><mat-icon>star</mat-icon>
+              <mat-icon>star</mat-icon><mat-icon>star</mat-icon>
+            </div>
+            <p class="quote">“{{ t.quote }}”</p>
+            <div class="author">
+              <span class="avatar">{{ t.initials }}</span>
+              <div>
+                <strong>{{ t.name }}</strong>
+                <span>{{ t.role }}</span>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="contacto" class="cta">
+    <div class="container cta-inner">
+      <h2>¿Listo para empezar tu transformación?</h2>
+      <p>Únete hoy y consigue tu primer plan personalizado esta misma semana.</p>
+      <a routerLink="/login" class="btn btn-primary">Acceder al área privada</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class="brand">
+          <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+          Adri<span class="dot">Fit</span>
+        </a>
+        <p>Entrenamiento personal y seguimiento profesional.</p>
+      </div>
+      <div class="footer-cols">
+        <div>
+          <h4>Producto</h4>
+          <a href="#servicios">Servicios</a>
+          <a href="#como-funciona">Cómo funciona</a>
+          <a href="#testimonios">Testimonios</a>
+        </div>
+        <div>
+          <h4>Cuenta</h4>
+          <a routerLink="/login">Acceder</a>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <a href="mailto:hola@adrifit.com">hola&#64;adrifit.com</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom container">© 2026 AdriFit. Todos los derechos reservados.</div>
+  </footer>
+</div>

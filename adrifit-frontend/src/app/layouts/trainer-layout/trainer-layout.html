@@ -1,0 +1,74 @@
+<div class="shell">
+
+  <!-- ── Topbar móvil ── -->
+  <header class="mobile-topbar">
+    <div class="brand">
+      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+      <span>Adri<span class="dot">Fit</span></span>
+    </div>
+    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+      <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </header>
+
+  <!-- ── Overlay oscuro ── -->
+  @if (menuOpen()) {
+    <div class="drawer-overlay" (click)="closeMenu()"></div>
+  }
+
+  <!-- ── Drawer desplegable (móvil) + Sidebar (desktop) ── -->
+  <aside class="sidebar" [class.open]="menuOpen()">
+    <div class="brand desktop-only">
+      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+      <span>Adri<span class="dot">Fit</span></span>
+    </div>
+
+    <nav class="nav">
+      <a routerLink="/trainer/dashboard" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>space_dashboard</mat-icon> <span>Dashboard</span>
+      </a>
+      <a routerLink="/trainer/clients" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>group</mat-icon> <span>Clientes</span>
+      </a>
+
+      <span class="nav-divider"></span>
+      <span class="nav-label">Gestión</span>
+
+      <a routerLink="/trainer/plans" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>workspace_premium</mat-icon> <span>Planes</span>
+      </a>
+      <a routerLink="/trainer/workouts" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>fitness_center</mat-icon> <span>Rutinas</span>
+      </a>
+      <a routerLink="/trainer/diets" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>restaurant</mat-icon> <span>Dietas</span>
+      </a>
+
+      <span class="nav-divider"></span>
+      <span class="nav-label">Seguimiento</span>
+
+      <a routerLink="/trainer/reports" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>monitoring</mat-icon> <span>Reportes</span>
+      </a>
+      <a routerLink="/trainer/reports" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">
+        <mat-icon>event_available</mat-icon> <span>Revisiones</span>
+      </a>
+      <a routerLink="/trainer/clients" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">
+        <mat-icon>payments</mat-icon> <span>Cobros</span>
+      </a>
+      <a routerLink="/trainer/clients" [queryParams]="{tab:'analiticas'}" routerLinkActive="active" [routerLinkActiveOptions]="{exact:false}" (click)="closeMenu()">
+        <mat-icon>biotech</mat-icon> <span>Analíticas</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout" (click)="logout()">
+        <mat-icon>logout</mat-icon> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <section class="main">
+    <router-outlet />
+  </section>
+</div>

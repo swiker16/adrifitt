@@ -1,0 +1,144 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">{{ workout()?.name || 'Rutina' }}</div>
+    <div class="subtitle">Detalle y ejercicios</div>
+  </div>
+  <div class="topbar-actions">
+    @if (workout()) {
+      <a [routerLink]="['/trainer/workouts', workout()!.id, 'edit']" class="btn btn-secondary">
+        <mat-icon>edit</mat-icon> Editar
+      </a>
+    }
+    <a routerLink="/trainer/workouts" class="btn btn-secondary">
+      <mat-icon>arrow_back</mat-icon> Volver
+    </a>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando rutina...</div></div>
+  } @else if (error() || !workout()) {
+    <div class="panel"><div class="empty"><mat-icon>error_outline</mat-icon><p>No se encontró la rutina.</p></div></div>
+  } @else {
+    <div class="panels-stack">
+    <div class="hero-card">
+      <div class="hero-icon"><mat-icon>fitness_center</mat-icon></div>
+      <div>
+        <h1>{{ workout()!.name }}</h1>
+        <div class="hero-meta">
+          @if (workout()!.objective) { <span class="tag orange">{{ workout()!.objective }}</span> }
+          <span class="tag gray">{{ workout()!.exercises.length }} ejercicios</span>
+          <span class="tag gray">Creada {{ workout()!.createdAt | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        @if (workout()!.description) {
+          <p class="description">{{ workout()!.description }}</p>
+        }
+      </div>
+    </div>
+
+    @if (workout()!.exercises.length === 0) {
+      <div class="panel"><div class="panel-body"><div class="empty"><mat-icon>list_alt</mat-icon><p>Esta rutina no tiene ejercicios.</p></div></div></div>
+    } @else if (groupedByDay().length > 0) {
+      <!-- Vista por días -->
+      @for (day of groupedByDay(); track day.dayNumber) {
+        <div class="panel day-panel">
+          <div class="panel-head day-head">
+            <div class="day-badge">DÍA {{ day.dayNumber }}</div>
+            <h2>{{ day.dayName }}</h2>
+            <span class="day-count">{{ day.exercises.length }} ejercicio{{ day.exercises.length !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="panel-body p0">
+            <div class="table-wrap">
+              <table class="ex-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Ejercicio</th>
+                    <th>Aproximaciones</th>
+                    <th>Reps aprox.</th>
+                    <th>Series</th>
+                    <th>Reps</th>
+                    <th>Notas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ex of day.exercises; track ex.id; let i = $index) {
+                    <tr>
+                      <td class="idx">{{ i + 1 }}</td>
+                      <td class="ex-name-cell">{{ ex.exerciseName }}</td>
+                      <td>{{ ex.warmUpSets || '—' }}</td>
+                      <td class="center">{{ ex.approxReps || '—' }}</td>
+                      <td class="center">{{ ex.sets }}</td>
+                      <td class="center">{{ ex.reps ?? '—' }}</td>
+                      <td class="notes-col">{{ ex.notes || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      }
+    } @else {
+      <!-- Vista plana (ejercicios sin día asignado) -->
+      <div class="panel">
+        <div class="panel-head"><h2>Ejercicios</h2></div>
+        <div class="panel-body p0">
+          <div class="table-wrap">
+            <table class="ex-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ejercicio</th>
+                  <th>Aproximaciones</th>
+                  <th>Reps aprox.</th>
+                  <th>Series</th>
+                  <th>Reps</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (ex of workout()!.exercises; track ex.id; let i = $index) {
+                  <tr>
+                    <td class="idx">{{ i + 1 }}</td>
+                    <td class="ex-name-cell">{{ ex.exerciseName }}</td>
+                    <td>{{ ex.warmUpSets || '—' }}</td>
+                    <td class="center">{{ ex.approxReps || '—' }}</td>
+                    <td class="center">{{ ex.sets }}</td>
+                    <td class="center">{{ ex.reps ?? '—' }}</td>
+                    <td class="notes-col">{{ ex.notes || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="panel">
+      <div class="panel-head"><h2>Asignar a cliente</h2></div>
+      <div class="panel-body assign-body">
+        <div class="assign-row">
+          <select [ngModel]="selectedClientId()" (ngModelChange)="selectedClientId.set($event)">
+            <option [ngValue]="null" disabled>Selecciona un cliente</option>
+            @for (c of clients(); track c.id) {
+              <option [ngValue]="c.id">{{ c.firstName }} {{ c.lastName }}</option>
+            }
+          </select>
+          <button class="btn btn-primary" [disabled]="assigning() || !selectedClientId()" (click)="assignToClient()">
+            {{ assigning() ? 'Asignando...' : 'Asignar rutina' }}
+          </button>
+          @if (selectedClientId()) {
+            <button class="btn btn-secondary" (click)="exportPdf(selectedClientId()!)">
+              <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+            </button>
+          }
+        </div>
+        @if (assignMessage()) { <small class="assign-msg">{{ assignMessage() }}</small> }
+      </div>
+    </div>
+    </div><!-- /panels-stack -->
+  }
+</div>

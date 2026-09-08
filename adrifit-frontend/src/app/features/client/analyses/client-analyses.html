@@ -1,0 +1,130 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Mis analíticas</div>
+    <div class="subtitle">Historial de documentos PDF subidos</div>
+  </div>
+  <button class="btn btn-primary" (click)="showUpload.set(true)">
+    <mat-icon>upload_file</mat-icon> Subir analítica
+  </button>
+</div>
+
+<div class="content">
+
+  <!-- Upload panel -->
+  @if (showUpload()) {
+    <div class="panel upload-panel">
+      <div class="panel-head">
+        <h2>Nueva analítica</h2>
+        <button class="icon-btn" (click)="showUpload.set(false); resetForm()"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="panel-body">
+        @if (uploadError()) {
+          <div class="error-banner"><mat-icon>error_outline</mat-icon> {{ uploadError() }}</div>
+        }
+        <div class="form-grid">
+          <div class="field field-wide">
+            <label>Título <span class="req">*</span></label>
+            <input type="text" [value]="title()" (input)="title.set($any($event.target).value)"
+              placeholder="Ej: Analítica hormonal completa" />
+          </div>
+          <div class="field">
+            <label>Fecha de la analítica <span class="req">*</span></label>
+            <input type="date" [value]="analysisDate()" (input)="analysisDate.set($any($event.target).value)" />
+          </div>
+          <div class="field field-wide">
+            <label>Observación</label>
+            <textarea rows="3" [value]="clientComment()" (input)="clientComment.set($any($event.target).value)"
+              placeholder="Observación opcional..."></textarea>
+          </div>
+          <div class="field field-wide">
+            <label>Archivo PDF <span class="req">*</span></label>
+            <div class="file-picker">
+              <label class="btn btn-secondary file-label">
+                <mat-icon>attach_file</mat-icon>
+                {{ selectedFile() ? selectedFile()!.name : 'Seleccionar PDF' }}
+                <input type="file" accept="application/pdf,.pdf" (change)="onFileSelected($event)" hidden />
+              </label>
+              @if (selectedFile()) {
+                <span class="file-meta">{{ formatBytes(selectedFile()!.size) }}</span>
+              }
+            </div>
+            @if (fileError()) {
+              <span class="field-error">{{ fileError() }}</span>
+            }
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" (click)="showUpload.set(false)">Cancelar</button>
+          <button class="btn btn-primary"
+            [disabled]="uploading() || !selectedFile() || !title().trim() || !analysisDate()"
+            (click)="upload()">
+            @if (uploading()) {
+              <mat-icon class="spin">sync</mat-icon> Subiendo...
+            } @else {
+              <mat-icon>cloud_upload</mat-icon> Subir
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- List -->
+  @if (loading()) {
+    <div class="panel"><div class="loading"><mat-icon class="spin">sync</mat-icon> Cargando...</div></div>
+  } @else if (error()) {
+    <div class="error-banner"><mat-icon>error_outline</mat-icon> {{ error() }}</div>
+  } @else if (analyses().length === 0) {
+    <div class="panel empty-state">
+      <mat-icon>description</mat-icon>
+      <p>Todavía no has subido ninguna analítica.</p>
+    </div>
+  } @else {
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Historial</h2>
+        <span class="panel-count">{{ analyses().length }} documentos</span>
+      </div>
+      <div class="analyses-list">
+        @for (a of analyses(); track a.id) {
+          <div class="analysis-row">
+            <div class="analysis-icon">
+              <mat-icon>picture_as_pdf</mat-icon>
+            </div>
+            <div class="analysis-info">
+              <div class="analysis-title">{{ a.title }}</div>
+              <div class="analysis-meta">
+                <span><mat-icon>event</mat-icon> {{ a.analysisDate | date:'dd/MM/yyyy' }}</span>
+                <span><mat-icon>schedule</mat-icon> Subida: {{ a.uploadedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span class="file-size">{{ formatBytes(a.fileSize) }}</span>
+              </div>
+              @if (a.clientComment) {
+                <div class="analysis-comment">{{ a.clientComment }}</div>
+              }
+            </div>
+            <div class="analysis-status">
+              <span class="status-badge" [class.reviewed]="a.status === 'REVIEWED'">
+                {{ statusLabel(a.status) }}
+              </span>
+            </div>
+            <div class="analysis-actions">
+              <button class="icon-btn" title="Ver PDF" (click)="open(a)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button class="icon-btn" title="Descargar" (click)="download(a)">
+                <mat-icon>download</mat-icon>
+              </button>
+              @if (a.status !== 'REVIEWED') {
+                <button class="icon-btn danger" title="Eliminar"
+                  [disabled]="deletingId() === a.id"
+                  (click)="delete(a)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

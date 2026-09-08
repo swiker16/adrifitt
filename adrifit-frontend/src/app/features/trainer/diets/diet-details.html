@@ -1,0 +1,133 @@
+<div class="topbar">
+  <div class="breadcrumb-row">
+    <a routerLink="/trainer/diets" class="breadcrumb-back"><mat-icon>arrow_back</mat-icon> Dietas</a>
+    @if (diet()) {
+      <span class="breadcrumb-sep">·</span>
+      <span class="breadcrumb-cur">{{ diet()!.name }}</span>
+    }
+  </div>
+  @if (diet()) {
+    <div class="topbar-actions">
+      <button class="btn btn-secondary" (click)="duplicate()"><mat-icon>content_copy</mat-icon> Duplicar</button>
+      <button class="btn btn-secondary" (click)="toggleStatus()">
+        <mat-icon>{{ diet()!.active ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+        {{ diet()!.active ? 'Desactivar' : 'Activar' }}
+      </button>
+      <a [routerLink]="['/trainer/diets', diet()!.id, 'edit']" class="btn btn-primary">
+        <mat-icon>edit</mat-icon> Editar
+      </a>
+      <button class="btn btn-danger" (click)="delete()"><mat-icon>delete</mat-icon></button>
+    </div>
+  }
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando dieta...</div></div>
+  } @else if (error() || !diet()) {
+    <div class="panel"><div class="empty"><mat-icon>error_outline</mat-icon><p>No se encontró la dieta.</p></div></div>
+  } @else {
+    <!-- Header info -->
+    <div class="diet-header">
+      <div class="dh-left">
+        <div class="dh-title-row">
+          <h1>{{ diet()!.name }}</h1>
+          <span class="tag" [class.green]="diet()!.active" [class.gray]="!diet()!.active">
+            {{ diet()!.active ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+        @if (diet()!.objective) {
+          <div class="dh-objective"><mat-icon>flag</mat-icon> {{ diet()!.objective }}</div>
+        }
+        @if (diet()!.description) {
+          <div class="dh-desc">{{ diet()!.description }}</div>
+        }
+      </div>
+      <div class="dh-macros">
+        <div class="macro-chip orange"><span>Kcal</span><strong>{{ diet()!.totalCalories | number:'1.0-0' }}</strong></div>
+        <div class="macro-chip"><span>Prot.</span><strong>{{ diet()!.totalProtein | number:'1.0-1' }}g</strong></div>
+        <div class="macro-chip"><span>HC</span><strong>{{ diet()!.totalCarbs | number:'1.0-1' }}g</strong></div>
+        <div class="macro-chip"><span>Grasas</span><strong>{{ diet()!.totalFat | number:'1.0-1' }}g</strong></div>
+        <div class="macro-chip gray"><span>Días</span><strong>{{ diet()!.dayCount }}</strong></div>
+      </div>
+    </div>
+
+    @if (diet()!.days?.length) {
+      <!-- Day nav -->
+      <div class="day-nav">
+        @for (day of diet()!.days; track day.id; let i = $index) {
+          <button class="day-nav-btn" [class.active]="activeDayIndex() === i" (click)="activeDayIndex.set(i)">
+            Día {{ day.dayNumber ?? (i + 1) }}
+            <span class="day-nav-name">{{ day.name }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Active day -->
+      @if (activeDay(); as day) {
+        <div class="day-content">
+          <div class="day-top">
+            <div class="day-info">
+              <h2>{{ day.name }}</h2>
+              @if (day.notes) { <p class="day-note">{{ day.notes }}</p> }
+            </div>
+            <div class="day-macros">
+              <span class="macro-sm"><mat-icon>local_fire_department</mat-icon>{{ day.totalCalories | number:'1.0-0' }} kcal</span>
+              <span class="macro-sm">P: {{ day.totalProtein | number:'1.0-1' }}g</span>
+              <span class="macro-sm">HC: {{ day.totalCarbs | number:'1.0-1' }}g</span>
+              <span class="macro-sm">G: {{ day.totalFat | number:'1.0-1' }}g</span>
+            </div>
+          </div>
+
+          @for (meal of day.meals; track meal.id) {
+            <div class="meal-block">
+              <div class="meal-title">
+                @if (meal.time) { <span class="meal-time">{{ meal.time }}</span> }
+                <span class="meal-name">{{ meal.name }}</span>
+                <div class="meal-macros">
+                  <span>{{ meal.totalCalories | number:'1.0-0' }} kcal</span>
+                  <span>P: {{ meal.totalProtein | number:'1.0-1' }}g</span>
+                  <span>HC: {{ meal.totalCarbs | number:'1.0-1' }}g</span>
+                  <span>G: {{ meal.totalFat | number:'1.0-1' }}g</span>
+                </div>
+              </div>
+              @if (meal.notes) { <p class="meal-note">{{ meal.notes }}</p> }
+
+              <table class="foods-table">
+                <thead>
+                  <tr><th>Alimento</th><th>Cantidad</th><th>Kcal</th><th>Prot.</th><th>HC</th><th>Grasas</th><th>Notas / Alternativas</th></tr>
+                </thead>
+                <tbody>
+                  @for (food of meal.foods; track food.id) {
+                    <tr>
+                      <td class="food-name-cell">{{ food.foodName }}</td>
+                      <td>{{ food.quantity ? (food.quantity | number:'1.0-1') : '—' }}{{ food.unit ? ' ' + food.unit : '' }}</td>
+                      <td>{{ food.calories ? (food.calories | number:'1.0-0') : '—' }}</td>
+                      <td>{{ food.proteinGrams ? (food.proteinGrams | number:'1.0-1') + 'g' : '—' }}</td>
+                      <td>{{ food.carbsGrams ? (food.carbsGrams | number:'1.0-1') + 'g' : '—' }}</td>
+                      <td>{{ food.fatGrams ? (food.fatGrams | number:'1.0-1') + 'g' : '—' }}</td>
+                      <td class="alts-cell">
+                        @if (food.notes) { <em>{{ food.notes }}</em> }
+                        @for (alt of food.alternatives; track alt.id) {
+                          <span class="alt-chip">
+                            <mat-icon>swap_horiz</mat-icon>
+                            {{ alt.alternativeName }}
+                            @if (alt.quantity) { {{ alt.quantity | number:'1.0-1' }}{{ alt.unit ? ' ' + alt.unit : '' }} }
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      <div class="panel">
+        <div class="empty"><mat-icon>restaurant</mat-icon><p>Esta dieta no tiene días configurados aún. <a [routerLink]="['/trainer/diets', diet()!.id, 'edit']">Edítala</a>.</p></div>
+      </div>
+    }
+  }
+</div>

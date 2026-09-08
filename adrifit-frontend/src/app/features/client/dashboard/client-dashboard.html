@@ -1,0 +1,167 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Hola, {{ username() }} 👋</div>
+    <div class="subtitle">Este es el resumen de tu semana</div>
+  </div>
+  <div class="topbar-actions">
+    <a routerLink="/client/report" class="btn btn-primary"><mat-icon>add</mat-icon> Enviar reporte</a>
+  </div>
+</div>
+
+<div class="content">
+  <div class="stat-grid">
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-icon orange"><mat-icon>monitor_weight</mat-icon></span>
+      </div>
+      @if (latestReport()) {
+        <div class="stat-value">{{ latestReport()!.weight }}<small style="font-size:1rem"> kg</small></div>
+      } @else {
+        <div class="stat-value">—</div>
+      }
+      <div class="stat-label">Peso actual</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-icon blue"><mat-icon>event</mat-icon></span>
+      </div>
+      @if (nextReviewDate()) {
+        <div class="stat-value" style="font-size:1.2rem">{{ nextReviewDate() | date:'dd MMM' }}</div>
+      } @else {
+        <div class="stat-value">—</div>
+      }
+      <div class="stat-label">Próxima revisión</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-icon green"><mat-icon>task_alt</mat-icon></span>
+      </div>
+      @if (latestReport()?.dietAdherence != null) {
+        <div class="stat-value">{{ latestReport()!.dietAdherence }}%</div>
+      } @else {
+        <div class="stat-value">—</div>
+      }
+      <div class="stat-label">Adherencia dieta</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-icon violet"><mat-icon>bolt</mat-icon></span>
+      </div>
+      @if (latestReport()?.energyLevel != null) {
+        <div class="stat-value">{{ latestReport()!.energyLevel }}/10</div>
+      } @else {
+        <div class="stat-value">—</div>
+      }
+      <div class="stat-label">Nivel de energía</div>
+    </article>
+  </div>
+
+  <div class="cta-card">
+    <div>
+      <h3>¿Lista tu semana?</h3>
+      <p>Envía tu reporte semanal para que tu coach ajuste tu plan.</p>
+    </div>
+    <a routerLink="/client/report" class="btn btn-light"><mat-icon>send</mat-icon> Enviar reporte</a>
+  </div>
+
+  @if (subLoaded()) {
+    <div class="panel plan-panel">
+      <div class="panel-head">
+        <h2>Mi plan</h2>
+        @if (subscription()) { <span class="tag green">{{ subscription()!.planName }}</span> }
+      </div>
+      <div class="panel-body">
+        @if (subscription(); as sub) {
+          <div class="plan-meta">
+            <div class="meta-item">
+              <span class="m-ico orange"><mat-icon>workspace_premium</mat-icon></span>
+              <div><span class="m-label">Plan</span><strong>{{ sub.planName }}</strong></div>
+            </div>
+            <div class="meta-item">
+              <span class="m-ico blue"><mat-icon>event_repeat</mat-icon></span>
+              <div><span class="m-label">Próxima revisión</span><strong>{{ nextReviewDate() ? (nextReviewDate() | date:'dd MMM yyyy') : '—' }}</strong></div>
+            </div>
+            <div class="meta-item">
+              <span class="m-ico violet"><mat-icon>payments</mat-icon></span>
+              <div><span class="m-label">Cuota</span><strong>{{ sub.plan.monthlyPrice | number: '1.0-2' }}€/mes</strong></div>
+            </div>
+          </div>
+          <div class="plan-features">
+            @for (f of features(); track f.label) {
+              <span class="feature" [class.on]="f.enabled" [class.off]="!f.enabled">
+                <mat-icon>{{ f.enabled ? 'check_circle' : 'remove_circle_outline' }}</mat-icon>
+                {{ f.label }}
+              </span>
+            }
+          </div>
+        } @else {
+          <div class="empty"><mat-icon>card_membership</mat-icon><p>Aún no tienes un plan asignado. Tu coach lo configurará pronto.</p></div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (workoutLoaded()) {
+    <div class="panel workout-dash-panel">
+      <div class="panel-head">
+        <h2>Mi entrenamiento</h2>
+        @if (clientWorkout()) { <span class="tag green">Activo</span> }
+      </div>
+      <div class="panel-body">
+        @if (clientWorkout(); as cw) {
+          <div class="workout-summary">
+            <div class="ws-left">
+              <div class="ws-icon"><mat-icon>fitness_center</mat-icon></div>
+              <div>
+                <div class="ws-name">{{ cw.workout.name }}</div>
+                @if (cw.workout.objective) { <div class="ws-obj">{{ cw.workout.objective }}</div> }
+                <div class="ws-meta">{{ cw.workout.exercises.length }} ejercicios · Asignada {{ cw.assignedAt | date: 'dd/MM/yyyy' }}</div>
+              </div>
+            </div>
+            <a routerLink="/client/workout" class="btn btn-primary btn-sm">
+              <mat-icon>open_in_new</mat-icon> Ver rutina
+            </a>
+          </div>
+          <div class="exercise-preview">
+            @for (ex of cw.workout.exercises.slice(0, 4); track ex.id; let i = $index) {
+              <div class="ep-row">
+                <span class="ep-idx">{{ i + 1 }}</span>
+                <span class="ep-name">{{ ex.exerciseName }}</span>
+                <span class="ep-detail">{{ ex.sets }}×{{ ex.reps }}</span>
+              </div>
+            }
+            @if (cw.workout.exercises.length > 4) {
+              <div class="ep-row more">+ {{ cw.workout.exercises.length - 4 }} ejercicios más</div>
+            }
+          </div>
+        } @else {
+          <div class="empty"><mat-icon>fitness_center</mat-icon><p>Tu entrenador aún no te ha asignado una rutina.</p></div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (reportLoaded()) {
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Último feedback del coach</h2>
+        <a routerLink="/client/report" class="link">Ver todos mis reportes</a>
+      </div>
+      <div class="panel-body">
+        @if (latestReport()?.coachFeedback) {
+          <div class="feedback-block">
+            <mat-icon class="fb-icon">chat</mat-icon>
+            <div class="fb-body">
+              <p>{{ latestReport()!.coachFeedback }}</p>
+              <span class="fb-date">Revisado el {{ latestReport()!.reviewedAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        } @else if (latestReport()) {
+          <div class="empty"><mat-icon>hourglass_empty</mat-icon><p>Tu coach aún no ha revisado tu último reporte.</p></div>
+        } @else {
+          <div class="empty"><mat-icon>assignment</mat-icon><p>Envía tu primer reporte semanal para recibir feedback.</p></div>
+        }
+      </div>
+    </div>
+  }
+</div>

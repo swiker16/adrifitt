@@ -1,0 +1,99 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Enviar reporte semanal</div>
+    <div class="subtitle">Registra tus datos para que tu coach ajuste tu plan</div>
+  </div>
+</div>
+
+<div class="content">
+  @if (submitted()) {
+    <div class="success">
+      <mat-icon>check_circle</mat-icon>
+      <div>
+        <h3>¡Reporte registrado!</h3>
+        <p>Tu coach lo revisará y recibirás feedback en breve.</p>
+      </div>
+      <button class="btn btn-light" style="margin-left:auto" (click)="reset()">Enviar otro</button>
+    </div>
+  } @else {
+    <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-grid">
+        <div class="field">
+          <label>Peso (kg) *</label>
+          <input type="number" step="0.1" formControlName="weight" placeholder="79.8" />
+          @if (form.controls.weight.touched && form.controls.weight.invalid) {
+            <small class="err">Introduce un peso válido (20–400).</small>
+          }
+        </div>
+        <div class="field">
+          <label>Cintura (cm)</label>
+          <input type="number" step="0.1" formControlName="waist" placeholder="84" />
+        </div>
+        <div class="field">
+          <label>% Grasa corporal</label>
+          <input type="number" step="0.1" formControlName="bodyFat" placeholder="18" />
+        </div>
+        <div class="field">
+          <label>Nivel de energía: <span class="range-value">{{ form.controls.energyLevel.value }}/10</span></label>
+          <input type="range" min="1" max="10" formControlName="energyLevel" />
+        </div>
+        <div class="field">
+          <label>Adherencia dieta: <span class="range-value">{{ form.controls.dietAdherence.value }}%</span></label>
+          <input type="range" min="0" max="100" step="5" formControlName="dietAdherence" />
+        </div>
+        <div class="field">
+          <label>Adherencia entreno: <span class="range-value">{{ form.controls.trainingAdherence.value }}%</span></label>
+          <input type="range" min="0" max="100" step="5" formControlName="trainingAdherence" />
+        </div>
+        <div class="field full">
+          <label>Comentarios</label>
+          <textarea rows="4" formControlName="comments" placeholder="¿Cómo te has sentido esta semana?"></textarea>
+        </div>
+      </div>
+      @if (submitError()) {
+        <div class="error-banner"><mat-icon>error</mat-icon> {{ submitError() }}</div>
+      }
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          <mat-icon>{{ saving() ? 'hourglass_empty' : 'send' }}</mat-icon>
+          {{ saving() ? 'Enviando...' : 'Enviar reporte' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (historyLoaded()) {
+    <div class="panel" style="margin-top:24px">
+      <div class="panel-head"><h2>Mis reportes anteriores</h2></div>
+      <div class="panel-body">
+        @if (history().length === 0) {
+          <div class="empty-sm"><mat-icon>inbox</mat-icon><p>Aún no has enviado ningún reporte.</p></div>
+        } @else {
+          @for (r of history(); track r.id) {
+            <div class="report-row">
+              <div class="report-meta">
+                <span class="report-date">{{ r.createdAt | date:'dd/MM/yyyy' }}</span>
+                <span class="tag" [class.orange]="r.status === 'PENDING'" [class.green]="r.status === 'REVIEWED'">
+                  {{ r.status === 'PENDING' ? 'Pendiente' : 'Revisado' }}
+                </span>
+              </div>
+              <div class="report-data">
+                <span><strong>{{ r.weight }} kg</strong></span>
+                @if (r.waist) { <span>Cin. {{ r.waist }} cm</span> }
+                @if (r.bodyFat) { <span>Grasa {{ r.bodyFat }}%</span> }
+                @if (r.energyLevel) { <span>Energía {{ r.energyLevel }}/10</span> }
+              </div>
+              @if (r.coachFeedback) {
+                <div class="feedback-box">
+                  <mat-icon>chat</mat-icon>
+                  <p>{{ r.coachFeedback }}</p>
+                  <span class="feedback-date">Revisado {{ r.reviewedAt | date:'dd/MM/yyyy' }}</span>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

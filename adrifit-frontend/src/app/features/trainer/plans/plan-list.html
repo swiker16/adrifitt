@@ -1,0 +1,76 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Planes</div>
+    <div class="subtitle">Crea y gestiona los planes de tus clientes</div>
+  </div>
+  <div class="topbar-actions">
+    <a routerLink="/trainer/plans/new" class="btn btn-primary"><mat-icon>add</mat-icon> Nuevo plan</a>
+  </div>
+</div>
+
+<div class="content">
+  <div class="panel">
+    <div class="panel-body">
+      @if (loading()) {
+        <div class="loading">Cargando planes...</div>
+      } @else if (error()) {
+        <div class="empty"><mat-icon>cloud_off</mat-icon><p>No se pudieron cargar los planes.</p></div>
+      } @else if (plans().length === 0) {
+        <div class="empty"><mat-icon>inventory_2</mat-icon><p>Aún no hay planes. Crea el primero.</p></div>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th>Precio</th>
+              <th>Revisión</th>
+              <th>Funcionalidades</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of plans(); track p.id) {
+              <tr [routerLink]="['/trainer/plans', p.id]" [class.inactive-row]="!p.active">
+                <td>
+                  <div class="cell-user">
+                    <span class="avatar"><mat-icon>workspace_premium</mat-icon></span>
+                    <div>
+                      <div class="name">{{ p.name }}</div>
+                      <div class="sub">{{ p.description || '—' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="price-cell">{{ p.monthlyPrice | number: '1.0-2' }}€<span>/mes</span></td>
+                <td>cada {{ p.reviewFrequencyDays }} días</td>
+                <td>
+                  <div class="feature-chips">
+                    @for (f of features(p); track f) { <span class="chip-sm">{{ f }}</span> }
+                    @if (features(p).length === 0) { <span class="sub">Básico</span> }
+                  </div>
+                </td>
+                <td>
+                  @if (p.active) { <span class="tag green">Activo</span> }
+                  @else { <span class="tag gray">Inactivo</span> }
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <a class="mini-btn" [routerLink]="['/trainer/plans', p.id, 'edit']" (click)="$event.stopPropagation()" title="Editar">
+                      <mat-icon>edit</mat-icon>
+                    </a>
+                    <button class="mini-btn" (click)="toggleActive(p, $event)" [title]="p.active ? 'Desactivar' : 'Activar'">
+                      <mat-icon>{{ p.active ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                    </button>
+                    <button class="mini-btn danger" (click)="deletePlan(p, $event)" title="Eliminar permanentemente">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+</div>

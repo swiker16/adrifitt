@@ -1,0 +1,51 @@
+@use '../../page';
+
+.filter-bar {
+  display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.filter-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border);
+  background: #fff; font-size: 0.88rem; font-weight: 500; cursor: pointer;
+  transition: all 0.15s;
+  &:hover { border-color: var(--orange); color: var(--orange); }
+  &.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+}
+.badge-sm {
+  background: rgba(255,255,255,0.35); border-radius: 10px;
+  padding: 1px 7px; font-size: 0.78rem; font-weight: 700;
+}
+.badge { padding: 3px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+.badge.orange { background: rgba(255,122,26,0.12); color: var(--orange); }
+.topbar-badge { display: flex; align-items: center; }
+.adherence-cell { display: flex; align-items: center; gap: 10px; min-width: 130px; }
+.adherence-cell .progress { flex: 1; }
+.adherence-cell strong { font-size: 0.85rem; }
+.na { color: var(--text-gray); }
+.expanded-row td { background: rgba(249,115,22,0.03); }
+.detail-row td { padding: 0 !important; border-bottom: 2px solid var(--orange) !important; }
+.detail-panel {
+  padding: 18px 24px; background: #fafafa;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.detail-grid {
+  display: flex; flex-wrap: wrap; gap: 14px; align-content: flex-start;
+}
+.d-item {
+  display: flex; flex-direction: column; gap: 3px;
+  span { font-size: 0.78rem; color: var(--text-gray); }
+  strong { font-size: 0.92rem; }
+  &.full { flex-basis: 100%; }
+}
+.feedback-section {
+  display: flex; flex-direction: column; gap: 10px;
+  textarea {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 13px; font-size: 0.9rem; font-family: inherit;
+    resize: vertical; outline: none;
+    &:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,122,26,0.1); }
+  }
+}
+.feedback-label { font-weight: 600; font-size: 0.88rem; }
+.err { color: var(--danger); font-size: 0.8rem; }
+.btn-sm { padding: 7px 14px; font-size: 0.88rem; align-self: flex-start; }

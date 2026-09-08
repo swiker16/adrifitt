@@ -1,0 +1,90 @@
+@use '../../page';
+
+.plan-panel { margin-bottom: 26px; }
+.workout-dash-panel { margin-bottom: 26px; }
+.workout-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 24px; flex-wrap: wrap;
+}
+.ws-left { display: flex; align-items: center; gap: 14px; }
+.ws-icon {
+  width: 44px; height: 44px; border-radius: 12px; background: rgba(249,115,22,0.12);
+  color: var(--orange); display: grid; place-items: center; flex-shrink: 0;
+}
+.ws-name { font-weight: 700; font-size: 1.05rem; }
+.ws-obj { color: var(--orange); font-size: 0.82rem; font-weight: 600; margin-top: 2px; }
+.ws-meta { color: var(--text-gray); font-size: 0.82rem; margin-top: 3px; }
+.btn-sm { padding: 8px 14px; font-size: 0.84rem; }
+.exercise-preview {
+  border-top: 1px solid var(--border); padding: 12px 24px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.ep-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.ep-row:last-child { border-bottom: none; }
+.ep-idx {
+  min-width: 22px; height: 22px; background: rgba(249,115,22,0.12); color: var(--orange);
+  border-radius: 50%; display: grid; place-items: center; font-size: 0.75rem; font-weight: 700;
+}
+.ep-name { flex: 1; font-size: 0.9rem; font-weight: 600; }
+.ep-detail { color: var(--text-gray); font-size: 0.85rem; }
+.ep-row.more { color: var(--text-gray); font-size: 0.85rem; justify-content: center; }
+.plan-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px 24px; }
+.plan-meta .meta-item { display: flex; align-items: center; gap: 12px; }
+.plan-meta .m-ico {
+  width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: #fff;
+}
+.plan-meta .m-ico.orange { background: var(--orange); }
+.plan-meta .m-ico.blue { background: #3b82f6; }
+.plan-meta .m-ico.violet { background: #8b5cf6; }
+.plan-meta .m-label { display: block; color: var(--text-gray); font-size: 0.78rem; }
+.plan-meta .meta-item strong { font-size: 1.02rem; }
+.plan-features {
+  display: flex; flex-wrap: wrap; gap: 10px; padding: 0 24px 22px;
+  border-top: 1px solid var(--border); padding-top: 18px; margin: 0 0;
+}
+.plan-features .feature {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 0.86rem; font-weight: 600;
+  padding: 6px 12px; border-radius: 999px;
+}
+.plan-features .feature mat-icon { font-size: 18px; width: 18px; height: 18px; }
+.plan-features .feature.on { background: rgba(34,197,94,0.12); color: var(--success); }
+.plan-features .feature.off { background: #f1f5f9; color: var(--text-gray); }
+
+@media (max-width: 720px) { .plan-meta { grid-template-columns: 1fr; } }
+
+.list-card { display: flex; flex-direction: column; }
+.list-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; border-bottom: 1px solid var(--border);
+}
+.list-item:last-child { border-bottom: none; }
+.list-item .label { font-weight: 600; }
+.list-item .detail { color: var(--text-gray); font-size: 0.9rem; }
+
+.msg { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+.msg:last-child { border-bottom: none; }
+.msg .head { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.msg .from { font-weight: 600; font-size: 0.9rem; }
+.msg .time { color: var(--text-gray); font-size: 0.8rem; }
+.msg .text { color: #475569; font-size: 0.92rem; line-height: 1.5; }
+
+.cta-card {
+  background: linear-gradient(135deg, var(--orange), #ff9f5a); color: #fff;
+  border-radius: var(--radius); padding: 24px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 26px;
+}
+.cta-card h3 { font-size: 1.25rem; }
+.cta-card p { opacity: 0.95; margin-top: 4px; }
+.cta-card .btn-light { background: var(--black-900); color: #fff; }
+.cta-card .btn-light:hover { background: #000; }
+
+.feedback-block {
+  display: flex; align-items: flex-start; gap: 14px; padding: 4px 0;
+  .fb-icon { color: var(--orange); font-size: 26px; width: 26px; height: 26px; flex-shrink: 0; margin-top: 2px; }
+  .fb-body { display: flex; flex-direction: column; gap: 4px; }
+  p { font-size: 0.95rem; }
+  .fb-date { font-size: 0.78rem; color: var(--text-gray); }
+}

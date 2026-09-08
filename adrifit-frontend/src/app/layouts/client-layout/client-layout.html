@@ -1,0 +1,65 @@
+<div class="shell">
+
+  <!-- ── Topbar móvil ── -->
+  <header class="mobile-topbar">
+    <div class="brand">
+      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+      <span>Adri<span class="dot">Fit</span></span>
+    </div>
+    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+      <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </header>
+
+  <!-- ── Overlay oscuro ── -->
+  @if (menuOpen()) {
+    <div class="drawer-overlay" (click)="closeMenu()"></div>
+  }
+
+  <!-- ── Drawer desplegable (móvil) + Sidebar (desktop) ── -->
+  <aside class="sidebar" [class.open]="menuOpen()">
+    <div class="brand desktop-only">
+      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
+      <span>Adri<span class="dot">Fit</span></span>
+    </div>
+
+    <nav class="nav">
+      <span class="nav-label">Mi área</span>
+      <a routerLink="/client/dashboard" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>space_dashboard</mat-icon> Mi panel
+      </a>
+      <a routerLink="/client/report" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>assignment</mat-icon> Enviar reporte
+      </a>
+      <a routerLink="/client/messages" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>chat_bubble</mat-icon> Mensajes
+      </a>
+      <a routerLink="/client/workout" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>fitness_center</mat-icon> Mi rutina
+      </a>
+      <a routerLink="/client/diet" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>restaurant</mat-icon> Mi dieta
+      </a>
+      <a routerLink="/client/analyses" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>analytics</mat-icon> Analíticas
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">{{ initials() }}</div>
+        <div class="user-meta">
+          <span class="name">{{ username() }}</span>
+          <span class="role">Cliente</span>
+        </div>
+      </div>
+      <button class="logout" (click)="logout()">
+        <mat-icon>logout</mat-icon> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <section class="main">
+    <router-outlet />
+  </section>
+</div>

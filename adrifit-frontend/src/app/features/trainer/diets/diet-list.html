@@ -1,0 +1,114 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Dietas</div>
+    <div class="subtitle">Gestiona los planes de nutrición</div>
+  </div>
+  <a routerLink="/trainer/diets/new" class="btn btn-primary">
+    <mat-icon>add</mat-icon> Nueva dieta
+  </a>
+</div>
+
+<div class="content">
+  <div class="filter-bar">
+    <div class="search-wrap">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Buscar dieta..." [value]="search()" (input)="search.set($any($event.target).value)" />
+    </div>
+    <select [value]="filterObjective()" (change)="filterObjective.set($any($event.target).value)">
+      <option value="">Todos los objetivos</option>
+      @for (obj of objectives(); track obj) {
+        <option [value]="obj">{{ obj }}</option>
+      }
+    </select>
+    <select [value]="filterStatus()" (change)="filterStatus.set($any($event.target).value)">
+      <option value="all">Todos</option>
+      <option value="active">Activas</option>
+      <option value="inactive">Inactivas</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando dietas...</div></div>
+  } @else if (error()) {
+    <div class="panel"><div class="empty"><mat-icon>error_outline</mat-icon><p>No se pudieron cargar las dietas.</p></div></div>
+  } @else if (diets().length === 0) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>restaurant</mat-icon>
+        <p>Aún no has creado ninguna dieta. <a routerLink="/trainer/diets/new">Crea la primera</a>.</p>
+      </div>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="panel"><div class="empty"><mat-icon>search_off</mat-icon><p>No hay dietas que coincidan con los filtros.</p></div></div>
+  } @else {
+    <div class="panel">
+      <div class="panel-body">
+        <table class="data-table desktop-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Objetivo</th>
+              <th>Días</th>
+              <th>Kcal medias</th>
+              <th>Estado</th>
+              <th>Actualizada</th>
+              <th class="actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of filtered(); track d.id) {
+              <tr>
+                <td><a [routerLink]="['/trainer/diets', d.id]" class="name-link">{{ d.name }}</a></td>
+                <td class="muted">{{ d.objective || '—' }}</td>
+                <td>{{ d.dayCount }}</td>
+                <td>{{ d.avgCalories ? (d.avgCalories | number:'1.0-0') + ' kcal' : '—' }}</td>
+                <td>
+                  <span class="tag" [class.green]="d.active" [class.gray]="!d.active">
+                    {{ d.active ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </td>
+                <td class="muted">{{ d.updatedAt | date:'dd/MM/yyyy' }}</td>
+                <td class="row-actions">
+                  <a [routerLink]="['/trainer/diets', d.id]" class="icon-btn" title="Ver"><mat-icon>visibility</mat-icon></a>
+                  <a [routerLink]="['/trainer/diets', d.id, 'edit']" class="icon-btn" title="Editar"><mat-icon>edit</mat-icon></a>
+                  <button class="icon-btn" title="Duplicar" (click)="duplicate(d.id)"><mat-icon>content_copy</mat-icon></button>
+                  <button class="icon-btn" [title]="d.active ? 'Desactivar' : 'Activar'" (click)="toggleStatus(d)">
+                    <mat-icon>{{ d.active ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                  </button>
+                  <button class="icon-btn danger" title="Eliminar"
+                    [disabled]="deletingId() === d.id" (click)="delete(d.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="mobile-cards">
+          @for (d of filtered(); track d.id) {
+            <div class="diet-card">
+              <div class="dc-main">
+                <a [routerLink]="['/trainer/diets', d.id]" class="dc-name">{{ d.name }}</a>
+                <div class="dc-meta">
+                  @if (d.objective) { <span class="tag orange">{{ d.objective }}</span> }
+                  <span class="tag gray"><mat-icon>calendar_today</mat-icon>{{ d.dayCount }} días</span>
+                  @if (d.avgCalories) { <span class="tag gray">~{{ d.avgCalories | number:'1.0-0' }} kcal</span> }
+                  <span class="tag" [class.green]="d.active" [class.gray]="!d.active">{{ d.active ? 'Activa' : 'Inactiva' }}</span>
+                </div>
+              </div>
+              <div class="dc-actions">
+                <a [routerLink]="['/trainer/diets', d.id, 'edit']" class="icon-btn" title="Editar"><mat-icon>edit</mat-icon></a>
+                <button class="icon-btn" title="Duplicar" (click)="duplicate(d.id)"><mat-icon>content_copy</mat-icon></button>
+                <button class="icon-btn danger" title="Eliminar"
+                  [disabled]="deletingId() === d.id" (click)="delete(d.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

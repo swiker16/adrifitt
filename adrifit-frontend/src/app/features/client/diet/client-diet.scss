@@ -1,0 +1,112 @@
+@use '../../page';
+
+/* ── Diet header ── */
+.diet-header {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px; margin-bottom: 20px;
+  display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;
+}
+.dh-info { flex: 1; min-width: 200px; }
+.dh-info h2 { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px; }
+.dh-obj {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-gray); font-size: 0.9rem; margin-bottom: 8px;
+  mat-icon { font-size: 16px; }
+}
+.trainer-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: rgba(249,115,22,0.06); border: 1px solid rgba(249,115,22,0.2);
+  border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: var(--text);
+  mat-icon { color: var(--orange); font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+}
+.dh-macros { display: flex; flex-wrap: wrap; gap: 10px; }
+.macro-chip {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 16px; display: flex; flex-direction: column; align-items: center; min-width: 80px;
+  span { font-size: 0.72rem; color: var(--text-gray); text-transform: uppercase; margin-bottom: 2px; }
+  strong { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+  &.orange { border-color: var(--orange); strong { color: var(--orange); } }
+}
+
+/* ── Day selector ── */
+.day-selector {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+}
+.day-btn {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 18px; cursor: pointer; transition: all .15s;
+  &.active { border-color: var(--orange); background: rgba(249,115,22,0.08); }
+  &:hover:not(.active) { border-color: var(--text-gray); }
+  .day-num { font-size: 0.75rem; font-weight: 700; color: var(--orange); text-transform: uppercase; }
+  .day-label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+}
+
+/* ── Day panel ── */
+.day-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.day-top {
+  padding: 20px; border-bottom: 1px solid var(--border);
+  h3 { font-size: 1.1rem; font-weight: 700; margin: 0 0 4px; }
+}
+.day-note { font-size: 0.85rem; color: var(--text-gray); margin: 0 0 8px; font-style: italic; }
+.day-totals {
+  display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px;
+  span { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: var(--text-gray); font-weight: 600; }
+  mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--orange); }
+}
+
+/* ── Meals ── */
+.meal-section { border-top: 1px solid var(--border); }
+.meal-head {
+  display: flex; align-items: center; gap: 10px; padding: 14px 20px 8px; flex-wrap: wrap;
+}
+.meal-time {
+  background: var(--orange); color: white; border-radius: 6px;
+  padding: 2px 8px; font-size: 0.78rem; font-weight: 700;
+}
+.meal-name { font-weight: 700; font-size: 1rem; flex: 1; }
+.meal-kcal { color: var(--text-gray); font-size: 0.85rem; margin-left: auto; }
+.meal-note { font-size: 0.85rem; color: var(--text-gray); padding: 0 20px 8px; margin: 0; font-style: italic; }
+
+/* ── Foods list ── */
+.foods-list { padding: 4px 0 12px; }
+.food-item {
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(var(--border-rgb, 226,232,240), 0.5);
+  &:last-child { border-bottom: none; }
+}
+.food-top {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.food-name { font-weight: 600; font-size: 0.95rem; flex: 1; min-width: 120px; }
+.food-qty { color: var(--text-gray); font-size: 0.85rem; background: var(--bg); border-radius: 6px; padding: 2px 8px; }
+.food-macros { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.mc {
+  font-size: 0.8rem; color: var(--text-gray); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
+  &.kcal { border-color: rgba(249,115,22,0.4); color: var(--orange); }
+}
+.food-note { font-size: 0.82rem; color: var(--text-gray); margin-top: 4px; font-style: italic; }
+
+/* ── Alternatives ── */
+.alternatives {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px;
+}
+.alt-label { font-size: 0.78rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase; }
+.alt-item {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 3px 10px; font-size: 0.8rem; color: var(--text);
+  mat-icon { font-size: 13px; width: 13px; height: 13px; color: var(--orange); }
+  em { color: var(--text-gray); font-style: italic; }
+}
+
+@media (max-width: 640px) {
+  .diet-header { flex-direction: column; }
+  .dh-macros { gap: 8px; }
+  .macro-chip { min-width: 68px; }
+  .food-macros { gap: 4px; }
+  .meal-kcal { display: none; }
+}

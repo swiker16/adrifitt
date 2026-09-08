@@ -1,0 +1,55 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Detalle del plan</div>
+    <div class="subtitle">Información y funcionalidades incluidas</div>
+  </div>
+  @if (plan()) {
+    <div class="topbar-actions">
+      <a [routerLink]="['/trainer/plans', plan()!.id, 'edit']" class="btn btn-primary">
+        <mat-icon>edit</mat-icon> Editar
+      </a>
+    </div>
+  }
+</div>
+
+<div class="content">
+  <a routerLink="/trainer/plans" class="btn btn-secondary" style="background:#f1f5f9;margin-bottom:18px">
+    <mat-icon>arrow_back</mat-icon> Volver a planes
+  </a>
+
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando plan...</div></div>
+  } @else if (error() || !plan()) {
+    <div class="panel"><div class="empty"><mat-icon>error_outline</mat-icon><p>No se encontró el plan.</p></div></div>
+  } @else {
+    <div class="plan-hero">
+      <div class="icon-lg"><mat-icon>workspace_premium</mat-icon></div>
+      <div>
+        <h1>{{ plan()!.name }}</h1>
+        <p class="desc">{{ plan()!.description || 'Sin descripción.' }}</p>
+        <div class="info-row">
+          <span class="info-pill"><mat-icon>event_repeat</mat-icon> Revisión cada {{ plan()!.reviewFrequencyDays }} días</span>
+          @if (plan()!.active) { <span class="info-pill" style="color:#15803d"><mat-icon>check_circle</mat-icon> Activo</span> }
+          @else { <span class="info-pill"><mat-icon>block</mat-icon> Inactivo</span> }
+        </div>
+      </div>
+      <div class="price">
+        <strong>{{ plan()!.monthlyPrice | number: '1.0-2' }}€</strong>
+        <span>/mes</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Funcionalidades incluidas</h2></div>
+      <div class="panel-body feature-list">
+        @for (f of features(); track f.label) {
+          <div class="feature-item" [class.on]="f.enabled" [class.off]="!f.enabled">
+            <span class="f-icon"><mat-icon>{{ f.icon }}</mat-icon></span>
+            <span class="f-label">{{ f.label }}</span>
+            <span class="f-state">{{ f.enabled ? 'Incluido' : 'No incluido' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

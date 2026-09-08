@@ -1,0 +1,120 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">{{ isEdit ? 'Editar rutina' : 'Nueva rutina' }}</div>
+    <div class="subtitle">{{ isEdit ? 'Modifica los días y ejercicios' : 'Define el nombre, los días y sus ejercicios' }}</div>
+  </div>
+  <a routerLink="/trainer/workouts" class="btn btn-secondary">
+    <mat-icon>arrow_back</mat-icon> Volver
+  </a>
+</div>
+
+<div class="content">
+  @if (loadingEdit()) {
+    <div class="panel"><div class="loading">Cargando rutina...</div></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+      <!-- ── Información general ── -->
+      <div class="panel">
+        <div class="panel-head"><h2>Información general</h2></div>
+        <div class="panel-body form-body">
+          <div class="field-row">
+            <div class="field flex2">
+              <label>Nombre de la rutina *</label>
+              <input formControlName="name" placeholder="Ej. Rutina Iker">
+              @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                <span class="field-error">El nombre es obligatorio.</span>
+              }
+            </div>
+            <div class="field">
+              <label>Objetivo</label>
+              <input formControlName="objective" placeholder="Ej. Hipertrofia, Fuerza...">
+            </div>
+          </div>
+          <div class="field full">
+            <label>Descripción</label>
+            <textarea formControlName="description" rows="2" placeholder="Descripción opcional de la rutina"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Días ── -->
+      <div formArrayName="days">
+        @for (dayCtrl of days.controls; track $index; let di = $index) {
+          <div class="day-block" [formGroupName]="di">
+            <div class="day-header">
+              <div class="day-num-badge">DÍA {{ di + 1 }}</div>
+              <input class="day-name-input" formControlName="dayName" placeholder="Nombre del día (ej. Pecho y Tríceps)">
+              @if (days.length > 1) {
+                <button type="button" class="icon-btn danger" title="Eliminar día" (click)="removeDay(di)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+
+            <!-- Ejercicios del día -->
+            <div class="day-exercises" formArrayName="exercises">
+              <div class="ex-table-wrap">
+                <table class="ex-form-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th class="col-name">Ejercicio *</th>
+                      <th title="Series de calentamiento previas">Aproximaciones</th>
+                      <th title="Rango de repeticiones objetivo, ej: 8-10">Reps aproximadas</th>
+                      <th title="Número de series efectivas">Series</th>
+                      <th title="Repeticiones por serie">Repeticiones</th>
+                      <th title="Indicaciones de RIR, descanso, técnica...">Notas</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (exCtrl of dayExercises(di).controls; track $index; let ei = $index) {
+                      <tr [formGroupName]="ei">
+                        <td class="td-num">{{ ei + 1 }}</td>
+                        <td class="td-name">
+                          <input formControlName="exerciseName" placeholder="Ej. Press banca">
+                          @if (exCtrl.get('exerciseName')?.invalid && exCtrl.get('exerciseName')?.touched) {
+                            <span class="field-error">Obligatorio</span>
+                          }
+                        </td>
+                        <td><input formControlName="warmUpSets" placeholder="Ej. 2×5 50kg" class="td-input-md"></td>
+                        <td><input formControlName="approxReps" placeholder="Ej. 8-10" class="td-input-sm"></td>
+                        <td><input type="number" formControlName="sets" min="1" class="td-input-xs"></td>
+                        <td><input type="number" formControlName="reps" min="1" placeholder="—" class="td-input-xs"></td>
+                        <td class="td-notes"><input formControlName="notes" placeholder="Ej. S1:RIR3 S2:RIR1 S3:RIR0 · 90s descanso"></td>
+                        <td class="td-actions">
+                          <button type="button" class="icon-btn" [disabled]="ei === 0" (click)="moveUp(di, ei)" title="Subir"><mat-icon>arrow_upward</mat-icon></button>
+                          <button type="button" class="icon-btn" [disabled]="ei === dayExercises(di).length - 1" (click)="moveDown(di, ei)" title="Bajar"><mat-icon>arrow_downward</mat-icon></button>
+                          <button type="button" class="icon-btn danger" (click)="removeExerciseFromDay(di, ei)" title="Eliminar"><mat-icon>delete</mat-icon></button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <button type="button" class="btn-add-ex" (click)="addExerciseToDay(di)">
+                <mat-icon>add</mat-icon> Añadir ejercicio
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button type="button" class="btn-add-day" (click)="addDay()">
+        <mat-icon>add_circle_outline</mat-icon> Añadir día
+      </button>
+
+      @if (serverError()) {
+        <div class="error-banner"><mat-icon>error</mat-icon> {{ serverError() }}</div>
+      }
+
+      <div class="form-actions">
+        <a routerLink="/trainer/workouts" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear rutina') }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

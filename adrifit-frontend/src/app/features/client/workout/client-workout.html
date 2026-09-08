@@ -1,0 +1,114 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Mi rutina</div>
+    <div class="subtitle">Tu entrenamiento asignado</div>
+  </div>
+  @if (clientWorkout()) {
+    <button class="btn btn-primary" (click)="exportPdf()">
+      <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+    </button>
+  }
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando tu rutina...</div></div>
+  } @else if (error() || !clientWorkout()) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>fitness_center</mat-icon>
+        <p>Aún no tienes una rutina asignada. Tu entrenador la configurará pronto.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="hero-card">
+      <div class="hero-icon"><mat-icon>fitness_center</mat-icon></div>
+      <div>
+        <h1>{{ clientWorkout()!.workout.name }}</h1>
+        <div class="hero-meta">
+          @if (clientWorkout()!.workout.daysPerWeek) {
+            <span class="tag orange">{{ clientWorkout()!.workout.daysPerWeek }} días/semana</span>
+          }
+          @if (clientWorkout()!.workout.objective) {
+            <span class="tag gray">{{ clientWorkout()!.workout.objective }}</span>
+          }
+          <span class="tag gray">Asignada {{ clientWorkout()!.assignedAt | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        @if (clientWorkout()!.workout.description) {
+          <p class="description">{{ clientWorkout()!.workout.description }}</p>
+        }
+      </div>
+    </div>
+
+    <!-- Vista por días (si los ejercicios tienen dayNumber) -->
+    @if (groupedByDay().length > 0) {
+      @for (day of groupedByDay(); track day.dayNumber) {
+        <div class="panel day-panel">
+          <div class="panel-head day-head">
+            <div class="day-badge">DÍA {{ day.dayNumber }}</div>
+            <h2>{{ day.dayName }}</h2>
+          </div>
+          <div class="panel-body p0">
+            <table class="ex-table">
+              <thead>
+                <tr>
+                  <th>Ejercicio</th>
+                  <th>Aproximaciones</th>
+                  <th>Reps aprox.</th>
+                  <th>Series</th>
+                  <th>Reps</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (ex of day.exercises; track ex.id) {
+                  <tr>
+                    <td class="ex-name-cell">{{ ex.exerciseName }}</td>
+                    <td>{{ ex.warmUpSets || '—' }}</td>
+                    <td class="center">{{ ex.approxReps || '—' }}</td>
+                    <td class="center">{{ ex.sets }}</td>
+                    <td class="center">{{ ex.reps ?? '—' }}</td>
+                    <td class="notes-cell">{{ ex.notes || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    } @else {
+      <!-- Vista plana (sin días definidos) -->
+      <div class="panel">
+        <div class="panel-head"><h2>Ejercicios</h2></div>
+        <div class="panel-body p0">
+          <table class="ex-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ejercicio</th>
+                <th>Aproximaciones</th>
+                <th>Reps aprox.</th>
+                <th>Series</th>
+                <th>Reps</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ex of clientWorkout()!.workout.exercises; track ex.id; let i = $index) {
+                <tr>
+                  <td class="center num-cell">{{ i + 1 }}</td>
+                  <td class="ex-name-cell">{{ ex.exerciseName }}</td>
+                  <td>{{ ex.warmUpSets || '—' }}</td>
+                  <td class="center">{{ ex.approxReps || '—' }}</td>
+                  <td class="center">{{ ex.sets }}</td>
+                  <td class="center">{{ ex.reps ?? '—' }}</td>
+                  <td class="notes-cell">{{ ex.notes || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+</div>
