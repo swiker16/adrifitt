@@ -1,5 +1,9 @@
 package com.adrifit.backend.diet.service;
 
+import com.adrifit.backend.common.exception.ResourceNotFoundException;
+import com.adrifit.backend.common.security.SecurityUtils;
+import com.adrifit.backend.plan.domain.Plan;
+import com.adrifit.backend.subscription.service.SubscriptionService;
 import com.adrifit.backend.client.domain.Client;
 import com.adrifit.backend.client.service.ClientService;
 import com.adrifit.backend.diet.domain.ClientDiet;
@@ -42,18 +46,28 @@ public class DietPdfService {
     private static final Color LIGHT  = new Color(0xF8, 0xFA, 0xFC);
     private final ClientService clientService;
     private final ClientDietRepository clientDietRepository;
+    private final SubscriptionService subscriptionService;
 
     public DietPdfService(ClientService clientService,
-                          ClientDietRepository clientDietRepository) {
+                          ClientDietRepository clientDietRepository,
+                          SubscriptionService subscriptionService) {
         this.clientService = clientService;
         this.clientDietRepository = clientDietRepository;
+        this.subscriptionService = subscriptionService;
     }
 
+    /**
+     * Trainer: any client. Client: only itself and only if its plan includes PDF export.
+     */
     @Transactional(readOnly = true)
     public byte[] generateForClient(Long clientId) {
-        Client client = clientService.getEntityById(clientId);
+        Client client = clientService.assertCanAccess(clientId);
+        if (!SecurityUtils.isTrainer()) {
+            subscriptionService.requireFeature(clientId, Plan::isPdfExportEnabled,
+                    "Tu plan actual no incluye la exportación a PDF");
+        }
         ClientDiet cd = clientDietRepository.findByClient_IdAndActiveTrue(clientId)
-                .orElseThrow(() -> new IllegalStateException("Cliente sin dieta activa"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente sin dieta activa"));
         return generate(client, cd.getDiet(), cd);
     }
 

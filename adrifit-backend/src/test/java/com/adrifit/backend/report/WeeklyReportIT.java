@@ -175,6 +175,24 @@ class WeeklyReportIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void feedback_emailsClient_locksReport_andCompletesPendingReview() {
+        Long reportId = createReportAndGetId();
+        post("/api/tasks", Map.of("title", "Revisión", "type", "REVIEW", "clientId", clientId), trainer);
+
+        rest.exchange("/api/reports/" + reportId + "/feedback", HttpMethod.PATCH,
+                entity(Map.of("coachFeedback", "Perfecto"), trainer), Map.class);
+
+        assertThat(count("SELECT COUNT(*) FROM email_messages WHERE client_id = ? AND type = 'REPORT_FEEDBACK'", clientId))
+                .isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM trainer_tasks WHERE client_id = ? AND status = 'DONE'", clientId))
+                .isEqualTo(1);
+
+        ResponseEntity<String> update = rest.exchange("/api/reports/" + reportId, HttpMethod.PUT,
+                entity(sampleReport(), client), String.class);
+        assertThat(update.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
     private Long createReportAndGetId() {
         ResponseEntity<Map> response = rest.exchange(
                 "/api/clients/" + clientId + "/reports", HttpMethod.POST,

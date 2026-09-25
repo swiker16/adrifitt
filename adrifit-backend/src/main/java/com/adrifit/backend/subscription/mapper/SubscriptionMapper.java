@@ -25,6 +25,8 @@ public class SubscriptionMapper {
                 subscription.getRenewalDate(),
                 subscription.getStatus(),
                 subscription.isActive(),
+                subscription.isCancelAtPeriodEnd(),
+                subscription.getCancelledAt(),
                 planMapper.toResponse(subscription.getPlan())
         );
     }

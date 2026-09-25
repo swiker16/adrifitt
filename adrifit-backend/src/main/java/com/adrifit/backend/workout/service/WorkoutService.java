@@ -1,7 +1,10 @@
 package com.adrifit.backend.workout.service;
 
 import com.adrifit.backend.client.service.ClientService;
+import com.adrifit.backend.common.event.ClientDeletedEvent;
 import com.adrifit.backend.common.exception.ResourceNotFoundException;
+import com.adrifit.backend.plan.domain.Plan;
+import com.adrifit.backend.subscription.service.SubscriptionService;
 import com.adrifit.backend.common.security.SecurityUtils;
 import com.adrifit.backend.user.service.UserService;
 import com.adrifit.backend.workout.domain.ClientWorkout;
@@ -18,6 +21,7 @@ import com.adrifit.backend.workout.repository.WorkoutRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,17 +35,20 @@ public class WorkoutService {
     private final WorkoutMapper workoutMapper;
     private final ClientService clientService;
     private final UserService userService;
+    private final SubscriptionService subscriptionService;
 
     public WorkoutService(WorkoutRepository workoutRepository,
                           ClientWorkoutRepository clientWorkoutRepository,
                           WorkoutMapper workoutMapper,
                           ClientService clientService,
-                          UserService userService) {
+                          UserService userService,
+                          SubscriptionService subscriptionService) {
         this.workoutRepository = workoutRepository;
         this.clientWorkoutRepository = clientWorkoutRepository;
         this.workoutMapper = workoutMapper;
         this.clientService = clientService;
         this.userService = userService;
+        this.subscriptionService = subscriptionService;
     }
 
     public List<WorkoutResponse> findAll() {
@@ -50,7 +57,41 @@ public class WorkoutService {
     }
 
     public WorkoutResponse findById(Long id) {
-        return workoutMapper.toResponse(getOrThrow(id));
+        Workout workout = getOrThrow(id);
+        if (!SecurityUtils.isTrainer()) {
+            Long clientId = getCurrentClientId();
+            boolean assigned = clientWorkoutRepository.findAllByClientIdOrderByAssignedAtDesc(clientId).stream()
+                    .anyMatch(cw -> cw.getWorkout().getId().equals(id));
+            if (!assigned) {
+                throw new ResourceNotFoundException("Workout not found with id: " + id);
+            }
+        }
+        return workoutMapper.toResponse(workout);
+    }
+
+    /**
+     * Trainer: any workout/client. Client: only its own active workout and only if its plan
+     * includes PDF export.
+     */
+    public void assertCanExportPdf(Long workoutId, Long clientId) {
+        clientService.assertCanAccess(clientId);
+        if (SecurityUtils.isTrainer()) {
+            return;
+        }
+        boolean isActive = clientWorkoutRepository.findByClientIdAndActiveTrue(clientId)
+                .map(cw -> cw.getWorkout().getId().equals(workoutId))
+                .orElse(false);
+        if (!isActive) {
+            throw new ResourceNotFoundException("Workout not found with id: " + workoutId);
+        }
+        subscriptionService.requireFeature(clientId, Plan::isPdfExportEnabled,
+                "Tu plan actual no incluye la exportación a PDF");
+    }
+
+    @EventListener
+    @Transactional
+    public void onClientDeleted(ClientDeletedEvent event) {
+        clientWorkoutRepository.deleteAll(clientWorkoutRepository.findAllByClientIdOrderByAssignedAtDesc(event.clientId()));
     }
 
     @Transactional
@@ -81,6 +122,11 @@ public class WorkoutService {
     public void delete(Long id) {
         Workout workout = getOrThrow(id);
         List<ClientWorkout> assignments = clientWorkoutRepository.findAllByWorkoutId(id);
+        if (assignments.stream().anyMatch(ClientWorkout::isActive)) {
+            throw new com.adrifit.backend.common.exception.BusinessException(
+                    "Esta rutina está asignada a algún cliente. Asígnale otra antes de eliminarla.");
+        }
+        // Past assignments are removed; logged sessions keep a snapshot of the routine name.
         clientWorkoutRepository.deleteAll(assignments);
         workoutRepository.delete(workout);
     }
@@ -92,6 +138,7 @@ public class WorkoutService {
                 .name(source.getName() + " (copia)")
                 .description(source.getDescription())
                 .objective(source.getObjective())
+                .daysPerWeek(source.getDaysPerWeek())
                 .build();
         source.getExercises().forEach(e -> {
             WorkoutExercise ex = WorkoutExercise.builder()
@@ -103,6 +150,10 @@ public class WorkoutService {
                     .restSeconds(e.getRestSeconds())
                     .notes(e.getNotes())
                     .orderIndex(e.getOrderIndex())
+                    .dayNumber(e.getDayNumber())
+                    .dayName(e.getDayName())
+                    .warmUpSets(e.getWarmUpSets())
+                    .approxReps(e.getApproxReps())
                     .build();
             copy.getExercises().add(ex);
         });
@@ -141,6 +192,7 @@ public class WorkoutService {
     }
 
     public List<ClientWorkoutResponse> getHistoryForClient(Long clientId) {
+        clientService.assertCanAccess(clientId);
         return clientWorkoutRepository.findAllByClientIdOrderByAssignedAtDesc(clientId)
                 .stream().map(workoutMapper::toClientWorkoutResponse).toList();
     }

@@ -5,10 +5,17 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/adrifit}
     username: ${DB_USERNAME:adrifit}
     password: ${DB_PASSWORD:adrifit}
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+  # The schema is owned by Flyway (db/migration). Hibernate only checks that the
+  # entities match it and refuses to start otherwise.
+  flyway:
+    enabled: true
+    # Databases created before Flyway (by ddl-auto=update) start at V1 and get V2+.
+    baseline-on-migrate: true
+    baseline-version: 1
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
@@ -18,11 +25,26 @@ spring:
     multipart:
       max-file-size: 15MB
       max-request-size: 16MB
+  # Only used when adrifit.mail.mode=smtp
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_STARTTLS:true}
 
 server:
   port: ${SERVER_PORT:8080}
 
 adrifit:
+  public-url: ${PUBLIC_URL:http://localhost:4200}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:[*],http://127.0.0.1:[*]}
   storage:
     local:
       base-dir: ${STORAGE_BASE_DIR:uploads}
@@ -31,3 +53,18 @@ adrifit:
       # Base64-encoded 256-bit secret. Override in production via env var.
       secret: ${JWT_SECRET:c2VjcmV0LWtleS1hZHJpZml0LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uLTEyMzQ1Ng==}
       expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  mail:
+    # test -> emails are stored in the outbox (visible to the trainer) and logged, never sent.
+    # smtp -> emails are sent through spring.mail.* and also stored in the outbox.
+    mode: ${MAIL_MODE:test}
+    from: ${MAIL_FROM:AdriFit <no-reply@adrifit.app>}
+  payments:
+    # test -> simulated card/Bizum gateway (no real money is moved).
+    mode: ${PAYMENTS_MODE:test}
+    currency: EUR
+  jobs:
+    # Daily job: subscription renewals, charges and review reminders.
+    daily-cron: ${JOBS_DAILY_CRON:0 0 6 * * *}
+  seed:
+    # Creates a demo client with routine, diet, reports, logs... (only if it does not exist).
+    demo-data: ${SEED_DEMO_DATA:false}

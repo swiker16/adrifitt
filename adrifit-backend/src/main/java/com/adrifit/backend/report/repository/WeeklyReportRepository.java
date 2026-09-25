@@ -26,4 +26,10 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Long
     List<WeeklyReport> findByCoachFeedbackIsNullOrderByCreatedAtDesc();
 
     List<WeeklyReport> findByClient_IdAndCreatedAtBetween(Long clientId, Instant from, Instant to);
+
+    Optional<WeeklyReport> findTopByClient_IdAndStatusOrderByCreatedAtDesc(Long clientId, ReportStatus status);
+
+    Optional<WeeklyReport> findTopByClient_IdAndReviewedAtIsNotNullOrderByReviewedAtDesc(Long clientId);
+
+    List<WeeklyReport> findByClient_Id(Long clientId);
 }

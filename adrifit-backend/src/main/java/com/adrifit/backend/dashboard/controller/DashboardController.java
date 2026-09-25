@@ -1,5 +1,6 @@
 package com.adrifit.backend.dashboard.controller;
 
+import com.adrifit.backend.dashboard.dto.BusinessOverviewResponse;
 import com.adrifit.backend.dashboard.dto.ClientDashboardResponse;
 import com.adrifit.backend.dashboard.dto.TrainerDashboardResponse;
 import com.adrifit.backend.dashboard.service.DashboardService;
@@ -23,6 +24,12 @@ public class DashboardController {
     @PreAuthorize("hasRole('TRAINER')")
     public ResponseEntity<TrainerDashboardResponse> trainerDashboard() {
         return ResponseEntity.ok(dashboardService.getTrainerDashboard());
+    }
+
+    @GetMapping("/business")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<BusinessOverviewResponse> business() {
+        return ResponseEntity.ok(dashboardService.getBusinessOverview());
     }
 
     @GetMapping("/client")

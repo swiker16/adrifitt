@@ -82,6 +82,10 @@ public class PlanService {
         if (planRepository.countActiveSubscriptionsByPlanId(id) > 0) {
             throw new BusinessException("No se puede eliminar un plan con suscripciones activas");
         }
+        if (planRepository.countSubscriptionsByPlanId(id) > 0) {
+            // Past subscriptions (and their payments) reference the plan: keep it for the history.
+            throw new BusinessException("Este plan tiene historial de suscripciones. Desactívalo en lugar de eliminarlo.");
+        }
         planRepository.delete(plan);
     }
 

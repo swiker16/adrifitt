@@ -19,3 +19,7 @@ Thumbs.db
 ### Logs / env ###
 *.log
 .env
+
+### Local runtime data (H2 files, uploads, DB backups) ###
+uploads/
+data/

@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -58,9 +59,18 @@ public class Subscription {
     @Column(nullable = false, length = 20)
     private SubscriptionStatus status;
 
+    /** "Current" subscription of the client (only one per client). PAUSED ones are still current. */
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    /** The client asked to cancel: stays ACTIVE until renewalDate, then it is closed without charging. */
+    @Column(name = "cancel_at_period_end", nullable = false)
+    @ColumnDefault("false")
+    private boolean cancelAtPeriodEnd;
+
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

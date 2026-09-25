@@ -104,6 +104,7 @@ public class WorkoutController {
     @PreAuthorize("hasAnyRole('TRAINER','CLIENT')")
     public ResponseEntity<byte[]> exportPdf(@PathVariable Long workoutId,
                                             @PathVariable Long clientId) {
+        workoutService.assertCanExportPdf(workoutId, clientId);
         byte[] pdf = workoutPdfService.generateWorkoutPdf(workoutId, clientId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

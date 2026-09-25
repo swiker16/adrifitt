@@ -1,16 +1,31 @@
 spring:
   datasource:
-    url: "jdbc:h2:mem:adrifit;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+    url: "jdbc:h2:mem:adrifit;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH"
     driver-class-name: org.h2.Driver
     username: sa
     password: ""
+  # Same migrations as production, then Hibernate validates the entities against them.
+  flyway:
+    enabled: true
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     open-in-view: false
 
 adrifit:
+  storage:
+    local:
+      base-dir: target/test-uploads
   security:
     jwt:
       secret: c2VjcmV0LWtleS1hZHJpZml0LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uLTEyMzQ1Ng==
       expiration-ms: 86400000
+  mail:
+    mode: test
+  payments:
+    mode: test
+  jobs:
+    # Never fires during tests (Feb 30th); jobs are triggered explicitly.
+    daily-cron: "0 0 0 30 2 *"
+  seed:
+    demo-data: false

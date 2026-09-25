@@ -30,7 +30,7 @@ public record CreateClientRequest(
         @NotNull(message = "Plan id is required")
         Long planId,
 
-        @NotNull(message = "Trainer id is required")
+        /* Optional: defaults to the authenticated trainer. */
         Long trainerId,
 
         String notes

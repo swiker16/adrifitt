@@ -6,6 +6,7 @@ public record AuthResponse(
         String token,
         Long userId,
         String username,
-        Role role
+        Role role,
+        boolean mustChangePassword
 ) {
 }

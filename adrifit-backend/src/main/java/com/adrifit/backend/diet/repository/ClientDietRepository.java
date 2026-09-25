@@ -12,4 +12,6 @@ public interface ClientDietRepository extends JpaRepository<ClientDiet, Long> {
     List<ClientDiet> findAllByClient_IdOrderByAssignedAtDesc(Long clientId);
 
     boolean existsByDiet_IdAndActiveTrue(Long dietId);
+
+    boolean existsByDiet_Id(Long dietId);
 }
