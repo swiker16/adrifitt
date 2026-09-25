@@ -1,59 +1,58 @@
-# AdrifitFrontend
+# AdriFit Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.28.
+Aplicación web (PWA instalable en móvil, tablet y escritorio) de la plataforma de entrenamiento personal.
+Angular 20 · componentes standalone · signals · Angular Material (iconos) · SCSS.
 
-## Development server
+## Requisitos
 
-To start a local development server, run:
+- Node 20+ y npm
+- Backend en marcha en `http://localhost:8080` (ver `../adrifit-backend/README.md`)
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Desarrollo
 
 ```bash
-ng generate component component-name
+npm install
+npm start          # ng serve → http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+`ng serve` redirige `/api` al backend mediante `proxy.conf.json`, así que no hay problemas de CORS.
+La URL de la API se define en `src/environments/environment*.ts` (`/api` por defecto: mismo dominio
+detrás de un proxy inverso en producción).
+
+## Build de producción
 
 ```bash
-ng generate --help
+npm run build      # dist/adrifit-frontend/browser
 ```
 
-## Building
+La build de producción incluye el **service worker** (`ngsw-config.json`): la app se puede instalar
+(“Añadir a pantalla de inicio”), arranca sin conexión y cachea la landing y los planes. Para probar la
+PWA en local sirve `dist/adrifit-frontend/browser` con cualquier servidor estático con fallback a
+`index.html` y proxy de `/api`.
 
-To build the project run:
+## Estructura
 
-```bash
-ng build
+```
+src/app
+├── core           auth (JWT), guards, interceptor, servicios HTTP por módulo, notificaciones
+├── shared         modelos (contratos de la API), componentes (gráficos SVG, imagen autenticada), utilidades
+├── layouts        layout de entrenador y de cliente (menú lateral, badges, barra inferior móvil)
+└── features
+    ├── landing    web pública: planes y reseñas de clientes
+    ├── auth       login
+    ├── trainer    dashboard, negocio, clientes, mensajes, revisiones y tareas, seguimientos,
+    │              analíticas, rutinas, dietas, planes, cobros, emails, reseñas
+    └── client     panel, rutina, registrar entreno, dieta, seguimiento, progreso, fotos,
+                   analíticas, mensajes, suscripción y pagos, reseña, perfil
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Usuarios de prueba (backend con perfil `local`)
 
-## Running unit tests
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `trainer` | `trainer123` | Entrenador |
+| `cliente` | `cliente123` | Cliente Premium (chat, PDF, revisión semanal) |
+| `carlos` | `carlos123` | Cliente Basic (sin chat) con un pago vencido |
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Pagos en **modo test**: tarjeta `4242 4242 4242 4242` (aprobada), `4000 0000 0000 0002` (rechazada),
+Bizum con cualquier móvil salvo `600 000 000` (rechazado). Los emails se guardan en *Emails* (no se envían).
