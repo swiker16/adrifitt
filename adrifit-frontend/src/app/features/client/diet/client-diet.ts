@@ -3,6 +3,8 @@ import { DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { DietService } from '../../../core/services/diet.service';
 import { ClientDiet, DietDay } from '../../../shared/models/diet.model';
+import { NotifyService } from '../../../core/services/notify.service';
+import { saveBlob } from '../../../shared/utils/download';
 
 @Component({
   selector: 'app-client-diet',
@@ -12,6 +14,7 @@ import { ClientDiet, DietDay } from '../../../shared/models/diet.model';
 })
 export class ClientDietView {
   private readonly dietService = inject(DietService);
+  private readonly notify = inject(NotifyService);
 
   readonly clientDiet = signal<ClientDiet | null>(null);
   readonly loading = signal(true);
@@ -37,17 +40,15 @@ export class ClientDietView {
 
   downloadPdf(): void {
     this.downloading.set(true);
-    const url = this.dietService.getMyDietPdfUrl();
-    fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
-      .then(r => r.blob())
-      .then(blob => {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'mi-dieta.pdf';
-        link.click();
-        URL.revokeObjectURL(link.href);
+    this.dietService.downloadMyDietPdf().subscribe({
+      next: (blob) => {
+        saveBlob(blob, 'mi-dieta.pdf');
         this.downloading.set(false);
-      })
-      .catch(() => this.downloading.set(false));
+      },
+      error: (err) => {
+        this.downloading.set(false);
+        this.notify.error(err, 'No se pudo descargar el PDF.');
+      },
+    });
   }
 }

@@ -12,9 +12,17 @@ export interface Subscription {
   renewalDate: string;
   status: SubscriptionStatus;
   active: boolean;
+  cancelAtPeriodEnd: boolean;
+  cancelledAt: string | null;
   plan: Plan;
 }
 
 export interface AssignPlanRequest {
   planId: number;
 }
+
+export const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatus, string> = {
+  ACTIVE: 'Activa',
+  PAUSED: 'Pausada',
+  CANCELLED: 'Cancelada',
+};

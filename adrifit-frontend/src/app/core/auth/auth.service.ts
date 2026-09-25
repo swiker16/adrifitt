@@ -3,7 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
-import { AuthResponse, LoginRequest, Role } from '../../shared/models/auth.model';
+import {
+  AuthResponse,
+  ChangePasswordRequest,
+  LoginRequest,
+  MeResponse,
+  Role,
+} from '../../shared/models/auth.model';
 
 const TOKEN_KEY = 'adrifit_token';
 const USER_KEY = 'adrifit_user';
@@ -12,6 +18,7 @@ interface StoredUser {
   userId: number;
   username: string;
   role: Role;
+  mustChangePassword?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,12 +29,27 @@ export class AuthService {
   private readonly _user = signal<StoredUser | null>(this.readUser());
 
   readonly user = this._user.asReadonly();
-  readonly isAuthenticated = computed(() => this._user() !== null);
+  readonly isAuthenticated = computed(() => this._user() !== null && this.getToken() !== null);
   readonly role = computed<Role | null>(() => this._user()?.role ?? null);
+  /** New clients log in with a temporary password and must change it first. */
+  readonly mustChangePassword = computed(() => this._user()?.mustChangePassword === true);
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${API_BASE_URL}/auth/login`, credentials).pipe(
       tap((res) => this.storeSession(res))
+    );
+  }
+
+  me(): Observable<MeResponse> {
+    return this.http.get<MeResponse>(`${API_BASE_URL}/auth/me`);
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<void> {
+    return this.http.post<void>(`${API_BASE_URL}/auth/change-password`, request).pipe(
+      tap(() => {
+        const user = this._user();
+        if (user) this.saveUser({ ...user, mustChangePassword: false });
+      })
     );
   }
 
@@ -42,27 +64,35 @@ export class AuthService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
-  redirectByRole(): void {
+  homeUrl(): string {
     const role = this.role();
-    if (role === 'TRAINER') {
-      this.router.navigateByUrl('/trainer/dashboard');
-    } else if (role === 'CLIENT') {
-      this.router.navigateByUrl('/client/dashboard');
-    } else {
-      this.router.navigateByUrl('/login');
-    }
+    if (role === 'TRAINER') return '/trainer/dashboard';
+    if (role === 'CLIENT') return this.mustChangePassword() ? '/client/profile' : '/client/dashboard';
+    return '/login';
+  }
+
+  redirectByRole(): void {
+    this.router.navigateByUrl(this.homeUrl());
   }
 
   private storeSession(res: AuthResponse): void {
     localStorage.setItem(TOKEN_KEY, res.token);
-    const user: StoredUser = { userId: res.userId, username: res.username, role: res.role };
+    this.saveUser({
+      userId: res.userId,
+      username: res.username,
+      role: res.role,
+      mustChangePassword: res.mustChangePassword,
+    });
+  }
+
+  private saveUser(user: StoredUser): void {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     this._user.set(user);
   }
 
   private readUser(): StoredUser | null {
     const raw = localStorage.getItem(USER_KEY);
-    if (!raw) {
+    if (!raw || !localStorage.getItem(TOKEN_KEY)) {
       return null;
     }
     try {

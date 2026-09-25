@@ -6,17 +6,16 @@
       <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
       <span>Adri<span class="dot">Fit</span></span>
     </div>
-    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Menú">
       <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+      @if ((unreadMessages() > 0 || pendingPayments() > 0) && !menuOpen()) { <span class="hamburger-dot"></span> }
     </button>
   </header>
 
-  <!-- ── Overlay oscuro ── -->
   @if (menuOpen()) {
     <div class="drawer-overlay" (click)="closeMenu()"></div>
   }
 
-  <!-- ── Drawer desplegable (móvil) + Sidebar (desktop) ── -->
   <aside class="sidebar" [class.open]="menuOpen()">
     <div class="brand desktop-only">
       <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
@@ -24,24 +23,52 @@
     </div>
 
     <nav class="nav">
-      <span class="nav-label">Mi área</span>
       <a routerLink="/client/dashboard" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>space_dashboard</mat-icon> Mi panel
+        <mat-icon>space_dashboard</mat-icon> <span>Mi panel</span>
       </a>
-      <a routerLink="/client/report" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>assignment</mat-icon> Enviar reporte
-      </a>
-      <a routerLink="/client/messages" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>chat_bubble</mat-icon> Mensajes
-      </a>
+
+      <span class="nav-divider"></span>
+      <span class="nav-label">Entrenamiento</span>
       <a routerLink="/client/workout" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>fitness_center</mat-icon> Mi rutina
+        <mat-icon>fitness_center</mat-icon> <span>Mi rutina</span>
+      </a>
+      <a routerLink="/client/workout-log" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>edit_note</mat-icon> <span>Registrar entreno</span>
       </a>
       <a routerLink="/client/diet" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>restaurant</mat-icon> Mi dieta
+        <mat-icon>restaurant</mat-icon> <span>Mi dieta</span>
+      </a>
+
+      <span class="nav-divider"></span>
+      <span class="nav-label">Seguimiento</span>
+      <a routerLink="/client/report" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>assignment</mat-icon> <span>Seguimiento</span>
+      </a>
+      <a routerLink="/client/progress" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>trending_up</mat-icon> <span>Mi progreso</span>
+      </a>
+      <a routerLink="/client/photos" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>photo_camera</mat-icon> <span>Fotos</span>
       </a>
       <a routerLink="/client/analyses" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>analytics</mat-icon> Analíticas
+        <mat-icon>biotech</mat-icon> <span>Analíticas</span>
+      </a>
+      <a routerLink="/client/messages" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>chat_bubble</mat-icon> <span>Mensajes</span>
+        @if (unreadMessages() > 0) { <span class="nav-badge">{{ unreadMessages() }}</span> }
+      </a>
+
+      <span class="nav-divider"></span>
+      <span class="nav-label">Mi cuenta</span>
+      <a routerLink="/client/subscription" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>credit_card</mat-icon> <span>Suscripción y pagos</span>
+        @if (pendingPayments() > 0) { <span class="nav-badge red">{{ pendingPayments() }}</span> }
+      </a>
+      <a routerLink="/client/testimonial" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>star</mat-icon> <span>Mi reseña</span>
+      </a>
+      <a routerLink="/client/profile" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>person</mat-icon> <span>Perfil</span>
       </a>
     </nav>
 
@@ -62,4 +89,16 @@
   <section class="main">
     <router-outlet />
   </section>
+
+  <!-- ── Barra inferior (móvil / PWA) ── -->
+  <nav class="bottom-nav" aria-label="Navegación principal">
+    <a routerLink="/client/dashboard" routerLinkActive="active"><mat-icon>space_dashboard</mat-icon><span>Panel</span></a>
+    <a routerLink="/client/workout" routerLinkActive="active"><mat-icon>fitness_center</mat-icon><span>Rutina</span></a>
+    <a routerLink="/client/workout-log" routerLinkActive="active" class="primary"><mat-icon>add</mat-icon><span>Entreno</span></a>
+    <a routerLink="/client/diet" routerLinkActive="active"><mat-icon>restaurant</mat-icon><span>Dieta</span></a>
+    <a routerLink="/client/messages" routerLinkActive="active">
+      <mat-icon>chat_bubble</mat-icon><span>Chat</span>
+      @if (unreadMessages() > 0) { <i class="bn-dot"></i> }
+    </a>
+  </nav>
 </div>

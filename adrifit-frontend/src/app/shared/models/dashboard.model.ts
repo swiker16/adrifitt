@@ -1,3 +1,7 @@
+import { Client } from './client.model';
+import { WeeklyReport } from './report.model';
+import { Subscription } from './subscription.model';
+
 export interface PlanDistribution {
   planId: number;
   planName: string;
@@ -67,5 +71,34 @@ export interface TrainerDashboard {
   clientsWithoutWorkouts: ClientWithoutWorkout[];
   upcomingRenewals: UpcomingRenewal[];
   recentActivity: ActivityItem[];
-  pendingAnalyses?: number;
+  pendingAnalyses: number;
+  unreadMessages: number;
+  pendingPaymentsCount: number;
+  pendingPaymentsAmount: number;
+  overduePaymentsCount: number;
+  tasksDue: number;
+  revenueThisMonth: number;
+  monthlyRecurringRevenue: number;
+}
+
+export interface ClientDashboard {
+  profile: Client;
+  totalReports: number;
+  latestReport: WeeklyReport | null;
+  subscription: Subscription | null;
+  pendingPayments: number;
+  pendingAmount: number;
+  overduePayments: boolean;
+  nextReviewDate: string | null;
+  unreadMessages: number;
+  messagingEnabled: boolean;
+  pdfExportEnabled: boolean;
+  workoutLogsThisWeek: number;
+  totalWorkoutLogs: number;
+  totalPhotos: number;
+  activeWorkoutName: string | null;
+  activeDietName: string | null;
+  hasTestimonial: boolean;
+  startWeight: number | null;
+  currentWeight: number | null;
 }

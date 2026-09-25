@@ -22,7 +22,7 @@ export interface CreateClientRequest {
   objective: string;
   email: string;
   planId: number;
-  trainerId: number;
+  trainerId?: number;
   notes?: string;
 }
 

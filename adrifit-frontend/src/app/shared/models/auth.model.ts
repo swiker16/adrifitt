@@ -10,4 +10,21 @@ export interface AuthResponse {
   userId: number;
   username: string;
   role: Role;
+  mustChangePassword: boolean;
+}
+
+export interface MeResponse {
+  userId: number;
+  username: string;
+  email: string;
+  role: Role;
+  mustChangePassword: boolean;
+  clientId: number | null;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }

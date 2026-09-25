@@ -217,14 +217,14 @@ export class ClientDetail {
 
   exportDietPdf(): void {
     const clientId = Number(this.id());
-    const token = localStorage.getItem('token');
-    fetch(this.dietService.getClientPdfUrl(clientId),
-      { headers: { Authorization: `Bearer ${token}` } }
-    ).then(r => r.blob()).then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'dieta-cliente.pdf'; a.click();
-      URL.revokeObjectURL(url);
+    this.dietService.downloadClientPdf(clientId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'dieta-cliente.pdf'; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: () => alert('No se pudo descargar el PDF de la dieta.'),
     });
   }
 

@@ -1,1 +1,35 @@
 @use '../shell';
+
+/* ── Bottom navigation (phones / installed PWA) ── */
+.bottom-nav { display: none; }
+
+@media (max-width: 860px) {
+  .main { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 120;
+    background: rgba(8, 11, 15, 0.97);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .bottom-nav a {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: #94a3b8; font-size: 0.68rem; font-weight: 600; padding: 4px 0;
+  }
+  .bottom-nav a mat-icon { font-size: 22px; width: 22px; height: 22px; }
+  .bottom-nav a.active { color: #fff; }
+  .bottom-nav a.active mat-icon { color: var(--orange); }
+  .bottom-nav a.primary mat-icon {
+    background: var(--orange); color: #fff; border-radius: 12px; width: 34px; height: 26px;
+    display: grid; place-items: center; font-size: 22px;
+  }
+  .bn-dot {
+    position: absolute; top: 2px; right: calc(50% - 16px);
+    width: 8px; height: 8px; border-radius: 50%; background: var(--orange);
+  }
+}

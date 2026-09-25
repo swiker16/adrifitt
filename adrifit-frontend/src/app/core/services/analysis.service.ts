@@ -41,6 +41,11 @@ export class AnalysisService {
 
   // ── Trainer ─────────────────────────────────────────────────────────────
 
+  findAll(status?: 'UPLOADED' | 'REVIEWED' | null): Observable<ClientAnalysis[]> {
+    const q = status ? `?status=${status}` : '';
+    return this.http.get<ClientAnalysis[]>(`${this.base}/analyses${q}`);
+  }
+
   getForClient(clientId: number): Observable<ClientAnalysis[]> {
     return this.http.get<ClientAnalysis[]>(`${this.base}/clients/${clientId}/analyses`);
   }
