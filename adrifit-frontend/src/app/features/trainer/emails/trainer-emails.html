@@ -1,0 +1,177 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Emails</div>
+    <div class="subtitle">Bandeja de salida y comunicaciones con tus clientes</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-primary btn-sm" type="button" (click)="openCompose()">
+      <mat-icon>edit</mat-icon> Redactar email
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="alert info intro">
+    <mat-icon>science</mat-icon>
+    <div>
+      <strong>Modo test.</strong> Los emails (bienvenida, recibos, avisos de pago, recordatorios y los que redactes aquí)
+      se generan y se guardan en esta bandeja, pero <strong>no se envían</strong>. En producción se enviarían por SMTP
+      configurando <code>MAIL_MODE=smtp</code>.
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="field">
+      <label for="f-client">Cliente</label>
+      <select id="f-client" [ngModel]="clientFilter() ?? ''" (ngModelChange)="setClient($event)">
+        <option value="">Todos los clientes</option>
+        @for (c of sortedClients(); track c.id) {
+          <option [value]="c.id">{{ fullName(c) }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-type">Tipo</label>
+      <select id="f-type" [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
+        <option value="">Todos los tipos</option>
+        @for (t of typeOptions; track t[0]) {
+          <option [value]="t[0]">{{ t[1] }}</option>
+        }
+      </select>
+    </div>
+    @if (!loading() && !error()) {
+      <div class="count">{{ filtered().length }} {{ filtered().length === 1 ? 'email' : 'emails' }}</div>
+    }
+  </div>
+
+  <div class="panel">
+    @if (loading()) {
+      <div class="loading">Cargando emails...</div>
+    } @else if (error()) {
+      <div class="empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>No se pudieron cargar los emails.</p>
+        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (filtered().length === 0) {
+      <div class="empty"><mat-icon>mark_email_read</mat-icon><p>No hay emails con estos filtros.</p></div>
+    } @else {
+      <ul class="mail-list">
+        @for (e of filtered(); track e.id) {
+          <li>
+            <button type="button" class="mail-row" (click)="preview.set(e)">
+              <span class="mail-icon"><mat-icon>{{ typeIcon(e.type) }}</mat-icon></span>
+              <span class="mail-main">
+                <span class="mail-subject">{{ e.subject }}</span>
+                <span class="mail-to">
+                  Para: {{ e.toName ? e.toName + ' · ' : '' }}{{ e.toAddress }}
+                </span>
+              </span>
+              <span class="mail-meta">
+                <span class="mail-badges">
+                  <span class="badge gray">{{ typeLabel[e.type] }}</span>
+                  <span class="badge" [class]="statusClass(e.status)">{{ statusLabel[e.status] }}</span>
+                </span>
+                <span class="mail-date">{{ e.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>
+
+<!-- Preview modal -->
+@if (preview(); as e) {
+  <div class="modal-backdrop" (click)="preview.set(null)">
+    <div class="modal wide" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h2>{{ e.subject }}</h2>
+        <button class="modal-close" type="button" aria-label="Cerrar" (click)="preview.set(null)"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <dl class="mail-headers">
+          <dt>Para</dt><dd>@if (e.toName) { {{ e.toName }} &lt;{{ e.toAddress }}&gt; } @else { {{ e.toAddress }} }</dd>
+          <dt>Fecha</dt><dd>{{ e.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          <dt>Tipo</dt><dd>{{ typeLabel[e.type] }}</dd>
+          <dt>Estado</dt>
+          <dd>
+            <span class="badge" [class]="statusClass(e.status)">{{ statusLabel[e.status] }}</span>
+            @if (e.sentAt) { <span class="muted"> · enviado {{ e.sentAt | date: 'dd/MM/yyyy HH:mm' }}</span> }
+          </dd>
+        </dl>
+        @if (e.errorMessage) {
+          <div class="alert error"><mat-icon>error_outline</mat-icon>{{ e.errorMessage }}</div>
+        }
+        <iframe class="mail-frame" title="Vista previa del email" sandbox="" [srcdoc]="previewHtml()"></iframe>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Compose modal -->
+@if (showCompose()) {
+  <div class="modal-backdrop" (click)="showCompose.set(false)">
+    <form class="modal wide" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (ngSubmit)="send()">
+      <div class="modal-head">
+        <h2>Redactar email</h2>
+        <button class="modal-close" type="button" aria-label="Cerrar" (click)="showCompose.set(false)"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label>Destinatarios</label>
+            <label class="check all-active">
+              <input type="checkbox" name="allActive" [ngModel]="allActive()" (ngModelChange)="allActive.set($event)" />
+              <span>Todos los clientes activos</span>
+            </label>
+            @if (!allActive()) {
+              <div class="recipients">
+                <div class="recipients-head">
+                  <input type="search" name="search" placeholder="Buscar cliente..." autocomplete="off"
+                         [ngModel]="search()" (ngModelChange)="search.set($event)" />
+                  <button class="btn btn-outline btn-sm" type="button" (click)="selectVisible()">Marcar todos</button>
+                  @if (selectedIds().size > 0) {
+                    <button class="btn btn-outline btn-sm" type="button" (click)="clearSelection()">Limpiar</button>
+                  }
+                </div>
+                <div class="recipients-list">
+                  @for (c of searchedClients(); track c.id) {
+                    <label class="check">
+                      <input type="checkbox" [checked]="isSelected(c.id)" (change)="toggleClient(c.id)" />
+                      <span>
+                        <span class="r-name">{{ fullName(c) }}</span>
+                        @if (c.email) { <span class="r-mail">{{ c.email }}</span> }
+                      </span>
+                    </label>
+                  } @empty {
+                    <div class="r-empty">No hay clientes que coincidan.</div>
+                  }
+                </div>
+                <span class="hint">{{ selectedIds().size }} seleccionado(s)</span>
+              </div>
+            }
+          </div>
+          <div class="field full">
+            <label for="c-subject">Asunto</label>
+            <input id="c-subject" name="subject" type="text" maxlength="200" autocomplete="off"
+                   placeholder="Ej.: Cambios en el horario de esta semana" [(ngModel)]="subject" required />
+          </div>
+          <div class="field full">
+            <label for="c-body">Mensaje</label>
+            <textarea id="c-body" name="body" rows="7" placeholder="Escribe tu mensaje..." [(ngModel)]="body" required></textarea>
+            <span class="hint">Se generará un email por cliente con la plantilla de AdriFit.</span>
+          </div>
+        </div>
+        @if (composeError()) { <div class="alert error mt"><mat-icon>error_outline</mat-icon>{{ composeError() }}</div> }
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" type="button" (click)="showCompose.set(false)">Cancelar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="sending()">
+          <mat-icon>send</mat-icon> {{ sending() ? 'Generando...' : 'Enviar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

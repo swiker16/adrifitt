@@ -1,0 +1,109 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Analíticas</div>
+    <div class="subtitle">Analíticas médicas (PDF) que han subido tus clientes</div>
+  </div>
+  <div class="topbar-actions">
+    <div class="segmented">
+      <button [class.active]="filter() === 'UPLOADED'" (click)="setFilter('UPLOADED')">Pendientes</button>
+      <button [class.active]="filter() === 'REVIEWED'" (click)="setFilter('REVIEWED')">Revisadas</button>
+      <button [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">Todas</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>{{ filter() === 'UPLOADED' ? 'Pendientes de revisar' : filter() === 'REVIEWED' ? 'Revisadas' : 'Todas las analíticas' }}</h2>
+      @if (!loading() && !error()) { <span class="count">{{ count() }} documento{{ count() === 1 ? '' : 's' }}</span> }
+    </div>
+    <div class="panel-body">
+      @if (loading()) {
+        <div class="loading">Cargando analíticas...</div>
+      } @else if (error()) {
+        <div class="empty">
+          <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar las analíticas.</p>
+          <button class="btn btn-outline btn-sm" (click)="load()">Reintentar</button>
+        </div>
+      } @else if (analyses().length === 0) {
+        <div class="empty">
+          <mat-icon>biotech</mat-icon>
+          <p>{{ filter() === 'UPLOADED' ? 'No hay analíticas pendientes de revisar.' : 'No hay analíticas en esta categoría.' }}</p>
+        </div>
+      } @else {
+        <div class="analysis-list">
+          @for (a of analyses(); track a.id) {
+            <div class="analysis">
+              <div class="an-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+              <div class="an-main">
+                <div class="an-top">
+                  <span class="an-title">{{ a.title }}</span>
+                  @if (a.status === 'REVIEWED') {
+                    <span class="badge green">Revisada</span>
+                  } @else {
+                    <span class="badge orange">Pendiente de revisar</span>
+                  }
+                </div>
+                <div class="an-meta">
+                  <a [routerLink]="['/trainer/clients', a.clientId]" class="an-client">
+                    <mat-icon>person</mat-icon>{{ a.clientName || ('Cliente #' + a.clientId) }}
+                  </a>
+                  <span><mat-icon>event</mat-icon>Fecha analítica: {{ a.analysisDate | date: 'dd/MM/yyyy' }}</span>
+                  <span><mat-icon>upload</mat-icon>Subida: {{ a.uploadedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  @if (a.fileSize) { <span class="muted">{{ fileSize(a.fileSize) }}</span> }
+                  @if (a.reviewedAt) { <span><mat-icon>check</mat-icon>Revisada: {{ a.reviewedAt | date: 'dd/MM/yyyy' }}</span> }
+                </div>
+                @if (a.clientComment) {
+                  <div class="an-comment"><mat-icon>chat_bubble_outline</mat-icon><span>“{{ a.clientComment }}”</span></div>
+                }
+                @if (a.trainerInternalNote) {
+                  <div class="an-note"><mat-icon>edit_note</mat-icon><span><strong>Nota interna:</strong> {{ a.trainerInternalNote }}</span></div>
+                }
+              </div>
+              <div class="an-actions">
+                <button class="btn btn-outline btn-sm" [disabled]="busyId() === a.id" (click)="view(a)">
+                  <mat-icon>visibility</mat-icon> Ver
+                </button>
+                <button class="btn btn-outline btn-sm" [disabled]="busyId() === a.id" (click)="download(a)">
+                  <mat-icon>download</mat-icon> Descargar
+                </button>
+                @if (a.status !== 'REVIEWED') {
+                  <button class="btn btn-primary btn-sm" (click)="openReview(a)">
+                    <mat-icon>check_circle</mat-icon> Marcar revisada
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (reviewing(); as ra) {
+  <div class="modal-backdrop" (click)="closeReview()">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>Marcar como revisada</h2>
+        <button class="modal-close" (click)="closeReview()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro"><strong>{{ ra.title }}</strong> · {{ ra.clientName }} · {{ ra.analysisDate | date: 'dd/MM/yyyy' }}</p>
+        <div class="field">
+          <label for="review-note">Nota interna (opcional)</label>
+          <textarea id="review-note" rows="4" maxlength="2000" placeholder="Solo visible para ti..."
+                    [ngModel]="reviewNote()" (ngModelChange)="reviewNote.set($event)"></textarea>
+          <span class="hint">El cliente no ve esta nota.</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="closeReview()">Cancelar</button>
+        <button class="btn btn-primary" [disabled]="savingReview()" (click)="submitReview()">
+          {{ savingReview() ? 'Guardando...' : 'Confirmar revisión' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

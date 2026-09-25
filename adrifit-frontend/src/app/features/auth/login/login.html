@@ -24,7 +24,7 @@
       <p class="subtitle">Introduce tus credenciales para acceder.</p>
 
       @if (error()) {
-        <div class="alert"><mat-icon>error</mat-icon> {{ error() }}</div>
+        <div class="alert" role="alert"><mat-icon>error</mat-icon> {{ error() }}</div>
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()">
@@ -32,7 +32,7 @@
           <span>Usuario</span>
           <div class="input-wrap">
             <mat-icon>person</mat-icon>
-            <input type="text" formControlName="username" placeholder="trainer" autocomplete="username" />
+            <input id="login-username" type="text" formControlName="username" placeholder="Tu usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" />
           </div>
           @if (form.controls.username.touched && form.controls.username.invalid) {
             <small class="err">El usuario es obligatorio.</small>
@@ -48,8 +48,9 @@
               formControlName="password"
               placeholder="••••••••"
               autocomplete="current-password"
+              enterkeyhint="go"
             />
-            <button type="button" class="toggle" (click)="togglePassword()">
+            <button type="button" class="toggle" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
               <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
           </div>
@@ -63,7 +64,8 @@
         </button>
       </form>
 
-      <p class="hint">Demo: <strong>trainer</strong> / <strong>trainer123</strong></p>
+      <p class="hint">Demo: <strong>trainer</strong> / <strong>trainer123</strong> · <strong>cliente</strong> / <strong>cliente123</strong></p>
+      <p class="hint small">¿Eres cliente nuevo? Usa el usuario y la contraseña temporal que te ha dado tu entrenador; te pediremos cambiarla al entrar.</p>
     </div>
   </main>
 </div>

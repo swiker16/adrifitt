@@ -1,0 +1,234 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Mi progreso</div>
+    <div class="subtitle">Tu evolución de medidas, fuerza y fotos</div>
+  </div>
+  <div class="topbar-actions">
+    <a routerLink="/client/report" class="btn btn-outline"><mat-icon>monitor_weight</mat-icon> Nuevo reporte</a>
+    <a routerLink="/client/workout-log" class="btn btn-primary"><mat-icon>fitness_center</mat-icon> Registrar entreno</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando tu progreso...</div></div>
+  } @else {
+    @if (partialError()) {
+      <div class="alert warn mb"><mat-icon>warning</mat-icon><span>No se pudieron cargar todos los datos. Algunas secciones pueden estar incompletas.</span></div>
+    }
+
+    <!-- ── Stats ── -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-icon orange"><mat-icon>monitor_weight</mat-icon></div>
+        <div class="stat-label">Peso</div>
+        @if (weightDelta(); as d) {
+          <div class="stat-value">{{ d.to | number: '1.0-1' }} <small>kg</small></div>
+          <div class="stat-sub">
+            Desde {{ d.from | number: '1.0-1' }} kg
+            <span class="delta" [class]="trendClass(d)">{{ d.diff > 0 ? '+' : '' }}{{ d.diff | number: '1.0-1' }} kg</span>
+          </div>
+        } @else {
+          <div class="stat-value muted">—</div>
+          <div class="stat-sub">Sin registros</div>
+        }
+      </div>
+      <div class="stat">
+        <div class="stat-icon blue"><mat-icon>straighten</mat-icon></div>
+        <div class="stat-label">Cintura</div>
+        @if (waistDelta(); as d) {
+          <div class="stat-value">{{ d.to | number: '1.0-1' }} <small>cm</small></div>
+          <div class="stat-sub">
+            Desde {{ d.from | number: '1.0-1' }} cm
+            <span class="delta" [class]="trendClass(d)">{{ d.diff > 0 ? '+' : '' }}{{ d.diff | number: '1.0-1' }} cm</span>
+          </div>
+        } @else {
+          <div class="stat-value muted">—</div>
+          <div class="stat-sub">Sin registros</div>
+        }
+      </div>
+      <div class="stat">
+        <div class="stat-icon violet"><mat-icon>percent</mat-icon></div>
+        <div class="stat-label">% Grasa</div>
+        @if (fatDelta(); as d) {
+          <div class="stat-value">{{ d.to | number: '1.0-1' }} <small>%</small></div>
+          <div class="stat-sub">
+            Desde {{ d.from | number: '1.0-1' }} %
+            <span class="delta" [class]="trendClass(d)">{{ d.diff > 0 ? '+' : '' }}{{ d.diff | number: '1.0-1' }} pts</span>
+          </div>
+        } @else {
+          <div class="stat-value muted">—</div>
+          <div class="stat-sub">Sin registros</div>
+        }
+      </div>
+      <div class="stat">
+        <div class="stat-icon green"><mat-icon>fitness_center</mat-icon></div>
+        <div class="stat-label">Entrenos registrados</div>
+        <div class="stat-value">{{ dashboard()?.totalWorkoutLogs ?? 0 }}</div>
+        <div class="stat-sub">{{ dashboard()?.workoutLogsThisWeek ?? 0 }} esta semana</div>
+      </div>
+      <a class="stat stat-link" routerLink="/client/photos">
+        <div class="stat-icon orange"><mat-icon>photo_camera</mat-icon></div>
+        <div class="stat-label">Fotos</div>
+        <div class="stat-value">{{ photos().length }}</div>
+        <div class="stat-sub">Ver galería <mat-icon class="inline">chevron_right</mat-icon></div>
+      </a>
+    </div>
+
+    <!-- ── Body charts ── -->
+    @if (sortedReports().length === 0) {
+      <div class="panel mb">
+        <div class="empty">
+          <mat-icon>show_chart</mat-icon>
+          <p>Aún no hay reportes semanales. Envía tu primer reporte para empezar a ver tu evolución.</p>
+          <a routerLink="/client/report" class="btn btn-primary">Enviar reporte</a>
+        </div>
+      </div>
+    } @else {
+      <div class="panel mb">
+        <div class="panel-head"><h2>Peso corporal</h2><span class="unit">kg</span></div>
+        <div class="chart-body"><app-line-chart [points]="weightPoints()" unit="kg" color="#FF7A1A" /></div>
+      </div>
+
+      <div class="charts-2 mb">
+        <div class="panel">
+          <div class="panel-head"><h2>Cintura</h2><span class="unit">cm</span></div>
+          <div class="chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#3b82f6" emptyText="Registra tu cintura en al menos dos reportes." /></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>% Grasa corporal</h2><span class="unit">%</span></div>
+          <div class="chart-body"><app-line-chart [points]="fatPoints()" unit="%" color="#8b5cf6" emptyText="Registra tu % de grasa en al menos dos reportes." /></div>
+        </div>
+      </div>
+
+      <div class="panel mb">
+        <div class="panel-head wrap">
+          <h2>Energía y adherencia</h2>
+          <div class="segmented">
+            <button type="button" [class.active]="secondary() === 'energy'" (click)="secondary.set('energy')">Energía</button>
+            <button type="button" [class.active]="secondary() === 'diet'" (click)="secondary.set('diet')">Dieta</button>
+            <button type="button" [class.active]="secondary() === 'training'" (click)="secondary.set('training')">Entreno</button>
+          </div>
+        </div>
+        <div class="chart-body">
+          @if (secondaryAvg() !== null) {
+            <div class="avg">
+              Media: <strong>{{ secondaryAvg() | number: '1.0-1' }}{{ secondary() === 'energy' ? '/10' : '%' }}</strong>
+              <span class="muted">(últimos {{ secondaryPoints().length }} reportes)</span>
+            </div>
+          }
+          <app-bar-chart
+            [points]="secondaryPoints()"
+            [unit]="secondary() === 'energy' ? '/10' : '%'"
+            [color]="secondary() === 'energy' ? '#f59e0b' : secondary() === 'diet' ? '#22c55e' : '#FF7A1A'"
+            emptyText="Sin datos en tus reportes."
+          />
+        </div>
+      </div>
+    }
+
+    <!-- ── Strength ── -->
+    <div class="panel mb">
+      <div class="panel-head wrap">
+        <h2><mat-icon class="h-icon">trending_up</mat-icon> Fuerza</h2>
+        @if (exerciseOptions().length > 0) {
+          <select class="ex-select" aria-label="Ejercicio" (change)="onExercise($event)">
+            @for (e of exerciseOptions(); track e.exerciseName) {
+              <option [value]="e.exerciseName" [selected]="currentExercise()?.exerciseName === e.exerciseName">
+                {{ e.exerciseName }} ({{ e.points.length }})
+              </option>
+            }
+          </select>
+        }
+      </div>
+      @if (exerciseOptions().length === 0) {
+        <div class="empty">
+          <mat-icon>fitness_center</mat-icon>
+          <p>Registra tus entrenos para ver la evolución de tu fuerza en cada ejercicio.</p>
+          <a routerLink="/client/workout-log" class="btn btn-primary">Registrar entreno</a>
+        </div>
+      } @else {
+        @if (strengthSummary(); as s) {
+          <div class="mini-stats">
+            <div><span>Sesiones</span><strong>{{ s.sessions }}</strong></div>
+            <div><span>Mejor peso</span><strong>{{ s.best | number: '1.0-2' }} kg</strong></div>
+            <div><span>Mejor 1RM est.</span><strong>{{ s.bestRm !== null ? (s.bestRm | number: '1.0-1') + ' kg' : '—' }}</strong></div>
+            <div>
+              <span>Progreso</span>
+              <strong [class.up]="s.diff > 0" [class.down]="s.diff < 0">{{ s.diff > 0 ? '+' : '' }}{{ s.diff | number: '1.0-2' }} kg</strong>
+            </div>
+          </div>
+        }
+        <div class="charts-2 inner">
+          <div>
+            <div class="chart-title">Peso máximo</div>
+            <app-line-chart [points]="maxWeightPoints()" unit="kg" color="#FF7A1A" emptyText="Necesitas al menos dos sesiones de este ejercicio." />
+          </div>
+          <div>
+            <div class="chart-title">1RM estimado</div>
+            <app-line-chart [points]="oneRmPoints()" unit="kg" color="#3b82f6" emptyText="Necesitas al menos dos sesiones con reps registradas." />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table strength-table">
+            <thead>
+              <tr><th>Fecha</th><th>Peso máx.</th><th>Volumen</th><th>1RM est.</th><th>Mejor RIR</th></tr>
+            </thead>
+            <tbody>
+              @for (r of strengthRows(); track r.date) {
+                <tr>
+                  <td>{{ r.date | date: 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <strong>{{ r.maxWeightKg | number: '1.0-2' }} kg</strong>
+                    @if (r.prWeight) { <span class="badge orange pr">PR</span> }
+                  </td>
+                  <td>{{ r.volumeKg | number: '1.0-0' }} kg</td>
+                  <td>
+                    {{ r.estimatedOneRepMaxKg !== null ? (r.estimatedOneRepMaxKg | number: '1.0-1') + ' kg' : '—' }}
+                    @if (r.prOneRm) { <span class="badge blue pr">PR</span> }
+                  </td>
+                  <td>{{ r.bestRir ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- ── Before / after ── -->
+    <div class="panel mb">
+      <div class="panel-head wrap">
+        <h2><mat-icon class="h-icon">compare</mat-icon> Antes / después</h2>
+        <a routerLink="/client/photos" class="link">Ver todas las fotos</a>
+      </div>
+      @if (beforeAfter(); as ba) {
+        @if (comparablePoses().length > 1) {
+          <div class="pose-tabs">
+            <div class="segmented">
+              @for (p of comparablePoses(); track p) {
+                <button type="button" [class.active]="ba.pose === p" (click)="selectedPose.set(p)">{{ poseLabel[p] }}</button>
+              }
+            </div>
+          </div>
+        }
+        <div class="ba-grid">
+          <figure>
+            <app-secure-img [src]="ba.before.contentUrl" alt="Antes" imgClass="ba-img" />
+            <figcaption><span class="badge gray">Antes</span> {{ ba.before.takenOn | date: 'dd/MM/yyyy' }}</figcaption>
+          </figure>
+          <figure>
+            <app-secure-img [src]="ba.after.contentUrl" alt="Después" imgClass="ba-img" />
+            <figcaption><span class="badge orange">Después</span> {{ ba.after.takenOn | date: 'dd/MM/yyyy' }}</figcaption>
+          </figure>
+        </div>
+      } @else {
+        <div class="empty">
+          <mat-icon>photo_camera</mat-icon>
+          <p>Sube al menos dos fotos con la misma pose para ver tu antes y después.</p>
+          <a routerLink="/client/photos" class="btn btn-primary">Subir fotos</a>
+        </div>
+      }
+    </div>
+  }
+</div>

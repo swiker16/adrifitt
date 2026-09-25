@@ -25,8 +25,9 @@
         <div class="ch-info">
           <div class="ch-name-row">
             <h1>{{ client()!.firstName }} {{ client()!.lastName }}</h1>
-            @if (subscription()) {
-              <span class="tag green">Activo</span>
+            @if (subscription(); as s) {
+              <span class="badge" [class]="subStatusBadge(s.status)">{{ subStatusLabel[s.status] }}</span>
+              @if (s.cancelAtPeriodEnd) { <span class="badge red">Cancelación programada</span> }
             } @else {
               <span class="tag gray">Sin plan</span>
             }
@@ -42,14 +43,22 @@
           <div class="ch-stat"><mat-icon>phone</mat-icon><div><span>Teléfono</span><strong>{{ client()!.phone }}</strong></div></div>
         }
         <div class="ch-stat"><mat-icon>fitness_center</mat-icon><div><span>Objetivo</span><strong>{{ client()!.objective || '—' }}</strong></div></div>
-        <div class="ch-stat"><mat-icon>assessment</mat-icon><div><span>Reportes</span><strong>{{ reports().length }}</strong></div></div>
+        <div class="ch-stat"><mat-icon>assessment</mat-icon><div><span>Seguimientos</span><strong>{{ reports().length }}</strong></div></div>
         @if (latestReport()) {
           <div class="ch-stat"><mat-icon>monitor_weight</mat-icon><div><span>Último peso</span><strong>{{ latestReport()!.weight }} kg</strong></div></div>
         }
       </div>
-      <button class="btn btn-secondary btn-sm ch-edit-btn">
-        <mat-icon>edit</mat-icon> Editar
-      </button>
+      <div class="ch-actions">
+        <a class="btn btn-primary btn-sm" routerLink="/trainer/messages" [queryParams]="{ clientId: client()!.id }">
+          <mat-icon>chat</mat-icon> Mensaje
+        </a>
+        <button class="btn btn-outline btn-sm" [disabled]="resettingPassword()" (click)="resetPassword()">
+          <mat-icon>lock_reset</mat-icon> {{ resettingPassword() ? 'Restableciendo...' : 'Restablecer contraseña' }}
+        </button>
+        <button class="btn btn-outline btn-sm" (click)="openEdit()">
+          <mat-icon>edit</mat-icon> Editar
+        </button>
+      </div>
     </div>
 
     <!-- ── Quick actions ── -->
@@ -64,7 +73,11 @@
         <mat-icon>restaurant</mat-icon> Ver dieta
       </button>
       <button class="cqa-btn" (click)="activeTab.set('reportes')">
-        <mat-icon>assignment</mat-icon> Ver reportes
+        <mat-icon>assignment</mat-icon> Ver seguimientos
+      </button>
+      <button class="cqa-btn" (click)="activeTab.set('pagos')">
+        <mat-icon>payments</mat-icon> Cobros
+        @if (pendingPaymentsCount() > 0) { <span class="cqa-count">{{ pendingPaymentsCount() }}</span> }
       </button>
       @if (clientWorkout()) {
         <button class="cqa-btn accent" (click)="exportPdf()">
@@ -81,17 +94,26 @@
       <button class="tab-btn" [class.active]="activeTab() === 'suscripciones'" (click)="activeTab.set('suscripciones')">
         <mat-icon>card_membership</mat-icon> Suscripciones
       </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'pagos'" (click)="activeTab.set('pagos')">
+        <mat-icon>payments</mat-icon> Pagos
+      </button>
       <button class="tab-btn" [class.active]="activeTab() === 'rutinas'" (click)="activeTab.set('rutinas')">
         <mat-icon>fitness_center</mat-icon> Rutinas
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'entrenos'" (click)="activeTab.set('entrenos')">
+        <mat-icon>sports_gymnastics</mat-icon> Entrenos
       </button>
       <button class="tab-btn" [class.active]="activeTab() === 'dietas'" (click)="activeTab.set('dietas')">
         <mat-icon>restaurant</mat-icon> Dietas
       </button>
       <button class="tab-btn" [class.active]="activeTab() === 'reportes'" (click)="activeTab.set('reportes')">
-        <mat-icon>assignment</mat-icon> Reportes
+        <mat-icon>assignment</mat-icon> Seguimientos
       </button>
       <button class="tab-btn" [class.active]="activeTab() === 'progreso'" (click)="activeTab.set('progreso')">
         <mat-icon>show_chart</mat-icon> Progreso
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'fotos'" (click)="activeTab.set('fotos')">
+        <mat-icon>photo_library</mat-icon> Fotos
       </button>
       <button class="tab-btn" [class.active]="activeTab() === 'analiticas'" (click)="activeTab.set('analiticas')">
         <mat-icon>analytics</mat-icon> Analíticas
@@ -130,7 +152,7 @@
               </div>
             }
             <div class="evo-metric neutral">
-              <div class="evo-label">Reportes</div>
+              <div class="evo-label">Seguimientos</div>
               <div class="evo-now">{{ reports().length }}</div>
               <div class="evo-delta">totales</div>
             </div>
@@ -151,7 +173,7 @@
                   <div class="sum-name">{{ sub.planName }}</div>
                   <div class="sum-sub">{{ sub.plan.monthlyPrice | number:'1.0-2' }}€/mes · cada {{ sub.plan.reviewFrequencyDays }} días</div>
                 </div>
-                <span class="tag green">Activo</span>
+                <span class="badge" [class]="subStatusBadge(sub.status)">{{ subStatusLabel[sub.status] }}</span>
               </div>
               <div class="sum-meta-grid">
                 <div class="sum-meta-item"><span>Inicio</span><strong>{{ sub.startDate | date:'dd/MM/yy' }}</strong></div>
@@ -194,7 +216,7 @@
 
         <!-- Último reporte -->
         <div class="panel">
-          <div class="panel-head"><h2>Último reporte</h2></div>
+          <div class="panel-head"><h2>Último seguimiento</h2></div>
           <div class="panel-body">
             @if (latestReport(); as r) {
               <div class="sum-date">{{ r.createdAt | date:'EEEE dd MMMM yyyy' }}</div>
@@ -209,9 +231,9 @@
               @if (!r.coachFeedback) {
                 <div class="no-feedback-bar"><mat-icon>pending</mat-icon> Pendiente de feedback</div>
               }
-              <button class="btn btn-link" (click)="activeTab.set('reportes')">Ver todos los reportes</button>
+              <button class="btn btn-link" (click)="activeTab.set('reportes')">Ver todos los seguimientos</button>
             } @else {
-              <div class="empty-sm"><mat-icon>assignment</mat-icon><p>Sin reportes aún.</p></div>
+              <div class="empty-sm"><mat-icon>assignment</mat-icon><p>Sin seguimientos aún.</p></div>
             }
           </div>
         </div>
@@ -226,7 +248,7 @@
               <div class="act-row">
                 <span class="act-dot report"><mat-icon>assignment</mat-icon></span>
                 <div class="act-info">
-                  <div class="act-title">Reporte semanal enviado</div>
+                  <div class="act-title">Seguimiento enviado</div>
                   <div class="act-sub">Peso: {{ r.weight }} kg@if (r.waist) { · Cintura: {{ r.waist }} cm}</div>
                 </div>
                 <div class="act-time">{{ r.createdAt | date:'dd MMM yyyy' }}</div>
@@ -260,11 +282,43 @@
               <div class="active-meta">
                 <div class="meta-item"><span>Precio</span><strong>{{ sub.plan.monthlyPrice | number:'1.0-2' }}€/mes</strong></div>
                 <div class="meta-item"><span>Inicio</span><strong>{{ sub.startDate | date:'dd/MM/yyyy' }}</strong></div>
-                <div class="meta-item"><span>Próximo pago</span><strong>{{ sub.renewalDate | date:'dd/MM/yyyy' }}</strong></div>
+                <div class="meta-item"><span>Próximo cobro</span><strong>{{ sub.renewalDate | date:'dd/MM/yyyy' }}</strong></div>
                 @if (sub.plan.analyticsEnabled) { <div class="meta-item"><span>Analíticas</span><strong>Incluidas</strong></div> }
                 @if (sub.plan.messagingEnabled) { <div class="meta-item"><span>Mensajería</span><strong>Incluida</strong></div> }
               </div>
-              <span class="tag green">Activa</span>
+              <div class="sub-badges">
+                <span class="badge" [class]="subStatusBadge(sub.status)">{{ subStatusLabel[sub.status] }}</span>
+                @if (sub.cancelAtPeriodEnd) { <span class="badge red">Cancelación programada</span> }
+              </div>
+            </div>
+            @if (sub.cancelAtPeriodEnd) {
+              <div class="alert warn">
+                <mat-icon>event_busy</mat-icon>
+                <span>El cliente ha solicitado la cancelación. La suscripción finalizará el {{ sub.renewalDate | date:'dd/MM/yyyy' }} y no se renovará.</span>
+              </div>
+            }
+            @if (sub.status === 'PAUSED') {
+              <div class="alert info">
+                <mat-icon>pause_circle</mat-icon>
+                <span>Suscripción pausada: no se generan cobros ni recordatorios de revisión hasta que la reactives.</span>
+              </div>
+            }
+            <div class="sub-status-actions">
+              @if (sub.status === 'ACTIVE') {
+                <button class="btn btn-outline btn-sm" [disabled]="updatingStatus()" (click)="changeSubscriptionStatus('PAUSED')">
+                  <mat-icon>pause</mat-icon> Pausar
+                </button>
+              }
+              @if (sub.status === 'PAUSED') {
+                <button class="btn btn-success btn-sm" [disabled]="updatingStatus()" (click)="changeSubscriptionStatus('ACTIVE')">
+                  <mat-icon>play_arrow</mat-icon> Reactivar
+                </button>
+              }
+              @if (sub.status !== 'CANCELLED') {
+                <button class="btn btn-danger btn-sm" [disabled]="updatingStatus()" (click)="changeSubscriptionStatus('CANCELLED')">
+                  <mat-icon>cancel</mat-icon> Cancelar suscripción
+                </button>
+              }
             </div>
           } @else {
             <div class="empty"><mat-icon>card_membership</mat-icon><p>Sin plan activo.</p></div>
@@ -288,6 +342,7 @@
           @if (subscriptionHistory().length > 0) {
             <div class="history-section">
               <h4>Historial de suscripciones</h4>
+              <div class="table-wrap">
               <table class="history-table">
                 <thead><tr><th>Plan</th><th>Precio</th><th>Período</th><th>Estado</th><th>Desde</th><th>Hasta</th></tr></thead>
                 <tbody>
@@ -296,13 +351,92 @@
                       <td>{{ h.planName }}</td>
                       <td>{{ h.plan.monthlyPrice | number:'1.0-2' }}€/mes</td>
                       <td>cada {{ h.plan.reviewFrequencyDays }} días</td>
-                      <td><span class="tag" [class.green]="h.active" [class.gray]="!h.active">{{ h.active ? 'Activa' : 'Completada' }}</span></td>
+                      <td>
+                        @if (h.active) {
+                          <span class="badge" [class]="subStatusBadge(h.status)">{{ subStatusLabel[h.status] }}</span>
+                        } @else {
+                          <span class="badge gray">{{ h.status === 'CANCELLED' ? 'Cancelada' : 'Finalizada' }}</span>
+                        }
+                      </td>
                       <td>{{ h.startDate | date:'dd/MM/yyyy' }}</td>
                       <td>{{ h.endDate ? (h.endDate | date:'dd/MM/yyyy') : '—' }}</td>
                     </tr>
                   }
                 </tbody>
               </table>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════
+         TAB: PAGOS
+    ════════════════════════════════════════ -->
+    @if (activeTab() === 'pagos') {
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Pagos del cliente</h2>
+          <a class="btn btn-outline btn-sm" routerLink="/trainer/payments" [queryParams]="{ clientId: client()!.id }">
+            <mat-icon>open_in_new</mat-icon> Ver en Cobros
+          </a>
+        </div>
+        <div class="panel-body">
+          @if (paymentsLoading()) {
+            <div class="loading">Cargando pagos...</div>
+          } @else if (paymentsError()) {
+            <div class="empty">
+              <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar los pagos.</p>
+              <button class="btn btn-outline btn-sm" (click)="loadPayments()">Reintentar</button>
+            </div>
+          } @else if (payments().length === 0) {
+            <div class="empty"><mat-icon>payments</mat-icon><p>Este cliente no tiene cobros registrados.</p></div>
+          } @else {
+            <div class="pay-list">
+              @for (p of payments(); track p.id) {
+                <div class="pay-row">
+                  <div class="pay-main">
+                    <div class="pay-concept">{{ p.concept }}</div>
+                    <div class="pay-meta">
+                      <span>Vence {{ p.dueDate | date:'dd/MM/yyyy' }}</span>
+                      @if (p.periodStart && p.periodEnd) {
+                        <span>Periodo {{ p.periodStart | date:'dd/MM' }} – {{ p.periodEnd | date:'dd/MM/yyyy' }}</span>
+                      }
+                      @if (p.paidAt) { <span>Pagado {{ p.paidAt | date:'dd/MM/yyyy HH:mm' }}</span> }
+                      @if (p.method) {
+                        <span>
+                          {{ paymentMethodLabel[p.method] }}
+                          @if (p.cardLast4) { · {{ p.cardBrand }} ····{{ p.cardLast4 }} }
+                          @if (p.bizumPhone) { · {{ p.bizumPhone }} }
+                        </span>
+                      }
+                    </div>
+                    @if (p.status === 'PENDING' && p.lastFailureReason) {
+                      <div class="pay-fail"><mat-icon>error_outline</mat-icon> Último intento fallido: {{ p.lastFailureReason }}</div>
+                    }
+                  </div>
+                  <div class="pay-amount">{{ p.amount | number:'1.2-2' }} €</div>
+                  <span class="badge" [class]="paymentBadge(p.status, p.overdue)">
+                    {{ paymentStatusLabel[p.status] }}@if (p.status === 'PENDING' && p.overdue) { · vencido }
+                  </span>
+                  <div class="pay-actions">
+                    @if (p.status === 'PENDING') {
+                      <button class="btn btn-success btn-sm" [disabled]="paymentBusyId() === p.id" (click)="markCash(p)">
+                        <mat-icon>payments</mat-icon> Efectivo
+                      </button>
+                      <button class="btn btn-outline btn-sm" [disabled]="paymentBusyId() === p.id" (click)="cancelPayment(p)">
+                        <mat-icon>block</mat-icon> Anular
+                      </button>
+                    }
+                    @if (p.status === 'PAID') {
+                      <button class="btn btn-outline btn-sm" [disabled]="paymentBusyId() === p.id" (click)="refundPayment(p)">
+                        <mat-icon>undo</mat-icon> Devolver
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           }
         </div>
@@ -389,6 +523,106 @@
     }
 
     <!-- ════════════════════════════════════════
+         TAB: ENTRENOS (registros del cliente)
+    ════════════════════════════════════════ -->
+    @if (activeTab() === 'entrenos') {
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-head">
+          <h2>Progresión por ejercicio</h2>
+          @if (exerciseProgress().length > 0) {
+            <select class="exercise-select" [ngModel]="selectedExercise()" (ngModelChange)="selectedExercise.set($event)" aria-label="Ejercicio">
+              @for (e of exerciseProgress(); track e.exerciseName) {
+                <option [ngValue]="e.exerciseName">{{ e.exerciseName }} ({{ e.points.length }})</option>
+              }
+            </select>
+          }
+        </div>
+        <div class="panel-body sub-body">
+          @if (exerciseProgress().length === 0) {
+            <div class="empty-sm"><mat-icon>insights</mat-icon><p>Aún no hay datos de progresión: el cliente debe registrar sus entrenos.</p></div>
+          } @else {
+            <div class="charts-grid">
+              <div class="chart-card">
+                <h4>Peso máximo (kg)</h4>
+                <app-line-chart [points]="maxWeightPoints()" unit="kg" color="#FF7A1A" />
+              </div>
+              <div class="chart-card">
+                <h4>1RM estimado (kg)</h4>
+                <app-line-chart [points]="oneRmPoints()" unit="kg" color="#3b82f6" />
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Sesiones registradas</h2>
+          <span class="panel-count">{{ workoutLogs().length }} sesiones</span>
+        </div>
+        <div class="panel-body">
+          @if (logsLoading()) {
+            <div class="loading">Cargando entrenos...</div>
+          } @else if (logsError()) {
+            <div class="empty">
+              <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar los entrenos.</p>
+              <button class="btn btn-outline btn-sm" (click)="loadWorkoutLogs()">Reintentar</button>
+            </div>
+          } @else if (workoutLogs().length === 0) {
+            <div class="empty"><mat-icon>sports_gymnastics</mat-icon><p>El cliente todavía no ha registrado ningún entreno.</p></div>
+          } @else {
+            @for (log of workoutLogs(); track log.id) {
+              <div class="log-card" [class.open]="expandedLogId() === log.id">
+                <button class="log-head" (click)="toggleLog(log.id)" [attr.aria-expanded]="expandedLogId() === log.id">
+                  <div class="log-date">
+                    <span class="log-day">{{ log.performedOn | date:'d' }}</span>
+                    <span class="log-month">{{ log.performedOn | date:'MMM' }}</span>
+                  </div>
+                  <div class="log-info">
+                    <div class="log-title">{{ log.dayName }}</div>
+                    <div class="log-sub">{{ log.workoutName }} · {{ log.performedOn | date:'EEEE dd/MM/yyyy' }}</div>
+                  </div>
+                  <div class="log-stats">
+                    <span><strong>{{ log.totalSets }}</strong> series</span>
+                    <span><strong>{{ log.totalVolumeKg | number:'1.0-0' }}</strong> kg vol.</span>
+                  </div>
+                  <mat-icon class="log-chevron">{{ expandedLogId() === log.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+                @if (expandedLogId() === log.id) {
+                  <div class="log-body">
+                    @if (log.notes) {
+                      <div class="rc-comment"><mat-icon>chat_bubble_outline</mat-icon> <em>{{ log.notes }}</em></div>
+                    }
+                    @for (ex of log.exercises; track $index) {
+                      <div class="log-ex">
+                        <div class="log-ex-name">{{ ex.exerciseName }}</div>
+                        <div class="table-wrap">
+                          <table class="sets-table">
+                            <thead><tr><th>Serie</th><th>Kg</th><th>Reps</th><th>RIR</th></tr></thead>
+                            <tbody>
+                              @for (st of ex.sets; track st.setNumber) {
+                                <tr>
+                                  <td>{{ st.setNumber }}</td>
+                                  <td>{{ st.weightKg | number:'1.0-2' }}</td>
+                                  <td>{{ st.reps ?? '—' }}</td>
+                                  <td>{{ st.rir }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════
          TAB: DIETAS
     ════════════════════════════════════════ -->
     @if (activeTab() === 'dietas') {
@@ -468,12 +702,12 @@
     @if (activeTab() === 'reportes') {
       <div class="panel">
         <div class="panel-head">
-          <h2>Reportes semanales</h2>
+          <h2>Seguimientos (check-ins)</h2>
           <span class="panel-count">{{ reports().length }} total</span>
         </div>
         <div class="panel-body">
           @if (reports().length === 0) {
-            <div class="empty"><mat-icon>assignment_late</mat-icon><p>Este cliente aún no ha enviado reportes.</p></div>
+            <div class="empty"><mat-icon>assignment_late</mat-icon><p>Este cliente aún no ha enviado seguimientos.</p></div>
           } @else {
             @for (r of reports(); track r.id) {
               <div class="report-card">
@@ -509,7 +743,7 @@
     @if (activeTab() === 'progreso') {
       @if (reports().length === 0) {
         <div class="panel">
-          <div class="empty"><mat-icon>show_chart</mat-icon><p>Sin reportes para mostrar progreso.</p></div>
+          <div class="empty"><mat-icon>show_chart</mat-icon><p>Sin seguimientos para mostrar progreso.</p></div>
         </div>
       } @else {
         <!-- Evolución -->
@@ -524,7 +758,7 @@
             <div class="evo-metric" [class]="deltaClass(weightDelta())">
               <div class="evo-label">Variación peso</div>
               <div class="evo-now">{{ deltaSign(weightDelta()) }}{{ weightDelta() | number:'1.1-1' }} kg</div>
-              <div class="evo-delta">en {{ reports().length }} reportes</div>
+              <div class="evo-delta">en {{ reports().length }} seguimientos</div>
             </div>
             @if (waistDelta() !== null) {
               <div class="evo-metric" [class]="deltaClass(waistDelta())">
@@ -543,10 +777,26 @@
           </div>
         </div>
 
+        <!-- Gráficas -->
+        <div class="charts-grid three" style="margin-bottom:16px">
+          <div class="panel chart-panel">
+            <div class="panel-head"><h2>Peso (kg)</h2></div>
+            <div class="panel-body chart-body"><app-line-chart [points]="weightPoints()" unit="kg" color="#FF7A1A" /></div>
+          </div>
+          <div class="panel chart-panel">
+            <div class="panel-head"><h2>Cintura (cm)</h2></div>
+            <div class="panel-body chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#3b82f6" /></div>
+          </div>
+          <div class="panel chart-panel">
+            <div class="panel-head"><h2>% Grasa corporal</h2></div>
+            <div class="panel-body chart-body"><app-line-chart [points]="bodyFatPoints()" unit="%" color="#8b5cf6" /></div>
+          </div>
+        </div>
+
         <!-- Tabla histórica -->
         <div class="panel">
           <div class="panel-head"><h2>Tabla de progreso</h2></div>
-          <div class="panel-body p0">
+          <div class="panel-body p0 table-wrap">
             <table class="history-table full">
               <thead>
                 <tr>
@@ -555,13 +805,18 @@
                 </tr>
               </thead>
               <tbody>
-                @for (r of progressChartData(); track r.date) {
+                @for (r of progressChartData(); track $index) {
                   <tr>
                     <td>{{ r.date | date:'dd MMM yyyy' }}</td>
                     <td>{{ r.weight }}</td>
                     <td>{{ r.waist ?? '—' }}</td>
                     <td>{{ r.bodyFat ?? '—' }}</td>
-                    <td>—</td><td>—</td><td>—</td><td>—</td>
+                    <td>{{ r.energyLevel !== null ? r.energyLevel + '/10' : '—' }}</td>
+                    <td>{{ r.dietAdherence !== null ? r.dietAdherence + '%' : '—' }}</td>
+                    <td>{{ r.trainingAdherence !== null ? r.trainingAdherence + '%' : '—' }}</td>
+                    <td>
+                      @if (r.hasFeedback) { <span class="badge green">Sí</span> } @else { <span class="badge orange">Pendiente</span> }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -644,6 +899,57 @@
     }
 
     <!-- ════════════════════════════════════════
+         TAB: FOTOS
+    ════════════════════════════════════════ -->
+    @if (activeTab() === 'fotos') {
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Fotos de progreso</h2>
+          <span class="panel-count">{{ photos().length }} fotos</span>
+        </div>
+        <div class="panel-body sub-body">
+          @if (photosLoading()) {
+            <div class="loading">Cargando fotos...</div>
+          } @else if (photosError()) {
+            <div class="empty">
+              <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar las fotos.</p>
+              <button class="btn btn-outline btn-sm" (click)="loadPhotos()">Reintentar</button>
+            </div>
+          } @else if (photos().length === 0) {
+            <div class="empty"><mat-icon>photo_library</mat-icon><p>El cliente aún no ha subido fotos de progreso.</p></div>
+          } @else {
+            @for (g of photoGroups(); track g.date) {
+              <div class="photo-group">
+                <h4 class="photo-date"><mat-icon>event</mat-icon> {{ g.date | date:'EEEE d MMMM yyyy' }}</h4>
+                <div class="photo-grid">
+                  @for (ph of g.photos; track ph.id) {
+                    <div class="photo-card">
+                      <button class="photo-thumb" (click)="viewingPhoto.set(ph)" [attr.aria-label]="'Ampliar foto ' + poseLabel[ph.pose]">
+                        <app-secure-img [src]="ph.contentUrl" imgClass="photo-img" [alt]="poseLabel[ph.pose]" />
+                        <span class="pose-chip">{{ poseLabel[ph.pose] }}</span>
+                      </button>
+                      <div class="photo-info">
+                        @if (ph.notes) { <div class="photo-notes">“{{ ph.notes }}”</div> }
+                        <textarea rows="2" placeholder="Comentario para el cliente..." maxlength="1000"
+                                  [ngModel]="commentDraft(ph.id)" (ngModelChange)="setCommentDraft(ph.id, $event)"
+                                  [attr.aria-label]="'Comentario foto ' + ph.id"></textarea>
+                        @if (commentChanged(ph)) {
+                          <button class="btn btn-primary btn-sm" [disabled]="savingCommentId() === ph.id" (click)="saveComment(ph)">
+                            {{ savingCommentId() === ph.id ? 'Guardando...' : 'Guardar comentario' }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════
          TAB: NOTAS
     ════════════════════════════════════════ -->
     @if (activeTab() === 'notas') {
@@ -664,10 +970,10 @@
             rows="12"
           ></textarea>
           <div class="notes-actions">
-            <button class="btn btn-primary" (click)="saveNotes()">
-              <mat-icon>save</mat-icon> Guardar notas
+            <button class="btn btn-primary" [disabled]="savingNotes() || notes() === (client()!.notes ?? '')" (click)="saveNotes()">
+              <mat-icon>save</mat-icon> {{ savingNotes() ? 'Guardando...' : 'Guardar notas' }}
             </button>
-            <span class="notes-tip">Las notas se guardan localmente en esta sesión.</span>
+            <span class="notes-tip">Se guardan en la ficha del cliente. El cliente no las ve.</span>
           </div>
         </div>
       </div>
@@ -675,3 +981,99 @@
 
   }
 </div>
+
+<!-- ── Modal: editar cliente ── -->
+@if (editOpen()) {
+  <div class="modal-backdrop" (click)="savingEdit() || editOpen.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>Editar datos del cliente</h2>
+        <button class="modal-close" (click)="editOpen.set(false)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <form (ngSubmit)="saveEdit()">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="e-first">Nombre *</label>
+              <input id="e-first" name="firstName" type="text" autocomplete="off" required [(ngModel)]="editForm.firstName" />
+            </div>
+            <div class="field">
+              <label for="e-last">Apellidos *</label>
+              <input id="e-last" name="lastName" type="text" autocomplete="off" required [(ngModel)]="editForm.lastName" />
+            </div>
+            <div class="field">
+              <label for="e-phone">Teléfono</label>
+              <input id="e-phone" name="phone" type="tel" inputmode="tel" autocomplete="off" [(ngModel)]="editForm.phone" />
+            </div>
+            <div class="field">
+              <label for="e-birth">Fecha de nacimiento</label>
+              <input id="e-birth" name="birthDate" type="date" [(ngModel)]="editForm.birthDate" />
+            </div>
+            <div class="field full">
+              <label for="e-obj">Objetivo</label>
+              <input id="e-obj" name="objective" type="text" autocomplete="off" [(ngModel)]="editForm.objective" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-outline" (click)="editOpen.set(false)">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="savingEdit()">{{ savingEdit() ? 'Guardando...' : 'Guardar cambios' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: contraseña temporal ── -->
+@if (tempPassword()) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>Contraseña restablecida</h2>
+        <button class="modal-close" (click)="tempPassword.set(null)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <p>Nueva contraseña temporal de <strong>{{ client()?.firstName }} {{ client()?.lastName }}</strong>
+          @if (client()?.username) { (usuario <strong>{{ client()!.username }}</strong>) }:</p>
+        <div class="temp-pwd">
+          <code>{{ tempPassword() }}</code>
+          <button class="btn btn-outline btn-sm" (click)="copyTempPassword()"><mat-icon>content_copy</mat-icon> Copiar</button>
+        </div>
+        <div class="alert info" style="margin-top:14px">
+          <mat-icon>mail</mat-icon>
+          <span>Se ha generado un email al cliente con la nueva contraseña (modo prueba: queda en la bandeja de Emails, no se envía). Deberá cambiarla al iniciar sesión.</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" (click)="tempPassword.set(null)">Entendido</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: foto ampliada ── -->
+@if (viewingPhoto(); as vp) {
+  <div class="modal-backdrop" (click)="viewingPhoto.set(null)">
+    <div class="modal wide photo-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>{{ poseLabel[vp.pose] }} · {{ vp.takenOn | date:'dd/MM/yyyy' }}</h2>
+        <button class="modal-close" (click)="viewingPhoto.set(null)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <app-secure-img [src]="vp.contentUrl" imgClass="photo-large" [alt]="poseLabel[vp.pose]" />
+        @if (vp.notes) { <p class="photo-notes">Nota del cliente: “{{ vp.notes }}”</p> }
+        <div class="field" style="margin-top:12px">
+          <label for="vp-comment">Tu comentario</label>
+          <textarea id="vp-comment" rows="3" maxlength="1000" [ngModel]="commentDraft(vp.id)"
+                    (ngModelChange)="setCommentDraft(vp.id, $event)"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="viewingPhoto.set(null)">Cerrar</button>
+        <button class="btn btn-primary" [disabled]="!commentChanged(vp) || savingCommentId() === vp.id" (click)="saveComment(vp)">
+          {{ savingCommentId() === vp.id ? 'Guardando...' : 'Guardar comentario' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

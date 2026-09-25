@@ -1,20 +1,24 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ReportService } from '../../../core/services/report.service';
 import { WeeklyReport } from '../../../shared/models/report.model';
+import { NotifyService } from '../../../core/services/notify.service';
+import { apiErrorMessage } from '../../../shared/utils/download';
 
 type FilterType = 'all' | 'pending' | 'reviewed';
 
 @Component({
   selector: 'app-trainer-reports',
-  imports: [MatIconModule, FormsModule, DatePipe],
+  imports: [MatIconModule, FormsModule, DatePipe, RouterLink],
   templateUrl: './trainer-reports.html',
   styleUrl: './trainer-reports.scss',
 })
 export class TrainerReports {
   private readonly reportService = inject(ReportService);
+  private readonly notify = inject(NotifyService);
 
   readonly loading = signal(true);
   readonly error = signal(false);
@@ -80,9 +84,12 @@ export class TrainerReports {
         this.expandedId.set(null);
         this.feedbackText.set('');
         this.savingFeedback.set(false);
+        this.notify.success('Feedback enviado. Seguimiento marcado como revisado.');
       },
-      error: () => {
-        this.feedbackError.set('No se pudo guardar el feedback.');
+      error: (err) => {
+        const msg = apiErrorMessage(err, 'No se pudo guardar el feedback.');
+        this.feedbackError.set(msg);
+        this.notify.error(msg);
         this.savingFeedback.set(false);
       },
     });

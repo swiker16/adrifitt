@@ -1,13 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ReportService } from '../../../core/services/report.service';
 import { WeeklyReport } from '../../../shared/models/report.model';
+import { apiErrorMessage } from '../../../shared/utils/download';
 
 @Component({
   selector: 'app-client-report',
-  imports: [ReactiveFormsModule, MatIconModule, DatePipe],
+  imports: [ReactiveFormsModule, MatIconModule, DatePipe, RouterLink],
   templateUrl: './client-report.html',
   styleUrl: './client-report.scss',
 })
@@ -20,6 +22,7 @@ export class ClientReport {
   readonly submitError = signal<string | null>(null);
   readonly history = signal<WeeklyReport[]>([]);
   readonly historyLoaded = signal(false);
+  readonly historyError = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     weight: [null as number | null, [Validators.required, Validators.min(20), Validators.max(400)]],
@@ -38,7 +41,10 @@ export class ClientReport {
   private loadHistory(): void {
     this.reportService.findMine().subscribe({
       next: (r) => { this.history.set(r); this.historyLoaded.set(true); },
-      error: () => this.historyLoaded.set(true),
+      error: (err) => {
+        this.historyError.set(apiErrorMessage(err, 'No se pudieron cargar tus seguimientos.'));
+        this.historyLoaded.set(true);
+      },
     });
   }
 
@@ -65,8 +71,8 @@ export class ClientReport {
         this.saving.set(false);
         this.submitted.set(true);
       },
-      error: () => {
-        this.submitError.set('No se pudo enviar el reporte. Inténtalo de nuevo.');
+      error: (err) => {
+        this.submitError.set(apiErrorMessage(err, 'No se pudo enviar el seguimiento. Inténtalo de nuevo.'));
         this.saving.set(false);
       },
     });

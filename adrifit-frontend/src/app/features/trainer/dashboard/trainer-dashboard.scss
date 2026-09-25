@@ -421,3 +421,12 @@
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .quick-actions-bar { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Second KPI row (messages, tasks, analyses, payments, revenue) */
+.kpi-grid-secondary { flex-shrink: 0; }
+.kpi-grid-secondary .kpi-card { padding: 10px 14px; }
+.kpi-grid-secondary .kpi-value { font-size: 1.2rem; }
+.kpi-grid-secondary .kpi-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 960px) {
+  .kpi-grid-secondary .kpi-label { white-space: normal; }
+}

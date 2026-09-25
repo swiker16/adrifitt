@@ -1,0 +1,65 @@
+@use '../../page';
+
+.mode-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.test-mode mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+.stat-grid.three { grid-template-columns: repeat(3, 1fr); }
+.stat-card .stat-top .stat-label { margin-top: 0; font-weight: 600; color: var(--black-800); }
+.stat-card .stat-value { font-size: 1.7rem; margin-top: 10px; }
+.stat-card .stat-icon.red { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+.stat-card.alarm { border-color: rgba(239, 68, 68, 0.35); }
+.stat-card.alarm .stat-value { color: #b91c1c; }
+
+.filters {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-bottom: 16px;
+}
+.client-filter { min-width: 220px; }
+.client-filter select { min-height: 42px; }
+
+.cell-user { color: inherit; }
+a.cell-user:hover .name { color: var(--orange); }
+.cell-user .avatar { flex-shrink: 0; }
+.concept { font-weight: 500; }
+.sub { font-size: 0.8rem; color: var(--text-gray); margin-top: 2px; }
+.sub.fail { color: #b91c1c; }
+.na { color: var(--text-gray); }
+.num { text-align: right; white-space: nowrap; }
+.table td .badge.red { margin-top: 4px; }
+.table tbody tr:hover { cursor: default; }
+
+td.actions { white-space: nowrap; text-align: right; }
+td.actions .btn + .btn { margin-left: 6px; }
+.danger-outline:hover { border-color: var(--danger); color: var(--danger); }
+
+.modal-summary { margin: 0 0 16px; color: var(--text-gray); }
+.modal-summary strong { color: var(--black-800); }
+.mt { margin-top: 14px; }
+
+/* Responsive: table on desktop, cards on phones */
+.mobile-only { display: none; }
+
+.card-list { padding: 4px 0; }
+.pay-card { padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.pay-card:last-child { border-bottom: none; }
+.pay-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pay-card-top .amount { font-family: 'Sora', sans-serif; font-size: 1.05rem; white-space: nowrap; }
+.pay-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; }
+.pay-card-meta .meta { font-size: 0.8rem; color: var(--text-gray); }
+.pay-card .sub.fail { margin-top: 8px; }
+.pay-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pay-card-actions .btn { min-height: 40px; flex: 1 1 auto; }
+
+@media (max-width: 1024px) {
+  .stat-grid.three { grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .stat-card { padding: 18px; }
+}
+
+@media (max-width: 760px) {
+  .desktop-only { display: none; }
+  .mobile-only { display: block; }
+  .stat-grid.three { grid-template-columns: 1fr; }
+  .client-filter { width: 100%; }
+  .filters .segmented { width: 100%; }
+  .filters .segmented button { min-height: 36px; }
+}

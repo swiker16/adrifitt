@@ -14,28 +14,13 @@
 </div>
 
 <div class="content">
-  @if (createdInfo(); as info) {
-    <div class="created-banner">
-      <div class="cb-icon"><mat-icon>check_circle</mat-icon></div>
-      <div class="cb-body">
-        <strong>Cliente creado correctamente</strong>
-        <span>
-          Acceso para <b>{{ info.name }}</b> — usuario <code>{{ info.username }}</code>,
-          contraseña temporal <code>{{ info.password }}</code>.
-          En el futuro estas credenciales se enviarán por correo.
-        </span>
-      </div>
-      <button class="cb-close" (click)="createdInfo.set(null)" title="Cerrar"><mat-icon>close</mat-icon></button>
-    </div>
-  }
-
   @if (showForm()) {
     <form class="client-form" [formGroup]="form" (ngSubmit)="save()">
       <div class="cf-head">
         <div class="cf-icon"><mat-icon>person_add</mat-icon></div>
         <div>
           <h3>Nuevo cliente</h3>
-          <p>Rellena los datos básicos y asigna un plan. El cliente recibirá sus credenciales por correo.</p>
+          <p>Rellena los datos básicos y asigna un plan. Se generará un usuario y una contraseña temporal.</p>
         </div>
       </div>
 
@@ -62,7 +47,7 @@
           </label>
           <label class="field">
             <span>Teléfono <i>*</i></span>
-            <input formControlName="phone" placeholder="600 000 000" />
+            <input formControlName="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="600 000 000" />
             @if (form.controls.phone.touched && form.controls.phone.invalid) {
               <small class="err">El teléfono es obligatorio.</small>
             }
@@ -95,11 +80,16 @@
             }
           </label>
         </div>
-        <div class="email-info"><mat-icon>info</mat-icon> El cliente recibirá un correo con un enlace para activar su cuenta y elegir su contraseña.</div>
+        <div class="email-info"><mat-icon>info</mat-icon> Se generará un correo de bienvenida con sus credenciales (modo prueba: no se envía, queda en la bandeja de correos). Deberá cambiar la contraseña en su primer acceso.</div>
       </div>
 
       <div class="cf-section">
         <div class="cf-section-title"><mat-icon>workspace_premium</mat-icon> Asignación inicial</div>
+        @if (plansError()) {
+          <div class="form-alert" style="margin: 0 0 12px"><mat-icon>error</mat-icon> {{ plansError() }}</div>
+        } @else if (plans().length === 0) {
+          <p class="notes-hint">No hay planes activos. Crea uno en la sección Planes.</p>
+        }
         <div class="plan-picker">
           @for (p of plans(); track p.id) {
             <button type="button" class="plan-option"
@@ -209,3 +199,59 @@
   </div>
   }
 </div>
+
+<!-- ═══ Modal: client created (credentials) ═══ -->
+@if (createdInfo(); as info) {
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="created-title">
+      <div class="modal-head">
+        <h2 id="created-title">Cliente creado</h2>
+        <button class="modal-close" (click)="closeCreated()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="created-top">
+          <span class="cb-icon"><mat-icon>check_circle</mat-icon></span>
+          <div>
+            <strong>{{ info.name }}</strong>
+            <span>{{ info.email }}</span>
+          </div>
+        </div>
+
+        <div class="cred">
+          <span class="cred-label">Usuario</span>
+          <code>{{ info.username }}</code>
+          <button type="button" class="btn btn-outline btn-sm" (click)="copy('username')">
+            <mat-icon>{{ copied() === 'username' ? 'check' : 'content_copy' }}</mat-icon>
+            {{ copied() === 'username' ? 'Copiado' : 'Copiar' }}
+          </button>
+        </div>
+        <div class="cred">
+          <span class="cred-label">Contraseña temporal</span>
+          <code>{{ info.password }}</code>
+          <button type="button" class="btn btn-outline btn-sm" (click)="copy('password')">
+            <mat-icon>{{ copied() === 'password' ? 'check' : 'content_copy' }}</mat-icon>
+            {{ copied() === 'password' ? 'Copiado' : 'Copiar' }}
+          </button>
+        </div>
+
+        <div class="alert info cred-alert">
+          <mat-icon>mark_email_read</mat-icon>
+          <div>
+            Se ha generado un correo de bienvenida con estas credenciales <span class="test-mode">Modo prueba</span>
+            No se envía de verdad: puedes consultarlo en la bandeja de correos.
+          </div>
+        </div>
+        <div class="alert warn cred-alert">
+          <mat-icon>key</mat-icon>
+          <div>El cliente deberá cambiar la contraseña en su primer inicio de sesión. Guárdala ahora: no se volverá a mostrar.</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline" (click)="copy('both')">
+          <mat-icon>{{ copied() === 'both' ? 'check' : 'content_copy' }}</mat-icon> Copiar ambos
+        </button>
+        <button type="button" class="btn btn-primary" (click)="closeCreated()">Hecho</button>
+      </div>
+    </div>
+  </div>
+}

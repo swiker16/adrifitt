@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    @if (cd.diet.days?.length) {
+    @if (cd.diet.days.length) {
       <!-- Day selector -->
       <div class="day-selector">
         @for (day of cd.diet.days; track day.id; let i = $index) {
@@ -109,7 +109,7 @@
                       </div>
                     </div>
                     @if (food.notes) { <div class="food-note">{{ food.notes }}</div> }
-                    @if (food.alternatives?.length) {
+                    @if (food.alternatives.length) {
                       <div class="alternatives">
                         <span class="alt-label">Alternativas:</span>
                         @for (alt of food.alternatives; track alt.id) {

@@ -1,0 +1,82 @@
+@use '../../page';
+
+.mb { margin-bottom: 18px; }
+.muted { color: var(--text-gray); }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat {
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; color: inherit; min-width: 0;
+}
+.stat.stat-link { transition: border-color 0.15s; }
+.stat.stat-link:hover { border-color: var(--orange); }
+.stat-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 8px; }
+.stat-icon mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.stat-icon.orange { background: rgba(255, 122, 26, 0.14); color: var(--orange); }
+.stat-icon.green { background: rgba(34, 197, 94, 0.14); color: #16a34a; }
+.stat-icon.blue { background: rgba(59, 130, 246, 0.14); color: #3b82f6; }
+.stat-icon.violet { background: rgba(139, 92, 246, 0.14); color: #8b5cf6; }
+.stat-label { color: var(--text-gray); font-size: 0.82rem; font-weight: 600; }
+.stat-value { font-family: 'Sora', sans-serif; font-size: 1.55rem; font-weight: 800; line-height: 1.2; }
+.stat-value small { font-size: 0.85rem; font-weight: 600; color: var(--text-gray); }
+.stat-value.muted { color: #cbd5e1; }
+.stat-sub { font-size: 0.8rem; color: var(--text-gray); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stat-sub .inline { font-size: 16px; width: 16px; height: 16px; }
+.delta { font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+.delta.good { background: rgba(34, 197, 94, 0.14); color: #15803d; }
+.delta.bad { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+.delta.neutral { background: #f1f5f9; color: #475569; }
+
+/* Charts */
+.panel-head.wrap { flex-wrap: wrap; gap: 10px; }
+.panel-head h2 { display: flex; align-items: center; gap: 8px; }
+.h-icon { color: var(--orange); font-size: 20px; width: 20px; height: 20px; }
+.unit { color: var(--text-gray); font-size: 0.8rem; font-weight: 600; }
+.chart-body { padding: 14px 18px 10px; }
+.charts-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.charts-2.inner { padding: 6px 18px 12px; }
+.chart-title { font-weight: 600; font-size: 0.85rem; color: var(--black-800); margin-bottom: 6px; }
+.avg { font-size: 0.88rem; margin-bottom: 6px; }
+
+/* Strength */
+.ex-select {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 0 12px; min-height: 42px; font: inherit;
+  font-size: 0.92rem; background: #fff; max-width: 100%; min-width: 0; cursor: pointer;
+}
+.ex-select:focus { outline: none; border-color: var(--orange); }
+.mini-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 16px 18px 4px; }
+.mini-stats > div { background: #f8fafc; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.mini-stats span { font-size: 0.75rem; color: var(--text-gray); font-weight: 600; }
+.mini-stats strong { font-size: 1.05rem; }
+.mini-stats strong.up { color: #15803d; }
+.mini-stats strong.down { color: #b91c1c; }
+.strength-table td, .strength-table th { padding: 12px 18px; white-space: nowrap; }
+.strength-table tbody tr:hover { cursor: default; }
+.pr { margin-left: 6px; }
+
+/* Before / after */
+
+.pose-tabs { padding: 14px 18px 0; }
+.ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px 18px 18px; max-width: 720px; }
+.ba-grid figure { margin: 0; }
+.ba-grid app-secure-img { aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; }
+:host ::ng-deep .ba-img { width: 100%; height: 100%; object-fit: cover; }
+.ba-grid figcaption { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.85rem; flex-wrap: wrap; }
+
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .charts-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { padding: 14px; }
+  .stat-value { font-size: 1.3rem; }
+  .mini-stats { grid-template-columns: 1fr 1fr; padding: 12px 14px 4px; }
+  .chart-body, .charts-2.inner { padding-left: 12px; padding-right: 12px; }
+  .ex-select { width: 100%; }
+  .ba-grid { gap: 8px; padding: 12px; }
+  .topbar-actions .btn { flex: 1; justify-content: center; }
+}

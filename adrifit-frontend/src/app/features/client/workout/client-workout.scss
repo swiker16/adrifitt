@@ -72,6 +72,24 @@
 .center { text-align: center; }
 .notes-cell { color: var(--text-gray); font-size: 0.83rem; max-width: 180px; }
 
+.hero-main { flex: 1; min-width: 0; }
+.hero-cta { flex-shrink: 0; align-self: center; }
+.pdf-wrap { display: inline-flex; }
+.pdf-note {
+  display: flex; align-items: center; gap: 6px; color: var(--text-gray); font-size: 0.82rem; margin-bottom: 12px;
+}
+.pdf-note mat-icon { font-size: 16px; width: 16px; height: 16px; }
+.day-head { justify-content: space-between; flex-wrap: wrap; }
+.day-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.day-head .btn { min-height: 40px; }
+.p0 { padding: 0; }
+.ex-table { min-width: 720px; }
+
 @media (max-width: 680px) {
-  .ex-table { display: block; overflow-x: auto; }
+  .hero-card { flex-direction: column; padding: 18px; gap: 14px; }
+  .hero-cta { align-self: stretch; justify-content: center; }
+  .topbar-actions > .btn, .pdf-wrap { flex: 1; }
+  .pdf-wrap .btn, .topbar-actions > .btn { width: 100%; justify-content: center; }
+  .day-head { padding: 14px 16px; }
+  .day-head .btn { width: 100%; justify-content: center; }
 }

@@ -148,7 +148,9 @@
 }
 .stars { display: flex; gap: 2px; color: var(--orange); margin-bottom: 14px; }
 .stars mat-icon { font-size: 20px; width: 20px; height: 20px; }
-.quote { color: #e2e8f0; line-height: 1.6; margin-bottom: 22px; }
+.stars mat-icon.off { color: #475569; }
+.testimonial-card { display: flex; flex-direction: column; }
+.quote { color: #e2e8f0; line-height: 1.6; margin: 0 0 22px; flex: 1; white-space: pre-line; word-break: break-word; }
 .author { display: flex; align-items: center; gap: 12px; }
 .author .avatar {
   width: 44px; height: 44px; border-radius: 50%; background: rgba(255, 122, 26, 0.18);
@@ -184,6 +186,26 @@
   .main-nav { display: none; }
 }
 @media (max-width: 620px) {
-  .benefits, .plans, .steps, .testimonial-grid { grid-template-columns: 1fr; }
-  .plan-card.featured { transform: none; }
+  .benefits, .plans, .steps, .testimonial-grid, .plans-loading { grid-template-columns: 1fr; }
+  .plan-card.featured, .plans-skeleton.featured-skeleton { transform: none; }
+  .header-inner { padding: 12px 0; }
+  .header .btn { padding: 10px 18px; }
+  .brand { font-size: 1.2rem; }
+  .logo-badge { width: 34px; height: 34px; }
+  .hero { padding: 56px 0 64px; }
+  .pill { margin-bottom: 18px; }
+  .lead { font-size: 1.02rem; margin: 18px 0 26px; }
+  .hero-actions .btn { flex: 1 1 100%; min-height: 48px; }
+  .hero-stats { gap: 18px 28px; margin-top: 38px; }
+  .hero-stats strong { font-size: 1.5rem; }
+  .benefits { margin-top: -24px; gap: 14px; }
+  .benefit-card, .step-card, .testimonial-card { padding: 22px; }
+  .benefit-card:hover { transform: none; }
+  .services, .how, .testimonials { padding: 60px 0; }
+  .section-head { margin-bottom: 32px; }
+  .plan-card { padding: 26px 22px; }
+  .plan-card .btn { min-height: 48px; }
+  .cta { padding: 10px 0 60px; }
+  .cta-inner { padding: 44px 22px; border-radius: 22px; }
+  .footer-cols { gap: 28px; }
 }

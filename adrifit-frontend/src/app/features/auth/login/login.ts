@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/auth/auth.service';
+import { apiErrorMessage } from '../../../shared/utils/download';
 
 @Component({
   selector: 'app-login',
@@ -23,6 +24,13 @@ export class Login {
     password: ['', Validators.required],
   });
 
+  constructor() {
+    // Already logged in: go straight to the private area.
+    if (this.auth.isAuthenticated()) {
+      this.auth.redirectByRole();
+    }
+  }
+
   togglePassword(): void {
     this.showPassword.update((v) => !v);
   }
@@ -32,6 +40,7 @@ export class Login {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.loading()) return;
     this.loading.set(true);
     this.error.set(null);
 
@@ -42,11 +51,13 @@ export class Login {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(
-          err?.status === 401
-            ? 'Usuario o contraseña incorrectos.'
-            : 'No se pudo conectar con el servidor.'
-        );
+        if (err?.status === 401) {
+          this.error.set(apiErrorMessage(err, 'Usuario o contraseña incorrectos.'));
+        } else if (err?.status === 0) {
+          this.error.set('No se pudo conectar con el servidor.');
+        } else {
+          this.error.set(apiErrorMessage(err, 'No se pudo iniciar sesión. Inténtalo de nuevo.'));
+        }
       },
     });
   }

@@ -1,13 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { DietService } from '../../../core/services/diet.service';
 import { Diet, DietDay } from '../../../shared/models/diet.model';
 
 @Component({
   selector: 'app-diet-details',
-  imports: [RouterLink, DatePipe, DecimalPipe, MatIconModule],
+  imports: [RouterLink, DecimalPipe, MatIconModule],
   templateUrl: './diet-details.html',
   styleUrl: './diet-details.scss',
 })

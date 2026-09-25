@@ -3,11 +3,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../../core/auth/auth.service';
 import { ClientService } from '../../../core/services/client.service';
 import { PlanService } from '../../../core/services/plan.service';
-import { Client } from '../../../shared/models/client.model';
+import { NotifyService } from '../../../core/services/notify.service';
+import { apiErrorMessage } from '../../../shared/utils/download';
+import { Client, CreateClientRequest } from '../../../shared/models/client.model';
 import { Plan } from '../../../shared/models/plan.model';
+
+type CopyKind = 'username' | 'password' | 'both';
 
 @Component({
   selector: 'app-clients-list',
@@ -18,18 +21,20 @@ import { Plan } from '../../../shared/models/plan.model';
 export class ClientsList {
   private readonly clientService = inject(ClientService);
   private readonly planService = inject(PlanService);
-  private readonly auth = inject(AuthService);
+  private readonly notify = inject(NotifyService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
 
   readonly clients = signal<Client[]>([]);
   readonly plans = signal<Plan[]>([]);
+  readonly plansError = signal<string | null>(null);
   readonly loading = signal(true);
   readonly error = signal(false);
   readonly showForm = signal(false);
   readonly saving = signal(false);
   readonly formError = signal<string | null>(null);
-  readonly createdInfo = signal<{ name: string; username: string; password: string } | null>(null);
+  readonly createdInfo = signal<{ name: string; email: string; username: string; password: string } | null>(null);
+  readonly copied = signal<CopyKind | null>(null);
 
   readonly filtered = computed(() => this.clients());
 
@@ -46,7 +51,10 @@ export class ClientsList {
 
   constructor() {
     this.load();
-    this.planService.findAll(true).subscribe({ next: (p) => this.plans.set(p), error: () => {} });
+    this.planService.findAll(true).subscribe({
+      next: (p) => this.plans.set([...p].sort((a, b) => a.monthlyPrice - b.monthlyPrice)),
+      error: (err) => this.plansError.set(apiErrorMessage(err, 'No se pudieron cargar los planes.')),
+    });
     if (this.route.snapshot.queryParamMap.has('new')) {
       this.showForm.set(true);
     }
@@ -82,23 +90,22 @@ export class ClientsList {
       this.form.markAllAsTouched();
       return;
     }
-    const trainerId = this.auth.user()?.userId;
-    if (!trainerId) return;
+    if (this.saving()) return;
 
     this.saving.set(true);
     this.formError.set(null);
 
     const raw = this.form.getRawValue();
-    const payload = {
-      firstName: raw.firstName,
-      lastName:  raw.lastName,
-      phone:     raw.phone,
+    // trainerId is optional: the backend assigns the logged-in trainer.
+    const payload: CreateClientRequest = {
+      firstName: raw.firstName.trim(),
+      lastName:  raw.lastName.trim(),
+      phone:     raw.phone.trim(),
       birthDate: raw.birthDate,
-      objective: raw.objective,
-      email:     raw.email,
+      objective: raw.objective.trim(),
+      email:     raw.email.trim(),
       planId:    raw.planId!,
-      trainerId,
-      notes:     raw.notes || undefined,
+      notes:     raw.notes?.trim() || undefined,
     };
 
     this.clientService.create(payload).subscribe({
@@ -106,6 +113,7 @@ export class ClientsList {
         this.clients.update((list) => [res.client, ...list]);
         this.createdInfo.set({
           name: `${res.client.firstName} ${res.client.lastName}`,
+          email: res.client.email ?? payload.email,
           username: res.username,
           password: res.temporaryPassword,
         });
@@ -116,11 +124,30 @@ export class ClientsList {
       error: (err) => {
         this.saving.set(false);
         this.formError.set(
-          err?.status === 409
-            ? 'El email ya está en uso.'
-            : 'No se pudo crear el cliente.'
+          apiErrorMessage(err, err?.status === 409 ? 'Ya existe un usuario con ese email.' : 'No se pudo crear el cliente.')
         );
       },
     });
+  }
+
+  async copy(kind: CopyKind): Promise<void> {
+    const info = this.createdInfo();
+    if (!info) return;
+    const text =
+      kind === 'username' ? info.username
+      : kind === 'password' ? info.password
+      : `Usuario: ${info.username}\nContraseña temporal: ${info.password}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copied.set(kind);
+      setTimeout(() => this.copied.set(null), 2000);
+    } catch {
+      this.notify.error('No se pudo copiar. Selecciona el texto y cópialo manualmente.');
+    }
+  }
+
+  closeCreated(): void {
+    this.createdInfo.set(null);
+    this.copied.set(null);
   }
 }

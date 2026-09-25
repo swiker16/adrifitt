@@ -1,0 +1,98 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Reseñas</div>
+    <div class="subtitle">Opiniones de tus clientes que aparecen en la web pública</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="alert info intro">
+    <mat-icon>info</mat-icon>
+    <div>
+      Las reseñas las escriben <strong>solo tus clientes</strong> (una por cliente) desde su área privada y se muestran
+      en la landing pública. Tú no puedes editarlas: solo decidir si se <strong>muestran u ocultan</strong>.
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">Cargando reseñas...</div>
+  } @else if (error()) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>No se pudieron cargar las reseñas.</p>
+        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+      </div>
+    </div>
+  } @else if (testimonials().length === 0) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>reviews</mat-icon>
+        <p>Todavía no tienes reseñas. Tus clientes pueden dejar la suya desde su panel.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="summary">
+      <div class="avg">
+        <span class="avg-value">{{ average() | number: '1.1-1' }}</span>
+        <div>
+          <div class="stars" [attr.aria-label]="'Media ' + (average() | number: '1.1-1') + ' de 5'">
+            @for (s of stars; track s) {
+              <span [class.on]="s <= average() + 0.25">★</span>
+            }
+          </div>
+          <div class="avg-sub">
+            {{ testimonials().length }} {{ testimonials().length === 1 ? 'reseña' : 'reseñas' }} ·
+            {{ visibleCount() }} {{ visibleCount() === 1 ? 'visible' : 'visibles' }} en la web
+          </div>
+        </div>
+      </div>
+      <div class="segmented">
+        <button type="button" [class.active]="filter() === 'all'" (click)="filter.set('all')">Todas</button>
+        <button type="button" [class.active]="filter() === 'visible'" (click)="filter.set('visible')">Visibles</button>
+        <button type="button" [class.active]="filter() === 'hidden'" (click)="filter.set('hidden')">Ocultas</button>
+      </div>
+    </div>
+
+    @if (filtered().length === 0) {
+      <div class="panel"><div class="empty"><mat-icon>filter_alt_off</mat-icon><p>No hay reseñas en esta categoría.</p></div></div>
+    } @else {
+      <div class="cards">
+        @for (t of filtered(); track t.id) {
+          <article class="review" [class.hidden-review]="!t.visible">
+            <header class="review-head">
+              <div class="cell-user">
+                <span class="avatar">{{ initials(t.authorName) }}</span>
+                <div>
+                  <div class="name">{{ t.authorName }}</div>
+                  <div class="sub">
+                    @if (t.planName) { Plan {{ t.planName }} · }{{ t.createdAt | date: 'd MMM yyyy' }}
+                  </div>
+                </div>
+              </div>
+              @if (t.visible) {
+                <span class="badge green"><mat-icon>visibility</mat-icon> Visible en la web</span>
+              } @else {
+                <span class="badge gray"><mat-icon>visibility_off</mat-icon> Oculta</span>
+              }
+            </header>
+            <div class="stars" [attr.aria-label]="t.rating + ' de 5 estrellas'">
+              @for (s of stars; track s) {
+                <span [class.on]="s <= t.rating">★</span>
+              }
+            </div>
+            <p class="review-text">“{{ t.content }}”</p>
+            <footer class="review-foot">
+              <button class="btn btn-sm" type="button"
+                      [class.btn-outline]="t.visible" [class.btn-primary]="!t.visible"
+                      [disabled]="busyId() === t.id" (click)="toggle(t)">
+                <mat-icon>{{ t.visible ? 'visibility_off' : 'visibility' }}</mat-icon>
+                {{ t.visible ? 'Ocultar' : 'Mostrar en la web' }}
+              </button>
+            </footer>
+          </article>
+        }
+      </div>
+    }
+  }
+</div>

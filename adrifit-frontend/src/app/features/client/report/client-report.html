@@ -1,6 +1,6 @@
 <div class="topbar">
   <div>
-    <div class="page-title">Enviar reporte semanal</div>
+    <div class="page-title">Enviar seguimiento</div>
     <div class="subtitle">Registra tus datos para que tu coach ajuste tu plan</div>
   </div>
 </div>
@@ -10,13 +10,20 @@
     <div class="success">
       <mat-icon>check_circle</mat-icon>
       <div>
-        <h3>¡Reporte registrado!</h3>
-        <p>Tu coach lo revisará y recibirás feedback en breve.</p>
+        <h3>¡Seguimiento registrado!</h3>
+        <p>Tu coach lo revisará y recibirás feedback en breve. <a class="inline-link" routerLink="/client/photos">¿Añadir fotos de progreso?</a></p>
       </div>
       <button class="btn btn-light" style="margin-left:auto" (click)="reset()">Enviar otro</button>
     </div>
   } @else {
     <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="alert info photo-hint">
+        <mat-icon>photo_camera</mat-icon>
+        <div>
+          Acompaña tu seguimiento con fotos de progreso (frente, perfil y espalda) para que tu entrenador vea tu evolución.
+          <a routerLink="/client/photos">Subir fotos de progreso</a>
+        </div>
+      </div>
       <div class="form-grid">
         <div class="field">
           <label>Peso (kg) *</label>
@@ -56,7 +63,7 @@
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" [disabled]="saving()">
           <mat-icon>{{ saving() ? 'hourglass_empty' : 'send' }}</mat-icon>
-          {{ saving() ? 'Enviando...' : 'Enviar reporte' }}
+          {{ saving() ? 'Enviando...' : 'Enviar seguimiento' }}
         </button>
       </div>
     </form>
@@ -64,10 +71,12 @@
 
   @if (historyLoaded()) {
     <div class="panel" style="margin-top:24px">
-      <div class="panel-head"><h2>Mis reportes anteriores</h2></div>
+      <div class="panel-head"><h2>Mis seguimientos anteriores</h2></div>
       <div class="panel-body">
-        @if (history().length === 0) {
-          <div class="empty-sm"><mat-icon>inbox</mat-icon><p>Aún no has enviado ningún reporte.</p></div>
+        @if (historyError()) {
+          <div class="error-banner"><mat-icon>error</mat-icon> {{ historyError() }}</div>
+        } @else if (history().length === 0) {
+          <div class="empty-sm"><mat-icon>inbox</mat-icon><p>Aún no has enviado ningún seguimiento.</p></div>
         } @else {
           @for (r of history(); track r.id) {
             <div class="report-row">

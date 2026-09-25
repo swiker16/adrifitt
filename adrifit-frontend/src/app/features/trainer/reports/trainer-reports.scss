@@ -49,3 +49,8 @@
 .feedback-label { font-weight: 600; font-size: 0.88rem; }
 .err { color: var(--danger); font-size: 0.8rem; }
 .btn-sm { padding: 7px 14px; font-size: 0.88rem; align-self: flex-start; }
+.client-link { color: var(--black-800); text-decoration: none; }
+.client-link:hover { color: var(--orange); }
+@media (max-width: 760px) {
+  .detail-panel { grid-template-columns: 1fr; padding: 14px 16px; }
+}

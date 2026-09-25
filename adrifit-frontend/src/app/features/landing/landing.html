@@ -10,7 +10,7 @@
         <a href="#inicio">Inicio</a>
         <a href="#servicios">Servicios</a>
         <a href="#como-funciona">Cómo funciona</a>
-        <a href="#testimonios">Testimonios</a>
+        @if (testimonials().length > 0) { <a href="#testimonios">Testimonios</a> }
         <a href="#contacto">Contacto</a>
       </nav>
       <a routerLink="/login" class="btn btn-primary">Acceder</a>
@@ -32,7 +32,9 @@
       </div>
       <div class="hero-stats">
         <div><strong>+250</strong><span>clientes activos</span></div>
-        <div><strong>4.9/5</strong><span>valoración media</span></div>
+        @if (averageRating(); as avg) {
+          <div><strong>{{ avg | number: '1.1-1' }}/5</strong><span>valoración media</span></div>
+        }
         <div><strong>92%</strong><span>cumplen su objetivo</span></div>
       </div>
     </div>
@@ -109,33 +111,36 @@
     </div>
   </section>
 
-  <!-- Testimonials -->
-  <section id="testimonios" class="testimonials">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Testimonios</span>
-        <h2>Lo que dicen nuestros clientes</h2>
-      </div>
-      <div class="testimonial-grid">
-        @for (t of testimonials; track t.name) {
-          <article class="testimonial-card">
-            <div class="stars">
-              <mat-icon>star</mat-icon><mat-icon>star</mat-icon><mat-icon>star</mat-icon>
-              <mat-icon>star</mat-icon><mat-icon>star</mat-icon>
-            </div>
-            <p class="quote">“{{ t.quote }}”</p>
-            <div class="author">
-              <span class="avatar">{{ t.initials }}</span>
-              <div>
-                <strong>{{ t.name }}</strong>
-                <span>{{ t.role }}</span>
+  <!-- Testimonials (real reviews from clients; hidden when there are none) -->
+  @if (testimonials().length > 0) {
+    <section id="testimonios" class="testimonials">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Testimonios</span>
+          <h2>Lo que dicen nuestros clientes</h2>
+        </div>
+        <div class="testimonial-grid">
+          @for (t of testimonials(); track t.id) {
+            <article class="testimonial-card">
+              <div class="stars" [attr.aria-label]="t.rating + ' de 5 estrellas'">
+                @for (s of starSlots; track s) {
+                  <mat-icon [class.off]="s > t.rating">{{ s <= t.rating ? 'star' : 'star_border' }}</mat-icon>
+                }
               </div>
-            </div>
-          </article>
-        }
+              <p class="quote">“{{ t.content }}”</p>
+              <div class="author">
+                <span class="avatar">{{ initials(t.authorName) }}</span>
+                <div>
+                  <strong>{{ t.authorName }}</strong>
+                  <span>{{ t.planName ? 'Cliente ' + t.planName : 'Cliente' }}</span>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  }
 
   <!-- CTA -->
   <section id="contacto" class="cta">
@@ -161,7 +166,7 @@
           <h4>Producto</h4>
           <a href="#servicios">Servicios</a>
           <a href="#como-funciona">Cómo funciona</a>
-          <a href="#testimonios">Testimonios</a>
+          @if (testimonials().length > 0) { <a href="#testimonios">Testimonios</a> }
         </div>
         <div>
           <h4>Cuenta</h4>

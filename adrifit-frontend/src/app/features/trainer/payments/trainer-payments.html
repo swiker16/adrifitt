@@ -1,0 +1,260 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Cobros</div>
+    <div class="subtitle">Pagos de tus clientes, renovaciones y cobros manuales</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline btn-sm" type="button" [disabled]="runningJobs()" (click)="runJobs()">
+      <mat-icon>{{ runningJobs() ? 'hourglass_empty' : 'autorenew' }}</mat-icon>
+      {{ runningJobs() ? 'Ejecutando...' : 'Ejecutar renovaciones' }}
+    </button>
+    <button class="btn btn-primary btn-sm" type="button" (click)="openCreate()">
+      <mat-icon>add</mat-icon> Nuevo cobro
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  @if (summary(); as s) {
+    @if (s.gatewayMode === 'test') {
+      <div class="mode-row">
+        <span class="test-mode"><mat-icon>science</mat-icon> Pasarela en modo test</span>
+      </div>
+    }
+    <div class="stat-grid three">
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-label">Pendiente</span>
+          <span class="stat-icon orange"><mat-icon>schedule</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ s.pendingAmount | number: '1.2-2' }} €</div>
+        <div class="stat-label">{{ s.pendingCount }} {{ s.pendingCount === 1 ? 'cobro' : 'cobros' }} pendientes</div>
+      </div>
+      <div class="stat-card" [class.alarm]="s.overdueCount > 0">
+        <div class="stat-top">
+          <span class="stat-label">Vencido</span>
+          <span class="stat-icon red"><mat-icon>error_outline</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ s.overdueAmount | number: '1.2-2' }} €</div>
+        <div class="stat-label">{{ s.overdueCount }} {{ s.overdueCount === 1 ? 'cobro vencido' : 'cobros vencidos' }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-label">Cobrado este mes</span>
+          <span class="stat-icon green"><mat-icon>payments</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ s.paidThisMonthAmount | number: '1.2-2' }} €</div>
+        <div class="stat-label">{{ s.paidThisMonthCount }} {{ s.paidThisMonthCount === 1 ? 'pago' : 'pagos' }}</div>
+      </div>
+    </div>
+  }
+
+  <div class="filters">
+    <div class="segmented">
+      @for (o of statusOptions; track o.value) {
+        <button type="button" [class.active]="statusFilter() === o.value" (click)="setStatus(o.value)">{{ o.label }}</button>
+      }
+    </div>
+    <div class="field client-filter">
+      <select aria-label="Filtrar por cliente" [ngModel]="clientFilter() ?? ''" (ngModelChange)="setClient($event)">
+        <option value="">Todos los clientes</option>
+        @for (c of sortedClients(); track c.id) {
+          <option [value]="c.id">{{ fullName(c) }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="panel">
+    @if (loading()) {
+      <div class="loading">Cargando cobros...</div>
+    } @else if (error()) {
+      <div class="empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>No se pudieron cargar los cobros.</p>
+        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (payments().length === 0) {
+      <div class="empty"><mat-icon>receipt_long</mat-icon><p>No hay cobros con estos filtros.</p></div>
+    } @else {
+      <!-- Desktop table -->
+      <div class="table-wrap desktop-only">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Concepto</th>
+              <th class="num">Importe</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th>Método</th>
+              <th>Pagado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of payments(); track p.id) {
+              <tr>
+                <td>
+                  <a class="cell-user" [routerLink]="['/trainer/clients', p.clientId]">
+                    <span class="avatar">{{ initials(p.clientName) }}</span>
+                    <span class="name">{{ p.clientName ?? 'Cliente #' + p.clientId }}</span>
+                  </a>
+                </td>
+                <td>
+                  <div class="concept">{{ p.concept }}</div>
+                  @if (p.lastFailureReason && p.status === 'PENDING') {
+                    <div class="sub fail">{{ p.failedAttempts }} intento(s) fallido(s): {{ p.lastFailureReason }}</div>
+                  }
+                  @if (p.trainerNotes) { <div class="sub">{{ p.trainerNotes }}</div> }
+                </td>
+                <td class="num"><strong>{{ p.amount | number: '1.2-2' }} €</strong></td>
+                <td>
+                  <div>{{ p.dueDate | date: 'dd/MM/yyyy' }}</div>
+                  @if (p.overdue) { <span class="badge red">Vencido</span> }
+                </td>
+                <td><span class="badge" [class]="statusClass(p.status)">{{ statusLabel[p.status] }}</span></td>
+                <td>
+                  @if (p.method) {
+                    <div>{{ methodLabel[p.method] }}</div>
+                    @if (methodDetail(p)) { <div class="sub">{{ methodDetail(p) }}</div> }
+                  } @else { <span class="na">—</span> }
+                </td>
+                <td>
+                  @if (p.paidAt) { {{ p.paidAt | date: 'dd/MM/yyyy' }} } @else { <span class="na">—</span> }
+                </td>
+                <td class="actions">
+                  <ng-container *ngTemplateOutlet="rowActions; context: { $implicit: p }" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="card-list mobile-only">
+        @for (p of payments(); track p.id) {
+          <div class="pay-card">
+            <div class="pay-card-top">
+              <a class="cell-user" [routerLink]="['/trainer/clients', p.clientId]">
+                <span class="avatar">{{ initials(p.clientName) }}</span>
+                <div>
+                  <div class="name">{{ p.clientName ?? 'Cliente #' + p.clientId }}</div>
+                  <div class="sub">{{ p.concept }}</div>
+                </div>
+              </a>
+              <strong class="amount">{{ p.amount | number: '1.2-2' }} €</strong>
+            </div>
+            <div class="pay-card-meta">
+              <span class="badge" [class]="statusClass(p.status)">{{ statusLabel[p.status] }}</span>
+              @if (p.overdue) { <span class="badge red">Vencido</span> }
+              <span class="meta">Vence {{ p.dueDate | date: 'dd/MM/yyyy' }}</span>
+              @if (p.method) {
+                <span class="meta">{{ methodLabel[p.method] }} @if (methodDetail(p)) { · {{ methodDetail(p) }} }</span>
+              }
+              @if (p.paidAt) { <span class="meta">Pagado {{ p.paidAt | date: 'dd/MM/yyyy' }}</span> }
+            </div>
+            @if (p.lastFailureReason && p.status === 'PENDING') {
+              <div class="sub fail">{{ p.failedAttempts }} intento(s) fallido(s): {{ p.lastFailureReason }}</div>
+            }
+            @if (p.status === 'PENDING' || p.status === 'PAID') {
+              <div class="pay-card-actions">
+                <ng-container *ngTemplateOutlet="rowActions; context: { $implicit: p }" />
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<ng-template #rowActions let-p>
+  @if (p.status === 'PENDING') {
+    <button class="btn btn-success btn-sm" type="button" [disabled]="busyId() === p.id" (click)="openCash(p)">
+      <mat-icon>payments</mat-icon> Cobrar en efectivo
+    </button>
+    <button class="btn btn-outline btn-sm" type="button" [disabled]="busyId() === p.id" (click)="cancel(p)">
+      Anular
+    </button>
+  } @else if (p.status === 'PAID') {
+    <button class="btn btn-outline btn-sm danger-outline" type="button" [disabled]="busyId() === p.id" (click)="refund(p)">
+      <mat-icon>undo</mat-icon> Devolver
+    </button>
+  }
+</ng-template>
+
+<!-- Cash modal -->
+@if (cashTarget(); as p) {
+  <div class="modal-backdrop" (click)="cashTarget.set(null)">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h2>Cobrar en efectivo</h2>
+        <button class="modal-close" type="button" aria-label="Cerrar" (click)="cashTarget.set(null)"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-summary">
+          <strong>{{ p.clientName }}</strong> · {{ p.concept }} · <strong>{{ p.amount | number: '1.2-2' }} €</strong>
+        </p>
+        <div class="field">
+          <label for="cash-notes">Notas (opcional)</label>
+          <textarea id="cash-notes" rows="3" placeholder="Ej.: entregado en mano en la sesión del lunes"
+                    [ngModel]="cashNotes()" (ngModelChange)="cashNotes.set($event)"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" type="button" (click)="cashTarget.set(null)">Cancelar</button>
+        <button class="btn btn-success" type="button" [disabled]="busyId() === p.id" (click)="confirmCash()">
+          <mat-icon>check</mat-icon> {{ busyId() === p.id ? 'Registrando...' : 'Registrar cobro' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- New payment modal -->
+@if (showCreate()) {
+  <div class="modal-backdrop" (click)="showCreate.set(false)">
+    <form class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" (ngSubmit)="create()">
+      <div class="modal-head">
+        <h2>Nuevo cobro</h2>
+        <button class="modal-close" type="button" aria-label="Cerrar" (click)="showCreate.set(false)"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="np-client">Cliente</label>
+            <select id="np-client" name="clientId" [(ngModel)]="newClientId" required>
+              <option [ngValue]="null" disabled>Selecciona un cliente</option>
+              @for (c of sortedClients(); track c.id) {
+                <option [ngValue]="c.id">{{ fullName(c) }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="np-amount">Importe (€)</label>
+            <input id="np-amount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01"
+                   placeholder="0,00" [(ngModel)]="newAmount" required />
+          </div>
+          <div class="field">
+            <label for="np-due">Fecha de vencimiento</label>
+            <input id="np-due" name="dueDate" type="date" [(ngModel)]="newDueDate" />
+          </div>
+          <div class="field full">
+            <label for="np-concept">Concepto</label>
+            <input id="np-concept" name="concept" type="text" maxlength="200" autocomplete="off"
+                   placeholder="Ej.: Sesión presencial extra" [(ngModel)]="newConcept" required />
+          </div>
+        </div>
+        @if (createError()) { <div class="alert error mt"><mat-icon>error_outline</mat-icon>{{ createError() }}</div> }
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" type="button" (click)="showCreate.set(false)">Cancelar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="creating()">
+          {{ creating() ? 'Creando...' : 'Crear cobro' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

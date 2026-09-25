@@ -1,0 +1,203 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Revisiones y tareas</div>
+    <div class="subtitle">Calendario de revisiones según el plan de cada cliente y tu lista de tareas</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline btn-sm" [disabled]="runningJobs()" (click)="runDailyJobs()"
+            title="Procesa renovaciones y crea recordatorios de revisión (normalmente se ejecuta cada día automáticamente)">
+      <mat-icon>{{ runningJobs() ? 'hourglass_empty' : 'autorenew' }}</mat-icon>
+      {{ runningJobs() ? 'Ejecutando...' : 'Ejecutar tareas diarias' }}
+    </button>
+    <button class="btn btn-primary btn-sm" (click)="openNew()">
+      <mat-icon>add</mat-icon> Nueva tarea
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- ════════ Calendario de revisiones ════════ -->
+  <div class="panel section">
+    <div class="panel-head">
+      <h2>Calendario de revisiones</h2>
+      <div class="head-badges">
+        @if (overdueCount() > 0) { <span class="badge red">{{ overdueCount() }} vencidas</span> }
+        @if (dueSoonCount() > 0) { <span class="badge orange">{{ dueSoonCount() }} próximas</span> }
+      </div>
+    </div>
+    <div class="alert info explain">
+      <mat-icon>info</mat-icon>
+      <span>Las revisiones se completan dando feedback al seguimiento (check-in) que envía el cliente. Al responderlo, la próxima revisión se recalcula según la frecuencia de su plan.</span>
+    </div>
+    <div class="panel-body">
+      @if (scheduleLoading()) {
+        <div class="loading">Cargando calendario...</div>
+      } @else if (scheduleError()) {
+        <div class="empty">
+          <mat-icon>cloud_off</mat-icon><p>No se pudo cargar el calendario de revisiones.</p>
+          <button class="btn btn-outline btn-sm" (click)="loadSchedule()">Reintentar</button>
+        </div>
+      } @else if (schedule().length === 0) {
+        <div class="empty"><mat-icon>event_available</mat-icon><p>No hay clientes con plan activo.</p></div>
+      } @else {
+        <div class="review-list">
+          @for (r of schedule(); track r.clientId) {
+            <div class="review-row" [class]="'state-' + r.state">
+              <div class="rv-date">
+                <span class="rv-day">{{ r.nextReviewDate | date: 'd' }}</span>
+                <span class="rv-month">{{ r.nextReviewDate | date: 'MMM' }}</span>
+              </div>
+              <div class="rv-info">
+                <a class="rv-name" [routerLink]="['/trainer/clients', r.clientId]">{{ r.clientName }}</a>
+                <div class="rv-sub">
+                  {{ r.planName }} · cada {{ r.frequencyDays }} días ·
+                  Última revisión: {{ r.lastReviewDate ? (r.lastReviewDate | date: 'dd/MM/yyyy') : 'nunca' }}
+                </div>
+                @if (r.pendingReportId) {
+                  <div class="rv-pending">
+                    <mat-icon>mark_email_unread</mat-icon>
+                    Seguimiento enviado el {{ r.pendingReportAt | date: 'dd/MM/yyyy' }} pendiente de feedback
+                  </div>
+                }
+              </div>
+              <div class="rv-state">
+                <span class="badge" [class]="stateBadge(r.state)">{{ stateLabel(r.state) }}</span>
+                <span class="rv-days" [class.overdue]="r.state === 'OVERDUE'">{{ daysText(r) }}</span>
+              </div>
+              @if (r.pendingReportId) {
+                <a class="btn btn-primary btn-sm rv-action" routerLink="/trainer/reports">
+                  <mat-icon>rate_review</mat-icon> Revisar seguimiento
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ════════ Tareas ════════ -->
+  <div class="panel section">
+    <div class="panel-head tasks-head">
+      <h2>Tareas</h2>
+      <div class="segmented">
+        <button [class.active]="filter() === 'PENDING'" (click)="setFilter('PENDING')">Pendientes</button>
+        <button [class.active]="filter() === 'DONE'" (click)="setFilter('DONE')">Hechas</button>
+        <button [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">Todas</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      @if (tasksLoading()) {
+        <div class="loading">Cargando tareas...</div>
+      } @else if (tasksError()) {
+        <div class="empty">
+          <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar las tareas.</p>
+          <button class="btn btn-outline btn-sm" (click)="loadTasks()">Reintentar</button>
+        </div>
+      } @else if (tasks().length === 0) {
+        <div class="empty">
+          <mat-icon>task_alt</mat-icon>
+          <p>{{ filter() === 'PENDING' ? '¡Nada pendiente! Estás al día.' : 'No hay tareas en esta categoría.' }}</p>
+        </div>
+      } @else {
+        <ul class="task-list">
+          @for (t of tasks(); track t.id) {
+            <li class="task" [class.done]="t.status === 'DONE'">
+              <button class="check" [class.checked]="t.status === 'DONE'" [disabled]="busyId() === t.id"
+                      (click)="toggle(t)" [attr.aria-label]="t.status === 'DONE' ? 'Reabrir tarea' : 'Completar tarea'"
+                      [title]="t.status === 'DONE' ? 'Reabrir' : 'Marcar como hecha'">
+                <mat-icon>{{ t.status === 'DONE' ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+              </button>
+              <div class="task-main">
+                <div class="task-title">{{ t.title }}</div>
+                @if (t.description) { <div class="task-desc">{{ t.description }}</div> }
+                <div class="task-meta">
+                  <span class="badge blue">{{ typeLabel[t.type] }}</span>
+                  <span class="badge" [class]="priorityBadge(t.priority)">Prioridad {{ priorityLabel[t.priority] | lowercase }}</span>
+                  @if (t.autoGenerated) { <span class="badge violet"><mat-icon class="xs">bolt</mat-icon>Automática</span> }
+                  @if (t.clientId) {
+                    <a class="task-client" [routerLink]="['/trainer/clients', t.clientId]">
+                      <mat-icon class="xs">person</mat-icon>{{ t.clientName }}
+                    </a>
+                  }
+                  @if (t.dueDate) {
+                    <span class="task-due" [class.overdue]="t.overdue && t.status !== 'DONE'">
+                      <mat-icon class="xs">event</mat-icon>{{ t.dueDate | date: 'dd/MM/yyyy' }}
+                      @if (t.overdue && t.status !== 'DONE') { · vencida }
+                    </span>
+                  }
+                  @if (t.status === 'DONE' && t.completedAt) {
+                    <span class="task-due">Hecha el {{ t.completedAt | date: 'dd/MM/yyyy' }}</span>
+                  }
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="icon-btn" title="Editar" aria-label="Editar" (click)="openEdit(t)"><mat-icon>edit</mat-icon></button>
+                <button class="icon-btn danger" title="Eliminar" aria-label="Eliminar" (click)="remove(t)"><mat-icon>delete</mat-icon></button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- ════════ Modal tarea ════════ -->
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>{{ editing() ? 'Editar tarea' : 'Nueva tarea' }}</h2>
+        <button class="modal-close" (click)="closeModal()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <form (ngSubmit)="save()">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="t-title">Título *</label>
+              <input id="t-title" name="title" type="text" maxlength="200" autocomplete="off" required
+                     [(ngModel)]="form.title" />
+              @if (submitted() && !form.title.trim()) { <span class="err">El título es obligatorio.</span> }
+            </div>
+            <div class="field full">
+              <label for="t-desc">Descripción</label>
+              <textarea id="t-desc" name="description" rows="3" maxlength="2000" [(ngModel)]="form.description"></textarea>
+            </div>
+            <div class="field full">
+              <label for="t-client">Cliente (opcional)</label>
+              <select id="t-client" name="clientId" [(ngModel)]="form.clientId">
+                <option [ngValue]="null">— Sin cliente —</option>
+                @for (c of clients(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.firstName }} {{ c.lastName }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label for="t-type">Tipo</label>
+              <select id="t-type" name="type" [(ngModel)]="form.type">
+                @for (ty of types; track ty) { <option [ngValue]="ty">{{ typeLabel[ty] }}</option> }
+              </select>
+            </div>
+            <div class="field">
+              <label for="t-priority">Prioridad</label>
+              <select id="t-priority" name="priority" [(ngModel)]="form.priority">
+                @for (p of priorities; track p) { <option [ngValue]="p">{{ priorityLabel[p] }}</option> }
+              </select>
+            </div>
+            <div class="field">
+              <label for="t-due">Fecha límite</label>
+              <input id="t-due" name="dueDate" type="date" [(ngModel)]="form.dueDate" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-outline" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : (editing() ? 'Guardar cambios' : 'Crear tarea') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

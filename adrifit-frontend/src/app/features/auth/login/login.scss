@@ -77,3 +77,11 @@
   .auth { grid-template-columns: 1fr; }
   .brand-panel { display: none; }
 }
+
+.hint.small { font-size: 0.8rem; margin-top: 10px; line-height: 1.5; }
+.toggle { min-width: 40px; min-height: 40px; }
+.btn-block { min-height: 48px; }
+@media (max-width: 640px) {
+  .form-panel { padding: 28px 18px; place-items: start center; }
+  .form-card h2 { font-size: 1.7rem; }
+}

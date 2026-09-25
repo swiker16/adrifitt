@@ -1,0 +1,198 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Fotos de progreso</div>
+    <div class="subtitle">Tu evolución visual. Solo tú y tu entrenador podéis verlas.</div>
+  </div>
+  <div class="topbar-actions">
+    @if (photos().length >= 2) {
+      <button type="button" class="btn" [class.btn-primary]="compareMode()" [class.btn-outline]="!compareMode()" (click)="toggleCompareMode()">
+        <mat-icon>compare</mat-icon> {{ compareMode() ? 'Salir de comparar' : 'Comparar' }}
+      </button>
+    }
+    <button type="button" class="btn btn-primary" (click)="openForm()">
+      <mat-icon>add_a_photo</mat-icon> Subir foto
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  @if (compareMode()) {
+    <div class="alert info compare-bar">
+      <mat-icon>touch_app</mat-icon>
+      <span class="grow">Selecciona dos fotos para compararlas ({{ compareIds().length }}/2).</span>
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="compareIds().length !== 2" (click)="showCompare.set(true)">
+        Ver comparación
+      </button>
+    </div>
+  }
+
+  <div class="filters">
+    <div class="segmented">
+      <button type="button" [class.active]="poseFilter() === 'ALL'" (click)="poseFilter.set('ALL')">Todas ({{ countFor('ALL') }})</button>
+      @for (p of poses; track p) {
+        <button type="button" [class.active]="poseFilter() === p" (click)="poseFilter.set(p)">{{ poseLabel[p] }} ({{ countFor(p) }})</button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="panel"><div class="loading">Cargando fotos...</div></div>
+  } @else if (loadError()) {
+    <div class="alert error mb"><mat-icon>error</mat-icon><span>{{ loadError() }}</span></div>
+    <button type="button" class="btn btn-outline" (click)="load()">Reintentar</button>
+  } @else if (photos().length === 0) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>photo_camera</mat-icon>
+        <p>Todavía no has subido ninguna foto.</p>
+        <p class="tip">Consejo: hazte las fotos siempre con la misma luz, a la misma hora y en las mismas poses.</p>
+        <button type="button" class="btn btn-primary" (click)="openForm()"><mat-icon>add_a_photo</mat-icon> Subir mi primera foto</button>
+      </div>
+    </div>
+  } @else if (groups().length === 0) {
+    <div class="panel"><div class="empty"><mat-icon>filter_alt_off</mat-icon><p>No hay fotos con esta pose.</p></div></div>
+  } @else {
+    @for (g of groups(); track g.date) {
+      <section class="group">
+        <h3 class="group-date">{{ g.date | date: 'EEEE, d MMMM yyyy' }}</h3>
+        <div class="gallery">
+          @for (p of g.photos; track p.id) {
+            <div
+              class="photo-card"
+              [class.selected]="compareMode() && isSelected(p.id)"
+              role="button"
+              tabindex="0"
+              (click)="onPhotoClick(p)"
+              (keydown.enter)="onPhotoClick(p)"
+            >
+              <div class="thumb">
+                <app-secure-img [src]="p.contentUrl" [alt]="poseLabel[p.pose]" imgClass="thumb-img" />
+                <span class="badge gray pose">{{ poseLabel[p.pose] }}</span>
+                @if (compareMode()) {
+                  <span class="select-dot" [class.on]="isSelected(p.id)"><mat-icon>check</mat-icon></span>
+                } @else {
+                  <button type="button" class="del-btn" title="Eliminar" aria-label="Eliminar foto" [disabled]="deletingId() === p.id" (click)="remove(p, $event)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </div>
+              @if (p.notes || p.trainerComment) {
+                <div class="photo-meta">
+                  @if (p.notes) { <p class="notes">{{ p.notes }}</p> }
+                  @if (p.trainerComment) {
+                    <div class="trainer-comment"><mat-icon>chat</mat-icon><span>{{ p.trainerComment }}</span></div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<!-- Upload modal -->
+@if (showForm()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="upTitle">
+      <div class="modal-head">
+        <h2 id="upTitle">Subir foto de progreso</h2>
+        <button type="button" class="modal-close" aria-label="Cerrar" (click)="closeForm()"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <label class="file-drop" [class.has-file]="!!previewUrl()">
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onFile($event)" />
+          @if (previewUrl()) {
+            <img [src]="previewUrl()" alt="Vista previa" class="preview" />
+            <span class="change">Cambiar foto</span>
+          } @else {
+            <mat-icon>add_photo_alternate</mat-icon>
+            <strong>Elige una foto o hazla ahora</strong>
+            <span class="hint">JPG, PNG o WEBP · máx. 10 MB</span>
+          }
+        </label>
+        @if (fileError()) { <div class="err file-err">{{ fileError() }}</div> }
+
+        <div class="form-grid mt">
+          <div class="field">
+            <label for="takenOn">Fecha</label>
+            <input id="takenOn" type="date" [value]="takenOn()" [max]="today" (change)="onDate($event)" />
+            @if (dateError()) { <small class="err">{{ dateError() }}</small> }
+          </div>
+          <div class="field">
+            <label for="pose">Pose</label>
+            <select id="pose" (change)="onPose($event)">
+              @for (p of poses; track p) {
+                <option [value]="p" [selected]="pose() === p">{{ poseLabel[p] }}</option>
+              }
+            </select>
+          </div>
+          <div class="field full">
+            <label for="pnotes">Notas (opcional)</label>
+            <textarea id="pnotes" rows="2" maxlength="500" placeholder="En ayunas, después de entrenar..." [value]="notes()" (input)="onNotes($event)"></textarea>
+          </div>
+        </div>
+
+        @if (uploadError()) {
+          <div class="alert error mt"><mat-icon>error</mat-icon><span>{{ uploadError() }}</span></div>
+        }
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline" (click)="closeForm()" [disabled]="uploading()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="upload()" [disabled]="uploading() || !file() || !!dateError()">
+          <mat-icon>{{ uploading() ? 'hourglass_empty' : 'cloud_upload' }}</mat-icon>
+          {{ uploading() ? 'Subiendo...' : 'Subir foto' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Large view -->
+@if (viewing(); as v) {
+  <div class="modal-backdrop" (click)="viewing.set(null)">
+    <div class="modal wide viewer" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>{{ poseLabel[v.pose] }} · {{ v.takenOn | date: 'dd/MM/yyyy' }}</h2>
+        <button type="button" class="modal-close" aria-label="Cerrar" (click)="viewing.set(null)"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <app-secure-img [src]="v.contentUrl" [alt]="poseLabel[v.pose]" imgClass="large-img" />
+        @if (v.notes) { <p class="notes mt">{{ v.notes }}</p> }
+        @if (v.trainerComment) {
+          <div class="trainer-comment mt"><mat-icon>chat</mat-icon><span><strong>Tu entrenador:</strong> {{ v.trainerComment }}</span></div>
+        }
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-danger" (click)="remove(v)" [disabled]="deletingId() === v.id"><mat-icon>delete</mat-icon> Eliminar</button>
+        <button type="button" class="btn btn-outline" (click)="viewing.set(null)">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Compare -->
+@if (showCompare() && comparePhotos().length === 2) {
+  <div class="modal-backdrop" (click)="showCompare.set(false)">
+    <div class="modal wide" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>Comparación</h2>
+        <button type="button" class="modal-close" aria-label="Cerrar" (click)="showCompare.set(false)"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="compare-grid">
+          @for (p of comparePhotos(); track p.id; let i = $index) {
+            <figure>
+              <app-secure-img [src]="p.contentUrl" [alt]="poseLabel[p.pose]" imgClass="compare-img" />
+              <figcaption>
+                <span class="badge" [class.gray]="i === 0" [class.orange]="i === 1">{{ i === 0 ? 'Antes' : 'Después' }}</span>
+                {{ p.takenOn | date: 'dd/MM/yyyy' }} · {{ poseLabel[p.pose] }}
+              </figcaption>
+            </figure>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -4,6 +4,8 @@ import { DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { PlanService } from '../../core/services/plan.service';
 import { Plan } from '../../shared/models/plan.model';
+import { TestimonialService } from '../../core/services/testimonial.service';
+import { PublicTestimonial } from '../../shared/models/testimonial.model';
 
 interface Benefit {
   icon: string;
@@ -17,12 +19,6 @@ interface Step {
   text: string;
 }
 
-interface Testimonial {
-  name: string;
-  role: string;
-  quote: string;
-  initials: string;
-}
 
 @Component({
   selector: 'app-landing',
@@ -32,6 +28,7 @@ interface Testimonial {
 })
 export class Landing implements OnInit {
   private readonly planService = inject(PlanService);
+  private readonly testimonialService = inject(TestimonialService);
 
   readonly apiPlans = signal<Plan[]>([]);
   readonly plansLoading = signal(true);
@@ -57,11 +54,14 @@ export class Landing implements OnInit {
     { number: '04', title: 'Recibes feedback personalizado', text: 'Tu coach revisa y ajusta tu plan para seguir progresando.' },
   ];
 
-  readonly testimonials: Testimonial[] = [
-    { name: 'Laura M.', role: 'Cliente Pro · 8 meses', initials: 'LM', quote: 'En 6 meses logré los resultados que llevaba años buscando. El seguimiento semanal marca la diferencia.' },
-    { name: 'Carlos R.', role: 'Cliente Elite · 1 año', initials: 'CR', quote: 'Tener un plan a medida y feedback real cada semana me mantiene constante y motivado.' },
-    { name: 'Marta G.', role: 'Cliente Pro · 4 meses', initials: 'MG', quote: 'La plataforma es clarísima. Subo mi reporte y en horas tengo los ajustes de mi coach.' },
-  ];
+  readonly testimonials = signal<PublicTestimonial[]>([]);
+  readonly starSlots = [1, 2, 3, 4, 5];
+
+  readonly averageRating = computed(() => {
+    const list = this.testimonials();
+    if (list.length === 0) return null;
+    return list.reduce((sum, t) => sum + t.rating, 0) / list.length;
+  });
 
   ngOnInit(): void {
     this.planService.findAll(true).subscribe({
@@ -71,6 +71,20 @@ export class Landing implements OnInit {
       },
       error: () => this.plansLoading.set(false),
     });
+    this.testimonialService.findPublic().subscribe({
+      next: (list) => this.testimonials.set(list),
+      error: () => this.testimonials.set([]),
+    });
+  }
+
+  initials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join('')
+      .toUpperCase();
   }
 
   planFeatures(plan: Plan): string[] {

@@ -1,0 +1,43 @@
+@use '../../page';
+
+.temp-alert { margin-bottom: 20px; font-size: 0.95rem; align-items: center; }
+.temp-alert mat-icon { font-size: 26px; width: 26px; height: 26px; }
+
+.grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
+.panel.highlight { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255,122,26,0.12); }
+
+.profile-top { display: flex; align-items: center; gap: 14px; padding: 20px 24px; }
+.avatar {
+  width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--orange), #ff9f5a); color: #fff; font-weight: 800; font-size: 1.2rem;
+}
+.p-name { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.15rem; }
+.p-sub { color: var(--text-gray); font-size: 0.85rem; }
+
+.data { margin: 0; padding: 0 24px; }
+.data > div {
+  display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--border);
+}
+.data dt {
+  display: flex; align-items: center; gap: 8px; color: var(--text-gray); font-size: 0.87rem; flex-shrink: 0;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; color: #94a3b8; }
+}
+.data dd { margin: 0; font-weight: 600; font-size: 0.92rem; text-align: right; word-break: break-word; }
+.ro-hint {
+  display: flex; align-items: center; gap: 6px; margin: 0; padding: 14px 24px 20px; color: var(--text-gray); font-size: 0.8rem;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.pw-form { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.pw-form input:not([type='checkbox']) { min-height: 44px; }
+.show-pw { display: flex; align-items: center; gap: 8px; font-size: 0.87rem; color: var(--text-gray); cursor: pointer; }
+.show-pw input { width: 18px; height: 18px; accent-color: var(--orange); }
+.pw-form .btn { align-self: flex-start; min-height: 44px; }
+
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .data > div { flex-direction: column; gap: 3px; }
+  .data dd { text-align: left; }
+  .pw-form .btn { align-self: stretch; }
+  .profile-top, .data, .pw-form { padding-left: 16px; padding-right: 16px; }
+}

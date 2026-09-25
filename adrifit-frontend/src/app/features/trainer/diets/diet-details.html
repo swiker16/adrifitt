@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    @if (diet()!.days?.length) {
+    @if (diet()!.days.length) {
       <!-- Day nav -->
       <div class="day-nav">
         @for (day of diet()!.days; track day.id; let i = $index) {

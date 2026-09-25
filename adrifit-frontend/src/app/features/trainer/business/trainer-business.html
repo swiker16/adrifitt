@@ -1,0 +1,178 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Negocio</div>
+    <div class="subtitle">Ingresos, suscripciones y evolución de tu cartera de clientes</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline btn-sm" type="button" [disabled]="loading()" (click)="load()">
+      <mat-icon>refresh</mat-icon> Actualizar
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading() && !data()) {
+    <div class="loading">Cargando métricas...</div>
+  } @else if (error()) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>No se pudieron cargar las métricas del negocio.</p>
+        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+      </div>
+    </div>
+  } @else if (data(); as d) {
+    <!-- Main KPIs -->
+    <div class="kpi-grid">
+      <div class="stat-card highlight">
+        <div class="stat-top">
+          <span class="kpi-label">MRR</span>
+          <span class="stat-icon orange"><mat-icon>autorenew</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ d.monthlyRecurringRevenue | number: '1.2-2' }} €</div>
+        <div class="kpi-sub">Ingreso recurrente mensual</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="kpi-label">Ingresos este mes</span>
+          <span class="stat-icon green"><mat-icon>trending_up</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ d.revenueThisMonth | number: '1.2-2' }} €</div>
+        <div class="kpi-sub">
+          @if (monthDelta(); as delta) {
+            <span class="trend" [class.up]="delta >= 0" [class.down]="delta < 0">
+              <mat-icon>{{ delta >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>{{ abs(delta) | number: '1.0-1' }}%
+            </span>
+            vs mes anterior ({{ d.revenueLastMonth | number: '1.2-2' }} €)
+          } @else if (monthDelta() === 0) {
+            <span class="trend">0%</span> vs mes anterior
+          } @else {
+            Mes anterior: {{ d.revenueLastMonth | number: '1.2-2' }} €
+          }
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="kpi-label">Ingresos 12 meses</span>
+          <span class="stat-icon blue"><mat-icon>calendar_month</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ d.revenueLast12Months | number: '1.2-2' }} €</div>
+        <div class="kpi-sub">Cobrado en el último año</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="kpi-label">Clientes activos</span>
+          <span class="stat-icon violet"><mat-icon>group</mat-icon></span>
+        </div>
+        <div class="stat-value">{{ d.activeSubscriptions }} <small>/ {{ d.pausedSubscriptions }} pausados</small></div>
+        <div class="kpi-sub">{{ d.totalClients }} clientes en total</div>
+      </div>
+    </div>
+
+    <!-- Secondary KPIs -->
+    <div class="mini-grid">
+      <div class="mini">
+        <mat-icon>person</mat-icon>
+        <div><strong>{{ d.averageRevenuePerActiveClient | number: '1.2-2' }} €</strong><span>Ticket medio por cliente activo</span></div>
+      </div>
+      <div class="mini" [class.warn]="d.churnRatePercent > 10">
+        <mat-icon>logout</mat-icon>
+        <div>
+          <strong>{{ d.churnRatePercent | number: '1.0-1' }}%</strong>
+          <span>Churn 30 días ({{ d.cancellationsLast30Days }} {{ d.cancellationsLast30Days === 1 ? 'baja' : 'bajas' }})</span>
+        </div>
+      </div>
+      <div class="mini">
+        <mat-icon>schedule</mat-icon>
+        <div><strong>{{ d.pendingAmount | number: '1.2-2' }} €</strong><span>Pendiente de cobro</span></div>
+      </div>
+      <div class="mini" [class.danger]="d.overdueAmount > 0">
+        <mat-icon>error_outline</mat-icon>
+        <div><strong>{{ d.overdueAmount | number: '1.2-2' }} €</strong><span>Vencido</span></div>
+      </div>
+      <div class="mini">
+        <mat-icon>undo</mat-icon>
+        <div><strong>{{ d.refundedLast12Months | number: '1.2-2' }} €</strong><span>Devoluciones 12 meses</span></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts">
+      <div class="panel">
+        <div class="panel-head"><h2>Ingresos por mes</h2></div>
+        <div class="chart-body">
+          <app-bar-chart [points]="revenuePoints()" unit="€" emptyText="Aún no hay ingresos registrados." />
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Altas de clientes por mes</h2></div>
+        <div class="chart-body">
+          <app-bar-chart [points]="newClientsPoints()" unit="clientes" color="#3b82f6" emptyText="Sin altas en este periodo." />
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <!-- Plans -->
+      <div class="panel">
+        <div class="panel-head"><h2>Planes</h2></div>
+        @if (plans().length === 0) {
+          <div class="empty"><mat-icon>inventory_2</mat-icon><p>No hay planes todavía.</p></div>
+        } @else {
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th class="num">Precio</th>
+                  <th class="num">Activos</th>
+                  <th class="num">MRR</th>
+                  <th class="share-col">% del MRR</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of plans(); track p.planId) {
+                  <tr>
+                    <td><strong>{{ p.planName }}</strong></td>
+                    <td class="num">{{ p.monthlyPrice | number: '1.2-2' }} €</td>
+                    <td class="num">{{ p.activeClients }}</td>
+                    <td class="num"><strong>{{ p.mrr | number: '1.2-2' }} €</strong></td>
+                    <td class="share-col">
+                      <div class="share">
+                        <div class="progress"><span [style.width.%]="p.share"></span></div>
+                        <span>{{ p.share | number: '1.0-0' }}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Methods -->
+      <div class="panel">
+        <div class="panel-head"><h2>Por método de pago</h2></div>
+        <ul class="methods">
+          @for (m of methods(); track m.method) {
+            <li>
+              <span class="m-icon"><mat-icon>{{ methodIcon(m.method) }}</mat-icon></span>
+              <div class="m-main">
+                <div class="m-row">
+                  <strong>{{ methodLabel[m.method] }}</strong>
+                  <strong>{{ m.amount | number: '1.2-2' }} €</strong>
+                </div>
+                <div class="progress"><span [style.width.%]="m.share"></span></div>
+                <div class="m-sub">{{ m.payments }} {{ m.payments === 1 ? 'pago' : 'pagos' }} · {{ m.share | number: '1.0-0' }}%</div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+</div>

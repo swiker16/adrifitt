@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { AnalysisService } from '../../../core/services/analysis.service';
@@ -7,7 +7,7 @@ import { ClientAnalysis } from '../../../shared/models/analysis.model';
 
 @Component({
   selector: 'app-client-analyses',
-  imports: [DatePipe, DecimalPipe, FormsModule, MatIconModule],
+  imports: [DatePipe, FormsModule, MatIconModule],
   templateUrl: './client-analyses.html',
   styleUrl: './client-analyses.scss',
 })

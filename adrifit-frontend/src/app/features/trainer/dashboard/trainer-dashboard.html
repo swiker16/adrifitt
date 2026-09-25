@@ -5,7 +5,7 @@
     <p>Resumen general de tu negocio</p>
   </div>
   <div class="dash-topbar-right">
-    <button class="tb-icon-btn notif-btn" title="Notificaciones">
+    <button class="tb-icon-btn notif-btn" title="Revisiones y seguimientos pendientes" routerLink="/trainer/tasks">
       <mat-icon>notifications_none</mat-icon>
       @if ((data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) > 0) {
         <span class="notif-badge">{{ (data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) }}</span>
@@ -58,7 +58,7 @@
       </div>
     </a>
 
-    <a routerLink="/trainer/clients" class="kpi-card kpi-green">
+    <a routerLink="/trainer/payments" class="kpi-card kpi-green">
       <div class="kpi-icon"><mat-icon>euro_symbol</mat-icon></div>
       <div class="kpi-body">
         <div class="kpi-value">{{ ingresos() | number:'1.0-0' }}€</div>
@@ -69,7 +69,7 @@
       </div>
     </a>
 
-    <a routerLink="/trainer/clients" class="kpi-card kpi-red">
+    <a routerLink="/trainer/tasks" class="kpi-card kpi-red">
       <div class="kpi-icon"><mat-icon>pending_actions</mat-icon></div>
       <div class="kpi-body">
         <div class="kpi-value">{{ overdueReviews().length }}</div>
@@ -86,7 +86,7 @@
       <div class="kpi-icon"><mat-icon>show_chart</mat-icon></div>
       <div class="kpi-body">
         <div class="kpi-value">{{ data()?.reportsThisWeek ?? 0 }}</div>
-        <div class="kpi-label">Reportes esta semana</div>
+        <div class="kpi-label">Seguimientos esta semana</div>
         <div class="kpi-trend">{{ data()?.totalReports ?? 0 }} en total</div>
       </div>
     </a>
@@ -101,6 +101,72 @@
         } @else {
           <div class="kpi-trend orange">Asignar rutina</div>
         }
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── KPIs seguimiento / negocio ── -->
+  <div class="kpi-grid kpi-grid-secondary">
+
+    <a routerLink="/trainer/messages" class="kpi-card kpi-blue">
+      <div class="kpi-icon"><mat-icon>chat_bubble</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.unreadMessages ?? 0 }}</div>
+        <div class="kpi-label">Mensajes sin leer</div>
+        @if ((data()?.unreadMessages ?? 0) === 0) {
+          <div class="kpi-trend ok">Bandeja al día</div>
+        } @else {
+          <div class="kpi-trend orange">Responder</div>
+        }
+      </div>
+    </a>
+
+    <a routerLink="/trainer/tasks" class="kpi-card kpi-yellow">
+      <div class="kpi-icon"><mat-icon>event_available</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.tasksDue ?? 0 }}</div>
+        <div class="kpi-label">Tareas para hoy</div>
+        @if ((data()?.tasksDue ?? 0) === 0) {
+          <div class="kpi-trend ok">Nada pendiente</div>
+        } @else {
+          <div class="kpi-trend orange">Vencidas o para hoy</div>
+        }
+      </div>
+    </a>
+
+    <a routerLink="/trainer/analyses" class="kpi-card kpi-violet">
+      <div class="kpi-icon"><mat-icon>biotech</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.pendingAnalyses ?? 0 }}</div>
+        <div class="kpi-label">Analíticas por revisar</div>
+        @if ((data()?.pendingAnalyses ?? 0) === 0) {
+          <div class="kpi-trend ok">Todas revisadas</div>
+        } @else {
+          <div class="kpi-trend orange">Pendientes</div>
+        }
+      </div>
+    </a>
+
+    <a routerLink="/trainer/payments" class="kpi-card kpi-red">
+      <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ data()?.pendingPaymentsCount ?? 0 }}</div>
+        <div class="kpi-label">Cobros pendientes · {{ (data()?.pendingPaymentsAmount ?? 0) | number:'1.2-2' }} €</div>
+        @if ((data()?.overduePaymentsCount ?? 0) > 0) {
+          <div class="kpi-trend orange">{{ data()?.overduePaymentsCount }} vencido{{ (data()?.overduePaymentsCount ?? 0) > 1 ? 's' : '' }}</div>
+        } @else {
+          <div class="kpi-trend ok">Sin vencidos</div>
+        }
+      </div>
+    </a>
+
+    <a routerLink="/trainer/business" class="kpi-card kpi-green">
+      <div class="kpi-icon"><mat-icon>trending_up</mat-icon></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ (data()?.revenueThisMonth ?? 0) | number:'1.0-0' }}€</div>
+        <div class="kpi-label">Ingresos este mes</div>
+        <div class="kpi-trend">MRR {{ (data()?.monthlyRecurringRevenue ?? 0) | number:'1.0-0' }} €/mes</div>
       </div>
     </a>
 
@@ -132,7 +198,7 @@
                   <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
                   <div class="ar-sub">{{ r.planName }} · Revisión prevista {{ r.nextReviewDate | date:'d MMM' }}</div>
                 </div>
-                <span class="pill pill-red" title="Días desde el último reporte">{{ r.daysSinceLastReview }}d sin reporte</span>
+                <span class="pill pill-red" title="Días desde la última revisión">{{ r.daysSinceLastReview }}d sin revisión</span>
                 <button class="btn btn-primary btn-xs" (click)="$event.stopPropagation(); goToClient(r.clientId)">Revisar</button>
               </div>
             }
@@ -166,7 +232,7 @@
         </div>
         <div class="panel panel-half">
           <div class="panel-head">
-            <div class="ph-left"><span class="ph-emoji">📄</span><h2>Reportes sin feedback</h2></div>
+            <div class="ph-left"><span class="ph-emoji">📄</span><h2>Seguimientos sin feedback</h2></div>
             <span class="badge-pill yellow">{{ data()?.reportsPendingFeedback ?? 0 }}</span>
           </div>
           <div class="panel-body p0">
@@ -227,7 +293,7 @@
             <div class="empty-sm"><mat-icon>timeline</mat-icon><span>Sin actividad reciente</span></div>
           } @else {
             <div class="timeline">
-              @for (a of data()!.recentActivity; track a.occurredAt) {
+              @for (a of data()!.recentActivity; track $index) {
                 <div class="tl-item" (click)="goToClient(a.clientId)">
                   <div class="tl-dot" [class]="activityColor(a.type)"><mat-icon>{{ activityIcon(a.type) }}</mat-icon></div>
                   <div class="tl-content">

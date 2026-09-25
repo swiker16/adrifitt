@@ -3,18 +3,10 @@ import { RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/auth/auth.service';
-import { SubscriptionService } from '../../../core/services/subscription.service';
-import { WorkoutService } from '../../../core/services/workout.service';
-import { ReportService } from '../../../core/services/report.service';
-import { Subscription } from '../../../shared/models/subscription.model';
-import { ClientWorkout } from '../../../shared/models/workout.model';
-import { WeeklyReport } from '../../../shared/models/report.model';
-
-interface FeatureFlag {
-  label: string;
-  enabled: boolean;
-  icon: string;
-}
+import { DashboardService } from '../../../core/services/dashboard.service';
+import { apiErrorMessage } from '../../../shared/utils/download';
+import { ClientDashboard as ClientDashboardData } from '../../../shared/models/dashboard.model';
+import { SUBSCRIPTION_STATUS_LABEL } from '../../../shared/models/subscription.model';
 
 @Component({
   selector: 'app-client-dashboard',
@@ -24,55 +16,56 @@ interface FeatureFlag {
 })
 export class ClientDashboard {
   private readonly auth = inject(AuthService);
-  private readonly subscriptionService = inject(SubscriptionService);
-  private readonly workoutService = inject(WorkoutService);
-  private readonly reportService = inject(ReportService);
+  private readonly dashboardService = inject(DashboardService);
 
-  readonly username = computed(() => this.auth.user()?.username ?? 'cliente');
-  readonly subscription = signal<Subscription | null>(null);
-  readonly subLoaded = signal(false);
-  readonly clientWorkout = signal<ClientWorkout | null>(null);
-  readonly workoutLoaded = signal(false);
-  readonly latestReport = signal<WeeklyReport | null>(null);
-  readonly reportLoaded = signal(false);
+  readonly statusLabel = SUBSCRIPTION_STATUS_LABEL;
 
-  readonly features = computed<FeatureFlag[]>(() => {
-    const p = this.subscription()?.plan;
-    if (!p) return [];
-    return [
-      { label: 'Mensajería', enabled: p.messagingEnabled, icon: 'chat' },
-      { label: 'Analíticas', enabled: p.analyticsEnabled, icon: 'insights' },
-      { label: 'Exportar PDF', enabled: p.pdfExportEnabled, icon: 'picture_as_pdf' },
-      { label: 'Soporte prioritario', enabled: p.prioritySupport, icon: 'support_agent' },
-    ];
+  readonly data = signal<ClientDashboardData | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+
+  readonly firstName = computed(
+    () => this.data()?.profile?.firstName || this.auth.user()?.username || ''
+  );
+
+  readonly greeting = computed(() => {
+    const h = new Date().getHours();
+    return h < 14 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches';
   });
 
-  readonly nextReviewDate = computed<Date | null>(() => {
-    const sub = this.subscription();
-    const report = this.latestReport();
-    if (!sub) return null;
-    const freqDays = sub.plan?.reviewFrequencyDays;
-    if (!freqDays) return null;
-    const ref = report ? new Date(report.createdAt) : new Date(sub.startDate);
-    ref.setDate(ref.getDate() + freqDays);
-    return ref;
+  readonly weightDiff = computed(() => {
+    const d = this.data();
+    if (d?.startWeight == null || d?.currentWeight == null) return null;
+    return Math.round((d.currentWeight - d.startWeight) * 10) / 10;
+  });
+
+  /** Days until the next review (negative = overdue). */
+  readonly reviewInDays = computed(() => {
+    const date = this.data()?.nextReviewDate;
+    if (!date) return null;
+    const target = new Date(date + (date.length === 10 ? 'T00:00:00' : ''));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    return Math.round((target.getTime() - today.getTime()) / 86400000);
   });
 
   constructor() {
-    this.subscriptionService.getMine().subscribe({
-      next: (s) => { this.subscription.set(s); this.subLoaded.set(true); },
-      error: () => this.subLoaded.set(true),
-    });
-    this.workoutService.getMyWorkout().subscribe({
-      next: (cw) => { this.clientWorkout.set(cw); this.workoutLoaded.set(true); },
-      error: () => this.workoutLoaded.set(true),
-    });
-    this.reportService.findMine().subscribe({
-      next: (reports) => {
-        this.latestReport.set(reports.length > 0 ? reports[0] : null);
-        this.reportLoaded.set(true);
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.dashboardService.getClientDashboard().subscribe({
+      next: (d) => {
+        this.data.set(d);
+        this.loading.set(false);
       },
-      error: () => this.reportLoaded.set(true),
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'No se pudo cargar tu panel.'));
+        this.loading.set(false);
+      },
     });
   }
 }
