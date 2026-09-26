@@ -25,6 +25,8 @@ public record ClientDashboardResponse(
         String activeDietName,
         boolean hasTestimonial,
         BigDecimal startWeight,
-        BigDecimal currentWeight
+        BigDecimal currentWeight,
+        /** Trainer videos / corrections the client has not seen yet. */
+        long newVideos
 ) {
 }

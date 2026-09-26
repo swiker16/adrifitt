@@ -1,6 +1,8 @@
 package com.adrifit.backend.common.storage;
 
 import java.io.InputStream;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 
 /**
  * Storage abstraction.
@@ -22,6 +24,14 @@ public interface FileStorageService {
      * Open a stream for reading. Caller must close.
      */
     InputStream load(String key);
+
+    /**
+     * The stored file as a Spring resource. Implementations that know the length (local files)
+     * allow HTTP range requests, which video playback needs.
+     */
+    default Resource loadResource(String key) {
+        return new InputStreamResource(load(key));
+    }
 
     /**
      * Delete the stored file. Best-effort; no exception if already absent.

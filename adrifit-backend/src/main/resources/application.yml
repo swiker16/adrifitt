@@ -23,8 +23,9 @@ spring:
     show-sql: false
   servlet:
     multipart:
-      max-file-size: 15MB
-      max-request-size: 16MB
+      # Technique videos (adrifit.videos.max-size-mb) are the largest uploads.
+      max-file-size: 210MB
+      max-request-size: 215MB
   # Only used when adrifit.mail.mode=smtp
   mail:
     host: ${MAIL_HOST:}
@@ -42,6 +43,9 @@ server:
   port: ${SERVER_PORT:8080}
 
 adrifit:
+  videos:
+    # Technique videos: ~30-60 s clips recorded with the phone.
+    max-size-mb: ${VIDEOS_MAX_SIZE_MB:200}
   public-url: ${PUBLIC_URL:http://localhost:4200}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:[*],http://127.0.0.1:[*]}
@@ -57,7 +61,7 @@ adrifit:
     # test -> emails are stored in the outbox (visible to the trainer) and logged, never sent.
     # smtp -> emails are sent through spring.mail.* and also stored in the outbox.
     mode: ${MAIL_MODE:test}
-    from: ${MAIL_FROM:AdriFit <no-reply@adrifit.app>}
+    from: ${MAIL_FROM:AdriFitt <no-reply@adrifitt.app>}
   payments:
     # test -> simulated card/Bizum gateway (no real money is moved).
     mode: ${PAYMENTS_MODE:test}
@@ -72,11 +76,11 @@ adrifit:
     # Web Push (PWA notifications). VAPID keys are generated once and stored in the DB
     # unless provided here (they must never change or existing subscriptions break).
     enabled: ${PUSH_ENABLED:true}
-    subject: ${PUSH_SUBJECT:mailto:hola@adrifit.app}
+    subject: ${PUSH_SUBJECT:mailto:hola@adrifitt.app}
     vapid-public-key: ${VAPID_PUBLIC_KEY:}
     vapid-private-key: ${VAPID_PRIVATE_KEY:}
   webauthn:
     # Passkeys: rp-id = domain of the frontend (no scheme/port); origins = exact frontend URLs.
     rp-id: ${WEBAUTHN_RP_ID:localhost}
-    rp-name: AdriFit
+    rp-name: AdriFitt
     origins: ${WEBAUTHN_ORIGINS:http://localhost:4200,http://localhost:4300}

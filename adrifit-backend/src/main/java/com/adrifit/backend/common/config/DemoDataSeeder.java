@@ -134,7 +134,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         LocalDate today = LocalDate.now();
 
         // ── Laura (Premium) ──
-        Client laura = createClient("cliente", "cliente123", "laura@demo.adrifit.app", "Laura", "Martín",
+        Client laura = createClient("cliente", "cliente123", "laura@demo.adrifitt.app", "Laura", "Martín",
                 "612345678", LocalDate.of(1994, 5, 12), "Perder grasa y ganar fuerza", trainer.getId());
         LocalDate lauraStart = today.minusDays(20);
         Subscription lauraSub = subscriptionRepository.save(Subscription.builder()
@@ -193,7 +193,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 .content("¡Gracias! ¿Puedo cambiar el arroz de la comida por patata?").build());
 
         // ── Carlos (Básica) ──
-        Client carlos = createClient("carlos", "carlos123", "carlos@demo.adrifit.app", "Carlos", "Ruiz",
+        Client carlos = createClient("carlos", "carlos123", "carlos@demo.adrifitt.app", "Carlos", "Ruiz",
                 "698765432", LocalDate.of(1988, 11, 3), "Mejorar la salud y perder peso", trainer.getId());
         LocalDate carlosStart = today.minusDays(35);
         Subscription carlosSub = subscriptionRepository.save(Subscription.builder()

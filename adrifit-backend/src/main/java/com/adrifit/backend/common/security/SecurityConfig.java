@@ -46,6 +46,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/passkey/**").permitAll()
+                        // Signed, short-lived links (VideoLinkSigner): <video> cannot send the JWT header.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/videos/*/stream").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/plans", "/api/plans/**").permitAll()
                         .anyRequest().authenticated())

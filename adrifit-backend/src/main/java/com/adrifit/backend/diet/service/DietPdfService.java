@@ -1,5 +1,6 @@
 package com.adrifit.backend.diet.service;
 
+import com.adrifit.backend.common.branding.BrandLogo;
 import com.adrifit.backend.common.exception.ResourceNotFoundException;
 import com.adrifit.backend.common.security.SecurityUtils;
 import com.adrifit.backend.plan.domain.Plan;
@@ -96,8 +97,9 @@ public class DietPdfService {
     }
 
     private void addHeader(Document doc, Client client, Diet diet, ClientDiet cd) throws Exception {
+        BrandLogo.addTo(doc, 64);
         Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, ORANGE);
-        Paragraph brand = new Paragraph("AdriFit", brandFont);
+        Paragraph brand = new Paragraph("AdriFitt", brandFont);
         brand.setAlignment(Element.ALIGN_CENTER);
         brand.setSpacingAfter(4);
         doc.add(brand);
@@ -222,7 +224,7 @@ public class DietPdfService {
 
     private void addFooter(Document doc) throws Exception {
         Font footFont = FontFactory.getFont(FontFactory.HELVETICA, 8, GRAY);
-        Paragraph footer = new Paragraph("Generado por AdriFit · adrifit.app", footFont);
+        Paragraph footer = new Paragraph("Generado por AdriFitt · adrifitt.app", footFont);
         footer.setAlignment(Element.ALIGN_CENTER);
         footer.setSpacingBefore(24);
         doc.add(footer);

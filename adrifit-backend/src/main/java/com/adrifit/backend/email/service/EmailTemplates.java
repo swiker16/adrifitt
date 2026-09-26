@@ -24,7 +24,7 @@ public class EmailTemplates {
     }
 
     public String welcome(String firstName, String username, String temporaryPassword, String planName) {
-        return layout("¡Bienvenido/a a AdriFit!",
+        return layout("¡Bienvenido/a a AdriFitt!",
                 p("Hola " + esc(firstName) + ",")
                         + p("Tu entrenador ha creado tu cuenta" + (planName != null ? " con el plan <strong>" + esc(planName) + "</strong>" : "") + ".")
                         + box("Usuario: <strong>" + esc(username) + "</strong><br>Contraseña temporal: <strong>" + esc(temporaryPassword) + "</strong>")
@@ -93,12 +93,14 @@ public class EmailTemplates {
         return "<!doctype html><html><body style=\"margin:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#111827\">"
                 + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"padding:24px 12px\"><tr><td align=\"center\">"
                 + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden\">"
-                + "<tr><td style=\"background:#080B0F;padding:20px 28px;font-size:22px;font-weight:800;color:#ffffff\">Adri<span style=\"color:#FF7A1A\">Fit</span></td></tr>"
+                + "<tr><td style=\"background:#080B0F;padding:20px 28px;font-size:22px;font-weight:800;color:#ffffff\">"
+                + "<img src=\"" + publicUrl + "/brand/logo-96.png\" width=\"44\" height=\"44\" alt=\"\" style=\"vertical-align:middle;margin-right:10px;border:0\">"
+                + "Adri<span style=\"color:#FF7A1A\">Fitt</span></td></tr>"
                 + "<tr><td style=\"padding:28px\">"
                 + (title != null ? "<h1 style=\"font-size:20px;margin:0 0 16px\">" + esc(title) + "</h1>" : "")
                 + content
                 + "</td></tr>"
-                + "<tr><td style=\"padding:16px 28px;background:#f9fafb;color:#6B7280;font-size:12px\">Este es un mensaje automático de AdriFit.</td></tr>"
+                + "<tr><td style=\"padding:16px 28px;background:#f9fafb;color:#6B7280;font-size:12px\">Este es un mensaje automático de AdriFitt.</td></tr>"
                 + "</table></td></tr></table></body></html>";
     }
 

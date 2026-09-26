@@ -1,5 +1,6 @@
 package com.adrifit.backend.workout.service;
 
+import com.adrifit.backend.common.branding.BrandLogo;
 import com.adrifit.backend.client.domain.Client;
 import com.adrifit.backend.client.service.ClientService;
 import com.adrifit.backend.workout.domain.Workout;
@@ -68,8 +69,9 @@ public class WorkoutPdfService {
 
     private void addHeader(Document doc, Client client, Workout workout) {
         try {
+            BrandLogo.addTo(doc, 64);
             Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, ORANGE);
-            Paragraph brand = new Paragraph("AdriFit", brandFont);
+            Paragraph brand = new Paragraph("AdriFitt", brandFont);
             brand.setAlignment(Element.ALIGN_CENTER);
             brand.setSpacingAfter(4);
             doc.add(brand);
@@ -184,7 +186,7 @@ public class WorkoutPdfService {
     private void addFooter(Document doc) {
         try {
             Font footFont = FontFactory.getFont(FontFactory.HELVETICA, 8, GRAY);
-            Paragraph footer = new Paragraph("Generado por AdriFit · adrifit.app", footFont);
+            Paragraph footer = new Paragraph("Generado por AdriFitt · adrifitt.app", footFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             footer.setSpacingBefore(24);
             doc.add(footer);

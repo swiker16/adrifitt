@@ -21,7 +21,7 @@ public class VapidWebPushSender implements WebPushSender {
     private volatile PushService pushService;
 
     public VapidWebPushSender(VapidKeyService keys,
-                              @Value("${adrifit.push.subject:mailto:hola@adrifit.app}") String subject) {
+                              @Value("${adrifit.push.subject:mailto:hola@adrifitt.app}") String subject) {
         this.keys = keys;
         this.subject = subject;
     }

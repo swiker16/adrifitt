@@ -36,4 +36,12 @@ public final class NotificationEvents {
     /** The client's periodic review is due (daily job). */
     public record ReviewDue(Long clientId, LocalDate reviewDate) {
     }
+
+    /** A technique video was uploaded: by the client (to review) or by the trainer (demonstration). */
+    public record VideoUploaded(Long clientId, boolean byTrainer, String exerciseName) {
+    }
+
+    /** The trainer corrected the client's technique video. */
+    public record VideoReviewed(Long clientId, String exerciseName) {
+    }
 }

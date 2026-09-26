@@ -63,7 +63,7 @@ class WebPushEncryptionTest {
             AppSettingRepository settings = Mockito.mock(AppSettingRepository.class);
             Mockito.when(settings.findById(Mockito.anyString())).thenReturn(Optional.empty());
             VapidKeyService vapid = new VapidKeyService(settings, "", "");
-            VapidWebPushSender sender = new VapidWebPushSender(vapid, "mailto:test@adrifit.app");
+            VapidWebPushSender sender = new VapidWebPushSender(vapid, "mailto:test@adrifitt.app");
 
             String payload = "{\"notification\":{\"title\":\"Hola\",\"body\":\"Tienes un mensaje\"}}";
             String endpoint = "http://127.0.0.1:" + server.getAddress().getPort() + "/push/abc";

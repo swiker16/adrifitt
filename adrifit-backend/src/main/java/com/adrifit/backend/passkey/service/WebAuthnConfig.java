@@ -19,7 +19,7 @@ public class WebAuthnConfig {
     @Bean
     public RelyingParty relyingParty(JpaCredentialRepository credentialRepository,
                                      @Value("${adrifit.webauthn.rp-id:localhost}") String rpId,
-                                     @Value("${adrifit.webauthn.rp-name:AdriFit}") String rpName,
+                                     @Value("${adrifit.webauthn.rp-name:AdriFitt}") String rpName,
                                      @Value("${adrifit.webauthn.origins:http://localhost:4200,http://localhost:4300}") String origins) {
         Set<String> allowed = Arrays.stream(origins.split(","))
                 .map(String::trim).filter(s -> !s.isEmpty())

@@ -61,7 +61,7 @@ public class EmailService {
                         UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
                         PlatformTransactionManager transactionManager,
-                        @Value("${adrifit.mail.from:AdriFit <no-reply@adrifit.app>}") String from) {
+                        @Value("${adrifit.mail.from:AdriFitt <no-reply@adrifitt.app>}") String from) {
         this.repository = repository;
         this.sender = sender;
         this.templates = templates;

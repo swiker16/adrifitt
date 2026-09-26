@@ -1,4 +1,4 @@
-# AdriFit Backend
+# AdriFitt Backend
 
 API REST de la plataforma de entrenamiento personal: clientes, planes y suscripciones, rutinas,
 dietas, seguimientos, fotos de progreso, registro de entrenos, analíticas, mensajería, cobros,
@@ -120,6 +120,18 @@ reseñas, tareas/revisiones, dashboards y seguridad (IDOR en PDFs, acceso entre 
 Emails automáticos: bienvenida con contraseña temporal, restablecimiento de contraseña, cobro pendiente,
 recibo de pago, cambios de suscripción, feedback del seguimiento y recordatorio de revisión.
 
+## Vídeos de técnica
+
+El cliente graba un ejercicio con el móvil (o lo sube de la galería) para que el entrenador le corrija la
+técnica; el entrenador responde con una corrección escrita y también puede enviar vídeos de ejemplo a
+cada cliente. Ambos reciben notificación push.
+
+- Formatos: MP4, MOV (iPhone) y WEBM, validados por la firma del archivo; máximo `VIDEOS_MAX_SIZE_MB` (200 MB).
+- Se guardan en el almacenamiento privado (`videos/{clientId}/…`) y se reproducen con **enlaces firmados de
+  corta duración** (HMAC, 3 h): `<video>` no puede enviar el JWT y el token no debe ir en URLs.
+  El streaming admite peticiones `Range` (206), necesarias para avanzar en el vídeo y para Safari/iOS.
+- Al borrar un cliente se borran sus vídeos. Detrás de un proxy (nginx) sube `client_max_body_size` a 210m.
+
 ## Notificaciones push (PWA)
 
 Web Push estándar (VAPID + cifrado `aes128gcm`, RFC 8291/8292), sin servicios de terceros de pago:
@@ -129,6 +141,8 @@ app **instalada** en la pantalla de inicio). Las claves VAPID se generan la prim
 
 | Evento | Destinatario | Al tocarla abre |
 |---|---|---|
+| Vídeo de técnica del cliente | Entrenador | Vídeos del cliente |
+| Corrección de técnica / vídeo de ejemplo | Cliente | Técnica |
 | El entrenador escribe | Cliente | Mensajes |
 | Un cliente escribe | Entrenador | Conversación del cliente |
 | Cobro pendiente / recordatorio de pago vencido (días 1, 3, 7 y 14) | Cliente | Suscripción y pagos |
@@ -174,8 +188,9 @@ El entrenador también puede lanzarlas desde la app (`POST /api/jobs/daily/run`)
 | `MAIL_FROM`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` | | SMTP |
 | `PAYMENTS_MODE` | `test` | Pasarela de pagos |
 | `JOBS_DAILY_CRON` | `0 0 6 * * *` | Tareas diarias |
+| `VIDEOS_MAX_SIZE_MB` | `200` | Tamaño máximo de un vídeo de técnica |
 | `PUSH_ENABLED` | `true` | Notificaciones push |
-| `PUSH_SUBJECT` | `mailto:hola@adrifit.app` | Contacto VAPID |
+| `PUSH_SUBJECT` | `mailto:hola@adrifitt.app` | Contacto VAPID |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | generadas y guardadas en BD | Claves Web Push |
 | `WEBAUTHN_RP_ID` | `localhost` | Dominio de las passkeys |
 | `WEBAUTHN_ORIGINS` | `http://localhost:4200,http://localhost:4300` | Orígenes permitidos |
@@ -197,6 +212,7 @@ Todas las rutas protegidas requieren `Authorization: Bearer <token>`.
 | Tareas y revisiones | CRUD `/api/tasks`, `PATCH …/{id}/complete|reopen`, `GET /api/reviews/schedule`, `POST /api/jobs/daily/run` | — |
 | Emails | `GET/POST /api/emails`, `GET /api/emails/{id}` | — |
 | Reseñas | `GET /api/testimonials`, `PATCH /api/testimonials/{id}/visibility` | `GET/POST /api/testimonials/me` · público: `GET /api/public/testimonials` |
+| Vídeos de técnica | `GET /api/videos(?pending=true)`, `GET /api/videos/counts`, `GET/POST /api/clients/{id}/videos`, `PATCH /api/videos/{id}/feedback`, `DELETE /api/videos/{id}` | `GET/POST /api/videos/me`, `POST /api/videos/me/seen`, `DELETE /api/videos/{id}` (los suyos) · ambos: `GET /api/videos/{id}/link` → `…/stream?exp&sig` |
 | Push | `GET /api/push/public-key`, `GET /api/push/status`, `POST /api/push/subscriptions(/remove)`, `POST /api/push/test` | ídem |
 | Passkeys | `GET /api/passkeys`, `POST /api/passkeys/register/options|finish`, `DELETE /api/passkeys/{id}` · login: `POST /api/auth/passkey/options|finish` | ídem |
 | Paneles | `GET /api/dashboard/trainer`, `GET /api/dashboard/business` | `GET /api/dashboard/client` |

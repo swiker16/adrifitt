@@ -23,6 +23,8 @@ public record TrainerDashboardResponse(
         BigDecimal pendingPaymentsAmount,
         long overduePaymentsCount,
         long tasksDue,
+        /** Client technique videos waiting for a correction. */
+        long pendingVideos,
         BigDecimal revenueThisMonth,
         BigDecimal monthlyRecurringRevenue,
 

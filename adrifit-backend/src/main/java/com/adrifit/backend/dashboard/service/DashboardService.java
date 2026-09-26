@@ -1,5 +1,6 @@
 package com.adrifit.backend.dashboard.service;
 
+import com.adrifit.backend.video.service.TechniqueVideoService;
 import com.adrifit.backend.analysis.service.AnalysisService;
 import com.adrifit.backend.client.domain.Client;
 import com.adrifit.backend.client.mapper.ClientMapper;
@@ -80,6 +81,7 @@ public class DashboardService {
     private final WorkoutLogService workoutLogService;
     private final ProgressPhotoService photoService;
     private final TestimonialRepository testimonialRepository;
+    private final TechniqueVideoService videoService;
 
     public DashboardService(ClientRepository clientRepository,
                             ClientService clientService,
@@ -97,7 +99,8 @@ public class DashboardService {
                             WorkoutLogRepository workoutLogRepository,
                             WorkoutLogService workoutLogService,
                             ProgressPhotoService photoService,
-                            TestimonialRepository testimonialRepository) {
+                            TestimonialRepository testimonialRepository,
+                            TechniqueVideoService videoService) {
         this.clientRepository = clientRepository;
         this.clientService = clientService;
         this.clientMapper = clientMapper;
@@ -115,6 +118,7 @@ public class DashboardService {
         this.workoutLogService = workoutLogService;
         this.photoService = photoService;
         this.testimonialRepository = testimonialRepository;
+        this.videoService = videoService;
     }
 
     // ── Trainer ─────────────────────────────────────────────────────────────
@@ -261,6 +265,7 @@ public class DashboardService {
                 messageService.countTrainerUnread(),
                 pending.size(), sum(pending), overdue,
                 taskService.countDueToday(),
+                videoService.countPendingReview(),
                 revenueThisMonth, mrr,
                 clientsPerPlan,
                 pendingReviews, reportsWithoutFeedback, clientsWithoutWorkouts, upcomingRenewals,
@@ -390,7 +395,8 @@ public class DashboardService {
                 clientDietRepository.findByClient_IdAndActiveTrue(clientId).map(cd -> cd.getDiet().getName()).orElse(null),
                 testimonialRepository.existsByClientId(clientId),
                 first != null ? first.weight() : null,
-                latest != null ? latest.weight() : null
+                latest != null ? latest.weight() : null,
+                videoService.countUnseenByClient(clientId)
         );
     }
 

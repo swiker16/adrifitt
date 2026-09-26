@@ -24,7 +24,7 @@ public abstract class AbstractIntegrationTest {
 
     /** Child tables first so foreign keys never block the cleanup. */
     private static final List<String> TABLES = List.of(
-            "push_subscriptions", "passkey_credentials", "messages", "payments", "email_messages", "trainer_tasks", "testimonials", "progress_photos",
+            "technique_videos", "push_subscriptions", "passkey_credentials", "messages", "payments", "email_messages", "trainer_tasks", "testimonials", "progress_photos",
             "workout_log_sets", "workout_logs", "client_analyses", "weekly_reports", "client_diets",
             "client_workouts", "subscriptions", "workout_exercises", "workouts", "diet_alternatives",
             "diet_foods", "diet_meals", "diet_days", "diets", "clients");

@@ -10,6 +10,8 @@ import com.adrifit.backend.notification.event.NotificationEvents.PaymentOverdue;
 import com.adrifit.backend.notification.event.NotificationEvents.PaymentReceived;
 import com.adrifit.backend.notification.event.NotificationEvents.ReportSubmitted;
 import com.adrifit.backend.notification.event.NotificationEvents.ReviewDue;
+import com.adrifit.backend.notification.event.NotificationEvents.VideoReviewed;
+import com.adrifit.backend.notification.event.NotificationEvents.VideoUploaded;
 import com.adrifit.backend.report.event.ReportReviewedEvent;
 import com.adrifit.backend.user.domain.Role;
 import java.time.LocalDate;
@@ -100,6 +102,28 @@ public class NotificationDispatcher {
                     "Tu revisión es " + when + ". Envía tus fotos y tu peso para que tu entrenador ajuste el plan.",
                     "/client/report", "review"));
         });
+    }
+
+    @Async
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onVideoUploaded(VideoUploaded e) {
+        safely(() -> {
+            if (e.byTrainer()) {
+                push.sendToClient(e.clientId(), new PushMessage("🎬 Tu entrenador te ha enviado un vídeo",
+                        e.exerciseName() + ": mira cómo se hace la técnica.", "/client/videos", "video"));
+            } else {
+                push.sendToTrainers(new PushMessage("🎬 Vídeo de técnica de " + name(e.clientId()),
+                        e.exerciseName() + " · pendiente de corregir.",
+                        "/trainer/videos?clientId=" + e.clientId(), "video-" + e.clientId()));
+            }
+        });
+    }
+
+    @Async
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onVideoReviewed(VideoReviewed e) {
+        safely(() -> push.sendToClient(e.clientId(), new PushMessage("✅ Tu entrenador ha corregido tu técnica",
+                e.exerciseName() + ": ya tienes sus indicaciones.", "/client/videos", "video")));
     }
 
     private String name(Long clientId) {
