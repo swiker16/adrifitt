@@ -2,7 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { filter, interval, startWith, switchMap } from 'rxjs';
+import { filter, interval, merge, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DeviceSetupPrompt } from '../../shared/components/device-setup-prompt';
@@ -27,8 +27,9 @@ export class TrainerLayout {
   readonly tasksDue = signal(0);
   readonly pendingAnalyses = signal(0);
   readonly overduePayments = signal(0);
+  readonly pendingVideos = signal(0);
   readonly totalBadges = computed(
-    () => this.unreadMessages() + this.tasksDue() + this.pendingAnalyses() + this.overduePayments()
+    () => this.unreadMessages() + this.tasksDue() + this.pendingAnalyses() + this.overduePayments() + this.pendingVideos()
   );
 
   constructor() {
@@ -41,7 +42,7 @@ export class TrainerLayout {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({ next: (d) => this.applyCounts(d), error: () => undefined });
-    navigations
+    merge(navigations, this.dashboardService.changed$)
       .pipe(
         switchMap(() => this.dashboardService.getTrainerDashboard()),
         takeUntilDestroyed(this.destroyRef)
@@ -49,11 +50,12 @@ export class TrainerLayout {
       .subscribe({ next: (d) => this.applyCounts(d), error: () => undefined });
   }
 
-  private applyCounts(d: { unreadMessages: number; tasksDue: number; pendingAnalyses: number; overduePaymentsCount: number }): void {
+  private applyCounts(d: { unreadMessages: number; tasksDue: number; pendingAnalyses: number; overduePaymentsCount: number; pendingVideos: number }): void {
     this.unreadMessages.set(d.unreadMessages ?? 0);
     this.tasksDue.set(d.tasksDue ?? 0);
     this.pendingAnalyses.set(d.pendingAnalyses ?? 0);
     this.overduePayments.set(d.overduePaymentsCount ?? 0);
+    this.pendingVideos.set(d.pendingVideos ?? 0);
   }
 
   toggleMenu(): void { this.menuOpen.update(v => !v); }

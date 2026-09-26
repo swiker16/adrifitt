@@ -13,7 +13,7 @@
   @if (loading()) {
     <div class="sk-wrap" aria-busy="true" aria-label="Cargando tu panel">
       <div class="skeleton sk-hero"></div>
-      <div class="sk-tiles"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      <div class="sk-tiles"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
       <div class="sk-stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
     </div>
   } @else if (error()) {
@@ -121,7 +121,7 @@
     <!-- ── Quick actions ── -->
     <h2 class="section-title">Hoy</h2>
     <div class="tiles">
-      <a routerLink="/client/workout" class="qa wide">
+      <a routerLink="/client/workout" class="qa">
         <span class="tile orange"><mat-icon>fitness_center</mat-icon></span>
         <div class="qa-text">
           <div class="qa-title">Mi rutina</div>
@@ -142,6 +142,14 @@
         <div class="qa-text">
           <div class="qa-title">Mi dieta</div>
           <div class="qa-sub">{{ d.activeDietName || 'Aún sin dieta asignada' }}</div>
+        </div>
+        <mat-icon class="chev">chevron_right</mat-icon>
+      </a>
+      <a routerLink="/client/videos" class="qa">
+        <span class="tile violet"><mat-icon>videocam</mat-icon></span>
+        <div class="qa-text">
+          <div class="qa-title">Técnica @if (d.newVideos > 0) { <span class="new-dot">{{ d.newVideos }}</span> }</div>
+          <div class="qa-sub">{{ d.newVideos > 0 ? 'Tienes novedades de tu entrenador' : 'Envía un vídeo y te corrige' }}</div>
         </div>
         <mat-icon class="chev">chevron_right</mat-icon>
       </a>

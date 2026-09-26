@@ -3,12 +3,12 @@
   <!-- ── Topbar móvil ── -->
   <header class="mobile-topbar">
     <div class="brand">
-      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
-      <span>Adri<span class="dot">Fit</span></span>
+      <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
+      <span>Adri<span class="dot">Fitt</span></span>
     </div>
     <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Menú">
       <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
-      @if ((unreadMessages() > 0 || pendingPayments() > 0) && !menuOpen()) { <span class="hamburger-dot"></span> }
+      @if ((unreadMessages() > 0 || pendingPayments() > 0 || newVideos() > 0) && !menuOpen()) { <span class="hamburger-dot"></span> }
     </button>
   </header>
 
@@ -18,8 +18,8 @@
 
   <aside class="sidebar" [class.open]="menuOpen()">
     <div class="brand desktop-only">
-      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
-      <span>Adri<span class="dot">Fit</span></span>
+      <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
+      <span>Adri<span class="dot">Fitt</span></span>
     </div>
 
     <nav class="nav">
@@ -34,6 +34,10 @@
       </a>
       <a routerLink="/client/workout-log" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>edit_note</mat-icon> <span>Registrar entreno</span>
+      </a>
+      <a routerLink="/client/videos" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>videocam</mat-icon> <span>Técnica</span>
+        @if (newVideos() > 0) { <span class="nav-badge">{{ newVideos() }}</span> }
       </a>
       <a routerLink="/client/diet" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>restaurant</mat-icon> <span>Mi dieta</span>

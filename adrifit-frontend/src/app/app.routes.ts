@@ -70,6 +70,11 @@ export const routes: Routes = [
           import('./features/trainer/analyses/trainer-analyses').then((m) => m.TrainerAnalyses),
       },
       {
+        path: 'videos',
+        loadComponent: () =>
+          import('./features/trainer/videos/trainer-videos').then((m) => m.TrainerVideos),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/trainer/settings/trainer-settings').then((m) => m.TrainerSettings),
@@ -180,6 +185,11 @@ export const routes: Routes = [
         path: 'photos',
         loadComponent: () =>
           import('./features/client/photos/client-photos').then((m) => m.ClientPhotos),
+      },
+      {
+        path: 'videos',
+        loadComponent: () =>
+          import('./features/client/videos/client-videos').then((m) => m.ClientVideos),
       },
       {
         path: 'analyses',

@@ -89,7 +89,7 @@
               <tbody>
                 @for (ex of day.exercises; track $index; let i = $index) {
                   <tr>
-                    <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span>{{ ex.exerciseName }}</td>
+                    <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span><span class="ex-name">{{ ex.exerciseName }}</span><a class="tech-btn" routerLink="/client/videos" [queryParams]="{ exercise: ex.exerciseName }" [attr.aria-label]="'Enviar vídeo de técnica de ' + ex.exerciseName" title="Enviar vídeo de técnica"><mat-icon>videocam</mat-icon></a></td>
                     <td class="warm-cell" data-label="Aproximaciones">{{ ex.warmUpSets || '—' }}</td>
                     <td class="center" data-label="Reps aprox.">{{ ex.approxReps || '—' }}</td>
                     <td class="center metric" data-label="Series">{{ ex.sets }}</td>
@@ -125,7 +125,7 @@
             <tbody>
               @for (ex of clientWorkout()!.workout.exercises; track $index; let i = $index) {
                 <tr>
-                  <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span>{{ ex.exerciseName }}</td>
+                  <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span><span class="ex-name">{{ ex.exerciseName }}</span><a class="tech-btn" routerLink="/client/videos" [queryParams]="{ exercise: ex.exerciseName }" [attr.aria-label]="'Enviar vídeo de técnica de ' + ex.exerciseName" title="Enviar vídeo de técnica"><mat-icon>videocam</mat-icon></a></td>
                   <td class="warm-cell" data-label="Aproximaciones">{{ ex.warmUpSets || '—' }}</td>
                   <td class="center" data-label="Reps aprox.">{{ ex.approxReps || '—' }}</td>
                   <td class="center metric" data-label="Series">{{ ex.sets }}</td>

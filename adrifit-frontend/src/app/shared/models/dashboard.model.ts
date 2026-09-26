@@ -77,6 +77,7 @@ export interface TrainerDashboard {
   pendingPaymentsAmount: number;
   overduePaymentsCount: number;
   tasksDue: number;
+  pendingVideos: number;
   revenueThisMonth: number;
   monthlyRecurringRevenue: number;
 }
@@ -101,4 +102,5 @@ export interface ClientDashboard {
   hasTestimonial: boolean;
   startWeight: number | null;
   currentWeight: number | null;
+  newVideos: number;
 }

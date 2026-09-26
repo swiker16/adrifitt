@@ -1,0 +1,101 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Técnica</div>
+    <div class="subtitle">Envía un vídeo de tus ejercicios y tu entrenador te corregirá la técnica.</div>
+  </div>
+  <div class="topbar-actions">
+    <button type="button" class="btn btn-primary" (click)="openUpload()">
+      <mat-icon>videocam</mat-icon> Enviar vídeo
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="video-grid" aria-busy="true" aria-label="Cargando vídeos">
+      @for (i of [1, 2, 3]; track i) { <div class="skeleton sk-video"></div> }
+    </div>
+  } @else if (loadError()) {
+    <div class="alert error"><mat-icon>error</mat-icon><span>{{ loadError() }}</span></div>
+    <button type="button" class="btn btn-outline" (click)="load()">Reintentar</button>
+  } @else if (videos().length === 0) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>videocam</mat-icon>
+        <p><strong>¿Dudas con la técnica de algún ejercicio?</strong></p>
+        <p class="tip">Grábate haciendo una serie y envíasela a tu entrenador: te dirá qué corregir. Aquí también verás los vídeos de ejemplo que te envíe.</p>
+        <button type="button" class="btn btn-primary" (click)="openUpload()"><mat-icon>videocam</mat-icon> Enviar mi primer vídeo</button>
+      </div>
+    </div>
+  } @else {
+    <div class="filters">
+      <div class="segmented" role="tablist" aria-label="Filtrar vídeos">
+        <button type="button" role="tab" [attr.aria-selected]="filter() === 'ALL'" [class.active]="filter() === 'ALL'" (click)="filter.set('ALL')">Todos ({{ videos().length }})</button>
+        <button type="button" role="tab" [attr.aria-selected]="filter() === 'MINE'" [class.active]="filter() === 'MINE'" (click)="filter.set('MINE')">Enviados por mí ({{ mineCount() }})</button>
+        <button type="button" role="tab" [attr.aria-selected]="filter() === 'TRAINER'" [class.active]="filter() === 'TRAINER'" (click)="filter.set('TRAINER')">De mi entrenador ({{ trainerCount() }})</button>
+      </div>
+      @if (pendingCount() > 0) {
+        <span class="badge orange">{{ pendingCount() }} pendiente{{ pendingCount() === 1 ? '' : 's' }} de corregir</span>
+      }
+    </div>
+
+    @if (visible().length === 0) {
+      <div class="panel"><div class="empty"><mat-icon>filter_alt_off</mat-icon><p>No hay vídeos con este filtro.</p></div></div>
+    }
+
+    <div class="video-grid">
+      @for (v of visible(); track v.id) {
+        <article class="video-card" [class.new]="v.unseen">
+          <div class="head">
+            <div class="titles">
+              <h3>{{ v.exerciseName }}</h3>
+              <div class="meta">{{ v.createdAt | date: "d MMM y, HH:mm" }}</div>
+            </div>
+            <div class="badges">
+              @if (v.unseen) { <span class="badge violet">Nuevo</span> }
+              @if (v.source === 'TRAINER') {
+                <span class="badge blue">De tu entrenador</span>
+              } @else if (v.reviewedAt) {
+                <span class="badge green">Corregido</span>
+              } @else {
+                <span class="badge orange">Pendiente</span>
+              }
+            </div>
+          </div>
+
+          <app-video-player [videoId]="v.id" [label]="v.exerciseName" [duration]="v.durationSeconds" />
+
+          @if (v.note) {
+            <p class="note"><strong>{{ v.source === 'TRAINER' ? 'Tu entrenador:' : 'Tu nota:' }}</strong> {{ v.note }}</p>
+          }
+          @if (v.feedback) {
+            <div class="feedback">
+              <mat-icon>sports</mat-icon>
+              <div>
+                <strong>Corrección de tu entrenador</strong>
+                <p>{{ v.feedback }}</p>
+              </div>
+            </div>
+          }
+          @if (v.source === 'CLIENT') {
+            <div class="actions">
+              <button type="button" class="btn btn-light btn-sm" (click)="remove(v)" [disabled]="deletingId() === v.id" [attr.aria-label]="'Eliminar vídeo de ' + v.exerciseName">
+                <mat-icon>delete</mat-icon> Eliminar
+              </button>
+            </div>
+          }
+        </article>
+      }
+    </div>
+  }
+</div>
+
+@if (showUpload()) {
+  <app-video-upload-dialog
+    mode="client"
+    [exercises]="exercises()"
+    [initialExercise]="initialExercise()"
+    (closed)="showUpload.set(false)"
+    (uploaded)="onUploaded($event)"
+  />
+}

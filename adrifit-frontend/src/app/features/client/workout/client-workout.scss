@@ -102,3 +102,12 @@
   .notes-cell.no-notes { display: none !important; }
   .metric { font-size: 1.05rem; }
 }
+
+/* Shortcut: record the technique of this exercise */
+.ex-name { flex: 1; }
+.tech-btn {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; margin-left: 8px; border-radius: 10px;
+  color: var(--brand-600); background: var(--brand-50); vertical-align: middle; flex-shrink: 0; transition: background .15s;
+}
+.tech-btn:hover { background: var(--brand-100); }
+.tech-btn mat-icon { font-size: 18px; width: 18px; height: 18px; }

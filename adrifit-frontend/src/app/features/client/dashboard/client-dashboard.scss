@@ -16,13 +16,14 @@
   &.green { background: var(--success-bg); color: var(--success); }
   &.blue { background: var(--info-bg); color: var(--info); }
   &.amber { background: var(--warning-bg); color: var(--warning); }
+  &.violet { background: var(--violet-bg); color: var(--violet); }
 }
 .chev { color: var(--ink-300); flex-shrink: 0; }
 
 /* Skeleton */
 .sk-hero { height: 190px; border-radius: var(--radius-xl); }
 .sk-tiles, .sk-stats { display: grid; gap: 12px; margin-top: 16px; }
-.sk-tiles { grid-template-columns: repeat(3, 1fr); .skeleton { height: 76px; border-radius: 18px; } }
+.sk-tiles { grid-template-columns: repeat(4, 1fr); .skeleton { height: 76px; border-radius: 18px; } }
 .sk-stats { grid-template-columns: repeat(4, 1fr); .skeleton { height: 124px; border-radius: var(--radius); } }
 
 /* Alerts as links */
@@ -86,7 +87,11 @@
 }
 
 /* Quick-action tiles */
-.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.new-dot {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 4px;
+  border-radius: 999px; background: var(--brand); color: #fff; font-size: 0.72rem; font-weight: 700; vertical-align: 2px;
+}
 .qa {
   display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 16px;
   background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-sm);
@@ -177,7 +182,7 @@ a.stat-card { display: block; color: inherit; }
     .chev { display: none; }
     .qa-sub { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   }
-  .sk-tiles { grid-template-columns: 1fr 1fr; .skeleton:first-child { grid-column: 1 / -1; } }
+  .sk-tiles { grid-template-columns: 1fr 1fr; }
   .stat-card .stat-label { font-size: 0.78rem; }
   .last-report { padding: 14px 16px 18px; }
 }

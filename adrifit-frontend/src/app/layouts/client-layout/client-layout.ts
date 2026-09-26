@@ -25,12 +25,17 @@ export class ClientLayout {
 
   readonly unreadMessages = signal(0);
   readonly pendingPayments = signal(0);
+  readonly newVideos = signal(0);
 
   constructor() {
     // Badges: refreshed every minute and after each navigation (skipped while the
     // temporary password has not been changed: every other endpoint is still reachable
     // but the menu is not useful yet).
-    merge(interval(60000).pipe(startWith(0)), this.router.events.pipe(filter((e) => e instanceof NavigationEnd)))
+    merge(
+      interval(60000).pipe(startWith(0)),
+      this.router.events.pipe(filter((e) => e instanceof NavigationEnd)),
+      this.dashboardService.changed$
+    )
       .pipe(
         filter(() => !this.auth.mustChangePassword()),
         switchMap(() => this.dashboardService.getClientDashboard()),
@@ -40,6 +45,7 @@ export class ClientLayout {
         next: (d) => {
           this.unreadMessages.set(d.unreadMessages ?? 0);
           this.pendingPayments.set(d.pendingPayments ?? 0);
+          this.newVideos.set(d.newVideos ?? 0);
         },
         error: () => undefined,
       });

@@ -65,10 +65,10 @@ import { PushAvailability, PushService } from '../../core/services/push.service'
           <p class="muted">Las notificaciones no están disponibles aquí. Usa la app instalada o un navegador compatible (Chrome, Edge, Firefox, Safari 16.4+).</p>
         }
         @case ('ios-needs-install') {
-          <p class="muted">En iPhone/iPad primero añade AdriFit a la pantalla de inicio (<mat-icon class="inline">ios_share</mat-icon> Compartir → «Añadir a pantalla de inicio») y ábrela desde el icono.</p>
+          <p class="muted">En iPhone/iPad primero añade AdriFitt a la pantalla de inicio (<mat-icon class="inline">ios_share</mat-icon> Compartir → «Añadir a pantalla de inicio») y ábrela desde el icono.</p>
         }
         @case ('denied') {
-          <p class="muted">Has bloqueado las notificaciones para AdriFit. Actívalas desde los ajustes del navegador o del sistema.</p>
+          <p class="muted">Has bloqueado las notificaciones para AdriFitt. Actívalas desde los ajustes del navegador o del sistema.</p>
         }
         @default {
           <div class="toggle-row">

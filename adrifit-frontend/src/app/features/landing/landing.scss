@@ -10,11 +10,7 @@ section[id] { scroll-margin-top: 80px; }
   font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.3rem; letter-spacing: -0.03em; color: var(--text);
 }
 .brand .dot { color: var(--brand); }
-.logo-badge {
-  width: 36px; height: 36px; border-radius: 11px; background: var(--brand-gradient);
-  display: grid; place-items: center; color: #fff; box-shadow: var(--brand-glow);
-}
-.logo-badge mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.logo-img { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; box-shadow: var(--brand-glow); }
 
 /* Navbar */
 .nav {

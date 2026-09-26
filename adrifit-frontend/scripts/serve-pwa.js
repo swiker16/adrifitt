@@ -37,4 +37,4 @@ http.createServer((req, res) => {
   }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
   fs.createReadStream(file).pipe(res);
-}).listen(PORT, () => console.log(`AdriFit PWA on http://localhost:${PORT} (API -> :${API_PORT})`));
+}).listen(PORT, () => console.log(`AdriFitt PWA on http://localhost:${PORT} (API -> :${API_PORT})`));

@@ -1,0 +1,37 @@
+/* Technique video cards (client and trainer pages). */
+.video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 560px) { .video-grid { grid-template-columns: 1fr; gap: 14px; } }
+
+.video-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); padding: 14px; display: grid; gap: 12px; min-width: 0;
+}
+.video-card.new { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(255, 107, 26, 0.12), var(--shadow-sm); }
+.video-card .head { display: flex; align-items: flex-start; gap: 10px; }
+.video-card .head .titles { flex: 1; min-width: 0; }
+.video-card h3 { margin: 0; font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
+.video-card .meta { font-size: 0.8rem; color: var(--text-subtle); margin-top: 2px; }
+.video-card .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.video-card .note {
+  margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;
+  padding: 10px 12px; background: var(--surface-2); border-radius: 12px; white-space: pre-line;
+}
+.video-card .note strong { color: var(--text); }
+.video-card .feedback {
+  display: flex; gap: 10px; padding: 12px; border-radius: 14px; background: var(--success-bg);
+  color: #0f5f2d; font-size: 0.92rem; line-height: 1.5;
+}
+.video-card .feedback mat-icon { flex-shrink: 0; color: var(--success); }
+.video-card .feedback p { margin: 2px 0 0; white-space: pre-line; color: var(--text); }
+.video-card .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+.filters {
+  margin-bottom: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  &::-webkit-scrollbar { display: none; }
+}
+.filters .segmented { flex-wrap: nowrap; }
+.filters .segmented button { white-space: nowrap; min-height: 36px; }
+.sk-video { height: 300px; border-radius: var(--radius); }
+.empty .btn { margin-top: 12px; }
+.tip { font-size: 0.85rem; max-width: 460px; margin: 6px auto 0; color: var(--text-subtle); }

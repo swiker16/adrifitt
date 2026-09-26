@@ -25,7 +25,7 @@ type Step = 'passkey' | 'push' | 'install' | null;
               @case ('passkey') {
                 <div class="hero-icon"><mat-icon>fingerprint</mat-icon></div>
                 <h2 id="setup-title">¿Entrar con {{ biometric }}?</h2>
-                <p>Crea una <strong>passkey</strong> y la próxima vez entrarás a AdriFit en un segundo, sin escribir tu contraseña.</p>
+                <p>Crea una <strong>passkey</strong> y la próxima vez entrarás a AdriFitt en un segundo, sin escribir tu contraseña.</p>
                 <ul class="perks">
                   <li><mat-icon>bolt</mat-icon> Más rápido que la contraseña</li>
                   <li><mat-icon>shield</mat-icon> Más seguro: tu huella o tu cara nunca salen del dispositivo</li>
@@ -50,12 +50,12 @@ type Step = 'passkey' | 'push' | 'install' | null;
               }
               @case ('install') {
                 <div class="hero-icon"><mat-icon>install_mobile</mat-icon></div>
-                <h2 id="setup-title">Instala AdriFit en tu iPhone</h2>
+                <h2 id="setup-title">Instala AdriFitt en tu iPhone</h2>
                 <p>Para recibir notificaciones en iPhone/iPad, añade la app a tu pantalla de inicio:</p>
                 <ol class="steps">
                   <li>Pulsa <mat-icon>ios_share</mat-icon> <strong>Compartir</strong> en Safari.</li>
                   <li>Elige <strong>«Añadir a pantalla de inicio»</strong>.</li>
-                  <li>Abre AdriFit desde el icono y activa las notificaciones.</li>
+                  <li>Abre AdriFitt desde el icono y activa las notificaciones.</li>
                 </ol>
               }
             }

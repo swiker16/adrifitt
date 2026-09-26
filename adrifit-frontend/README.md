@@ -1,4 +1,4 @@
-# AdriFit Frontend
+# AdriFitt Frontend
 
 Aplicación web (PWA instalable en móvil, tablet y escritorio) de la plataforma de entrenamiento personal.
 Angular 20 · componentes standalone · signals · Angular Material (iconos) · SCSS.
@@ -36,13 +36,27 @@ npm run start:pwa   # build + http://localhost:4300 con proxy de /api a :8080 (A
 
 `ng serve` no activa el service worker, así que las notificaciones solo funcionan con la build.
 
+### Marca
+
+Logo en `public/brand/` (cabecera, login, landing, emails) y en `public/icons/` (iconos de la PWA,
+*maskable* y Apple); `favicon.ico` con varios tamaños. Los PDF usan `adrifit-backend/src/main/resources/branding/logo.png`.
+
+### Vídeos de técnica
+
+- Cliente: menú **Técnica** (o el icono de cámara junto a cada ejercicio de *Mi rutina*). En el móvil
+  permite **grabar** con la cámara trasera o elegir de la galería; muestra la vista previa y el progreso de subida.
+- Entrenador: **Vídeos de técnica** con la bandeja *Por corregir*, filtro por cliente, corrección escrita y
+  «Enviar vídeo a un cliente» para mandar ejemplos.
+- El reproductor pide el enlace firmado solo al pulsar play (la lista no descarga vídeos) y ofrece descargarlo
+  si el navegador no soporta el formato (p. ej. HEVC de iPhone en algunos PC).
+
 ### Notificaciones y passkeys
 
 - Al entrar, la app ofrece **crear una passkey** (Face ID / Touch ID, huella en Android, Windows Hello)
   y después **activar las notificaciones**. «Ahora no» lo vuelve a preguntar en 7 días; «No volver a
   preguntar» lo oculta en ese dispositivo. Todo se gestiona luego en *Perfil* (cliente) o *Ajustes* (entrenador).
 - En el login: botón «Entrar con Face ID / huella» y passkeys en el autocompletado del campo usuario.
-- **iPhone/iPad**: las notificaciones web requieren iOS 16.4+ y abrir AdriFit desde la pantalla de inicio;
+- **iPhone/iPad**: las notificaciones web requieren iOS 16.4+ y abrir AdriFitt desde la pantalla de inicio;
   la app lo explica si se abre desde Safari.
 - Passkeys y push necesitan **https** en producción (en `localhost` funcionan sin él).
 
@@ -57,9 +71,9 @@ src/app
     ├── landing    web pública: planes y reseñas de clientes
     ├── auth       login
     ├── trainer    dashboard, negocio, clientes, mensajes, revisiones y tareas, seguimientos,
-    │              analíticas, rutinas, dietas, planes, cobros, emails, reseñas
-    └── client     panel, rutina, registrar entreno, dieta, seguimiento, progreso, fotos,
-                   analíticas, mensajes, suscripción y pagos, reseña, perfil
+    │              vídeos de técnica, analíticas, rutinas, dietas, planes, cobros, emails, reseñas, ajustes
+    └── client     panel, rutina, registrar entreno, técnica (vídeos), dieta, seguimiento, progreso,
+                   fotos, analíticas, mensajes, suscripción y pagos, reseña, perfil
 ```
 
 ## Usuarios de prueba (backend con perfil `local`)

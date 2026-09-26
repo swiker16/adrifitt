@@ -8,11 +8,7 @@
   font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.35rem; letter-spacing: -0.03em; color: var(--text);
 }
 .brand .dot { color: var(--brand); }
-.logo-badge {
-  width: 38px; height: 38px; border-radius: 12px; background: var(--brand-gradient);
-  display: grid; place-items: center; color: #fff; box-shadow: var(--brand-glow);
-}
-.logo-badge mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.logo-img { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; box-shadow: var(--brand-glow); }
 
 /* Left panel */
 .brand-panel {

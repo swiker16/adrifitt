@@ -1,0 +1,127 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Vídeos de técnica</div>
+    <div class="subtitle">Corrige la ejecución de tus clientes y envíales vídeos de ejemplo.</div>
+  </div>
+  <div class="topbar-actions">
+    <button type="button" class="btn btn-primary" (click)="showUpload.set(true)">
+      <mat-icon>video_call</mat-icon> Enviar vídeo a un cliente
+    </button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="filters">
+    <div class="segmented" role="tablist" aria-label="Filtrar vídeos">
+      <button type="button" role="tab" [attr.aria-selected]="filter() === 'PENDING'" [class.active]="filter() === 'PENDING'" (click)="filter.set('PENDING')">
+        Por corregir ({{ pendingCount() }})
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="filter() === 'ALL'" [class.active]="filter() === 'ALL'" (click)="filter.set('ALL')">Todos</button>
+    </div>
+    <div class="field client-filter">
+      <label for="tv-client" class="sr-only">Cliente</label>
+      <select id="tv-client" [ngModel]="clientFilter()" (ngModelChange)="setClientFilter($event)">
+        <option [ngValue]="null">Todos los clientes</option>
+        @for (c of clients(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+      </select>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="video-grid" aria-busy="true" aria-label="Cargando vídeos">
+      @for (i of [1, 2, 3]; track i) { <div class="skeleton sk-video"></div> }
+    </div>
+  } @else if (loadError()) {
+    <div class="alert error"><mat-icon>error</mat-icon><span>{{ loadError() }}</span></div>
+    <button type="button" class="btn btn-outline" (click)="load()">Reintentar</button>
+  } @else if (visible().length === 0) {
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>{{ filter() === 'PENDING' ? 'task_alt' : 'videocam' }}</mat-icon>
+        @if (filter() === 'PENDING') {
+          <p><strong>¡Todo corregido!</strong></p>
+          <p class="tip">Cuando un cliente te envíe un vídeo de su técnica aparecerá aquí y te llegará una notificación.</p>
+        } @else {
+          <p>Todavía no hay vídeos{{ clientFilter() ? ' de este cliente' : '' }}.</p>
+          <p class="tip">Envía un vídeo de ejemplo para que tus clientes vean cómo se hace cada ejercicio.</p>
+          <button type="button" class="btn btn-primary" (click)="showUpload.set(true)"><mat-icon>video_call</mat-icon> Enviar vídeo</button>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="video-grid">
+      @for (v of visible(); track v.id) {
+        <article class="video-card" [class.new]="isPending(v)">
+          <div class="head">
+            <div class="titles">
+              <h3>{{ v.exerciseName }}</h3>
+              <div class="meta">
+                <a [routerLink]="['/trainer/clients', v.clientId]" class="client-link">{{ v.clientName }}</a>
+                · {{ v.createdAt | date: "d MMM, HH:mm" }}
+              </div>
+            </div>
+            <div class="badges">
+              @if (v.source === 'TRAINER') {
+                <span class="badge blue">Enviado por ti</span>
+              } @else if (v.reviewedAt) {
+                <span class="badge green">Corregido</span>
+              } @else {
+                <span class="badge orange">Por corregir</span>
+              }
+            </div>
+          </div>
+
+          <app-video-player [videoId]="v.id" [label]="v.exerciseName" [duration]="v.durationSeconds" />
+
+          @if (v.note) {
+            <p class="note"><strong>{{ v.source === 'TRAINER' ? 'Tu nota:' : 'Nota del cliente:' }}</strong> {{ v.note }}</p>
+          }
+
+          @if (v.source === 'CLIENT') {
+            @if (v.reviewedAt && editing() !== v.id) {
+              <div class="feedback">
+                <mat-icon>sports</mat-icon>
+                <div><strong>Tu corrección</strong><p>{{ v.feedback }}</p></div>
+              </div>
+            } @else {
+              <div class="field">
+                <label [for]="'fb-' + v.id">Corrección</label>
+                <textarea [id]="'fb-' + v.id" rows="3" maxlength="2000" [ngModel]="draft(v)" (ngModelChange)="setDraft(v, $event)"
+                          placeholder="p. ej. Buena profundidad. Mantén el pecho arriba y empuja con el talón."></textarea>
+              </div>
+            }
+          }
+
+          <div class="actions">
+            <button type="button" class="btn btn-light btn-sm" (click)="remove(v)" [attr.aria-label]="'Eliminar vídeo de ' + v.exerciseName">
+              <mat-icon>delete</mat-icon>
+            </button>
+            @if (v.source === 'CLIENT') {
+              @if (v.reviewedAt && editing() !== v.id) {
+                <button type="button" class="btn btn-outline btn-sm" (click)="startEdit(v)"><mat-icon>edit</mat-icon> Editar corrección</button>
+              } @else {
+                @if (editing() === v.id) {
+                  <button type="button" class="btn btn-outline btn-sm" (click)="editing.set(null)">Cancelar</button>
+                }
+                <button type="button" class="btn btn-primary btn-sm" (click)="saveFeedback(v)" [disabled]="!draft(v).trim() || savingId() === v.id">
+                  <mat-icon>send</mat-icon> {{ savingId() === v.id ? 'Enviando…' : 'Enviar corrección' }}
+                </button>
+              }
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+@if (showUpload()) {
+  <app-video-upload-dialog
+    mode="trainer"
+    [clients]="clients()"
+    [exercises]="exercises()"
+    [initialClientId]="clientFilter()"
+    (closed)="showUpload.set(false)"
+    (uploaded)="onUploaded($event)"
+  />
+}
