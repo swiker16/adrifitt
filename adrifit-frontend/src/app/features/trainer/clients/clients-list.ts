@@ -36,7 +36,23 @@ export class ClientsList {
   readonly createdInfo = signal<{ name: string; email: string; username: string; password: string } | null>(null);
   readonly copied = signal<CopyKind | null>(null);
 
-  readonly filtered = computed(() => this.clients());
+  readonly search = signal('');
+  readonly sort = signal<'recent' | 'name'>('recent');
+
+  readonly filtered = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    let list = this.clients();
+    if (q) {
+      list = list.filter((c) =>
+        [c.firstName, c.lastName, c.email, c.phone, c.objective]
+          .some((v) => (v ?? '').toLowerCase().includes(q))
+        || `${c.firstName} ${c.lastName}`.toLowerCase().includes(q));
+    }
+    if (this.sort() === 'name') {
+      list = [...list].sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'es'));
+    }
+    return list;
+  });
 
   readonly form = this.fb.group({
     firstName:  this.fb.nonNullable.control('', Validators.required),

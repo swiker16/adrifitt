@@ -18,7 +18,7 @@
 <div class="content">
   @if (tab() === 'log') {
     @if (loadingDays()) {
-      <div class="panel"><div class="loading">Cargando tu rutina...</div></div>
+      <div class="sk-list" aria-busy="true" aria-label="Cargando tu rutina"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
     } @else if (noRoutine()) {
       <div class="panel">
         <div class="empty">
@@ -93,7 +93,7 @@
       }
 
       @if (loadingTemplate()) {
-        <div class="panel"><div class="loading">Cargando ejercicios...</div></div>
+        <div class="sk-list" aria-busy="true" aria-label="Cargando ejercicios"><div class="skeleton tall"></div><div class="skeleton tall"></div></div>
       } @else if (templateError()) {
         <div class="alert error mb"><mat-icon>error</mat-icon><span>{{ templateError() }}</span></div>
         <button type="button" class="btn btn-outline" (click)="selectDay(selectedDay()!)">Reintentar</button>
@@ -122,13 +122,13 @@
 
             <div class="sets">
               <div class="set-row set-header">
-                <span>Serie</span><span>Peso (kg)</span><span>Reps</span><span>RIR</span><span class="c">Hecha</span>
+                <span></span><span>Peso kg</span><span>Reps</span><span>RIR</span><span class="c">Hecha</span>
               </div>
               @for (r of e.rows; track r.setNumber; let ri = $index) {
                 @let err = errors()[ei][ri];
                 @let prev = previousFor(e.ex, r.setNumber);
                 <div class="set-row" [class.done]="r.done">
-                  <span class="set-label">{{ r.setNumber }}</span>
+                  <span class="set-label"><small>Serie</small>{{ r.setNumber }}</span>
                   <input
                     class="in"
                     [class.invalid]="!!err.weight"
@@ -174,7 +174,7 @@
                 </div>
                 @if (prev || err.weight || err.reps || err.rir) {
                   <div class="set-sub">
-                    @if (prev) { <span class="prev">Última vez: {{ previousText(prev) }}</span> }
+                    @if (prev) { <span class="prev"><mat-icon>history</mat-icon>Última vez: {{ previousText(prev) }}</span> }
                     @if (err.weight) { <span class="err">{{ err.weight }}</span> }
                     @if (err.reps) { <span class="err">{{ err.reps }}</span> }
                     @if (err.rir) { <span class="err">{{ err.rir }}</span> }
@@ -226,7 +226,7 @@
   } @else {
     <!-- ── Historial ── -->
     @if (loadingHistory()) {
-      <div class="panel"><div class="loading">Cargando historial...</div></div>
+      <div class="sk-list" aria-busy="true" aria-label="Cargando historial"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
     } @else if (historyError()) {
       <div class="alert error mb"><mat-icon>error</mat-icon><span>{{ historyError() }}</span></div>
       <button type="button" class="btn btn-outline" (click)="loadHistory()">Reintentar</button>

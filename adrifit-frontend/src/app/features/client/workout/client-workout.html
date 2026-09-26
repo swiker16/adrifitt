@@ -5,7 +5,7 @@
   </div>
   @if (clientWorkout()) {
     <div class="topbar-actions">
-      <a routerLink="/client/workout-log" class="btn btn-primary">
+      <a routerLink="/client/workout-log" class="btn btn-primary desktop-only">
         <mat-icon>edit_note</mat-icon> Registrar entreno
       </a>
       <span class="pdf-wrap" [attr.title]="pdfExportEnabled() ? null : 'Disponible en planes con exportación PDF'">
@@ -20,7 +20,11 @@
 
 <div class="content">
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando tu rutina...</div></div>
+    <div class="sk-list" aria-busy="true" aria-label="Cargando tu rutina">
+      <div class="skeleton sk-hero"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
   } @else if (error() || !clientWorkout()) {
     <div class="panel">
       <div class="empty">
@@ -34,23 +38,23 @@
     }
 
     <div class="hero-card">
-      <div class="hero-icon"><mat-icon>fitness_center</mat-icon></div>
       <div class="hero-main">
+        <div class="hero-label"><mat-icon>fitness_center</mat-icon> Rutina activa</div>
         <h1>{{ clientWorkout()!.workout.name }}</h1>
         <div class="hero-meta">
           @if (clientWorkout()!.workout.daysPerWeek) {
-            <span class="tag orange">{{ clientWorkout()!.workout.daysPerWeek }} días/semana</span>
+            <span class="hchip strong">{{ clientWorkout()!.workout.daysPerWeek }} días/semana</span>
           }
           @if (clientWorkout()!.workout.objective) {
-            <span class="tag gray">{{ clientWorkout()!.workout.objective }}</span>
+            <span class="hchip">{{ clientWorkout()!.workout.objective }}</span>
           }
-          <span class="tag gray">Asignada {{ clientWorkout()!.assignedAt | date: 'dd/MM/yyyy' }}</span>
+          <span class="hchip">Asignada {{ clientWorkout()!.assignedAt | date: 'dd/MM/yyyy' }}</span>
         </div>
         @if (clientWorkout()!.workout.description) {
           <p class="description">{{ clientWorkout()!.workout.description }}</p>
         }
       </div>
-      <a routerLink="/client/workout-log" class="btn btn-primary hero-cta">
+      <a routerLink="/client/workout-log" class="btn btn-primary btn-lg hero-cta">
         <mat-icon>edit_note</mat-icon> Registrar entreno
       </a>
     </div>
@@ -61,44 +65,42 @@
         <div class="panel day-panel">
           <div class="panel-head day-head">
             <div class="day-title">
-              <div class="day-badge">DÍA {{ day.dayNumber }}</div>
+              <div class="day-badge">Día {{ day.dayNumber }}</div>
               <h2>{{ day.dayName }}</h2>
             </div>
             <a class="btn btn-sm btn-outline" routerLink="/client/workout-log" [queryParams]="{ day: day.dayNumber }">
               <mat-icon>edit_note</mat-icon> Registrar este día
             </a>
           </div>
-          <div class="panel-body p0">
-            <div class="table-wrap">
-              <table class="ex-table">
-                <thead>
+          <div class="table-wrap">
+            <table class="ex-table">
+              <thead>
+                <tr>
+                  <th>Ejercicio</th>
+                  <th>Aproximaciones</th>
+                  <th class="center">Reps aprox.</th>
+                  <th class="center">Series</th>
+                  <th class="center">Reps</th>
+                  <th class="center">RIR</th>
+                  <th class="center">Descanso</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (ex of day.exercises; track $index; let i = $index) {
                   <tr>
-                    <th>Ejercicio</th>
-                    <th>Aproximaciones</th>
-                    <th>Reps aprox.</th>
-                    <th>Series</th>
-                    <th>Reps</th>
-                    <th>RIR</th>
-                    <th>Descanso</th>
-                    <th>Notas</th>
+                    <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span>{{ ex.exerciseName }}</td>
+                    <td class="warm-cell" data-label="Aproximaciones">{{ ex.warmUpSets || '—' }}</td>
+                    <td class="center" data-label="Reps aprox.">{{ ex.approxReps || '—' }}</td>
+                    <td class="center metric" data-label="Series">{{ ex.sets }}</td>
+                    <td class="center metric" data-label="Reps">{{ ex.reps || '—' }}</td>
+                    <td class="center metric" data-label="RIR">{{ ex.rir ?? '—' }}</td>
+                    <td class="center" data-label="Descanso">{{ restText(ex.restSeconds) }}</td>
+                    <td class="notes-cell" [class.no-notes]="!ex.notes" data-label="Notas">{{ ex.notes || '—' }}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  @for (ex of day.exercises; track $index) {
-                    <tr>
-                      <td class="ex-name-cell">{{ ex.exerciseName }}</td>
-                      <td>{{ ex.warmUpSets || '—' }}</td>
-                      <td class="center">{{ ex.approxReps || '—' }}</td>
-                      <td class="center">{{ ex.sets }}</td>
-                      <td class="center">{{ ex.reps || '—' }}</td>
-                      <td class="center">{{ ex.rir ?? '—' }}</td>
-                      <td class="center">{{ restText(ex.restSeconds) }}</td>
-                      <td class="notes-cell">{{ ex.notes || '—' }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
       }
@@ -106,39 +108,35 @@
       <!-- Vista plana (sin días definidos) -->
       <div class="panel">
         <div class="panel-head"><h2>Ejercicios</h2></div>
-        <div class="panel-body p0">
-          <div class="table-wrap">
-            <table class="ex-table">
-              <thead>
+        <div class="table-wrap">
+          <table class="ex-table">
+            <thead>
+              <tr>
+                <th>Ejercicio</th>
+                <th>Aproximaciones</th>
+                <th class="center">Reps aprox.</th>
+                <th class="center">Series</th>
+                <th class="center">Reps</th>
+                <th class="center">RIR</th>
+                <th class="center">Descanso</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ex of clientWorkout()!.workout.exercises; track $index; let i = $index) {
                 <tr>
-                  <th>#</th>
-                  <th>Ejercicio</th>
-                  <th>Aproximaciones</th>
-                    <th>Reps aprox.</th>
-                  <th>Series</th>
-                  <th>Reps</th>
-                  <th>RIR</th>
-                  <th>Descanso</th>
-                  <th>Notas</th>
+                  <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span>{{ ex.exerciseName }}</td>
+                  <td class="warm-cell" data-label="Aproximaciones">{{ ex.warmUpSets || '—' }}</td>
+                  <td class="center" data-label="Reps aprox.">{{ ex.approxReps || '—' }}</td>
+                  <td class="center metric" data-label="Series">{{ ex.sets }}</td>
+                  <td class="center metric" data-label="Reps">{{ ex.reps || '—' }}</td>
+                  <td class="center metric" data-label="RIR">{{ ex.rir ?? '—' }}</td>
+                  <td class="center" data-label="Descanso">{{ restText(ex.restSeconds) }}</td>
+                  <td class="notes-cell" [class.no-notes]="!ex.notes" data-label="Notas">{{ ex.notes || '—' }}</td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (ex of clientWorkout()!.workout.exercises; track $index; let i = $index) {
-                  <tr>
-                    <td class="center num-cell">{{ i + 1 }}</td>
-                    <td class="ex-name-cell">{{ ex.exerciseName }}</td>
-                    <td>{{ ex.warmUpSets || '—' }}</td>
-                      <td class="center">{{ ex.approxReps || '—' }}</td>
-                    <td class="center">{{ ex.sets }}</td>
-                    <td class="center">{{ ex.reps || '—' }}</td>
-                    <td class="center">{{ ex.rir ?? '—' }}</td>
-                    <td class="center">{{ restText(ex.restSeconds) }}</td>
-                    <td class="notes-cell">{{ ex.notes || '—' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+              }
+            </tbody>
+          </table>
         </div>
       </div>
     }

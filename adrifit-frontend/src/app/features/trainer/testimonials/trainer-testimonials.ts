@@ -39,6 +39,15 @@ export class TrainerTestimonials {
     return list.length ? list.reduce((acc, t) => acc + t.rating, 0) / list.length : 0;
   });
 
+  /** Count and share of reviews per star rating (5 to 1). */
+  readonly distribution = computed(() => {
+    const list = this.testimonials();
+    return [5, 4, 3, 2, 1].map((star) => {
+      const count = list.filter((t) => Math.round(t.rating) === star).length;
+      return { star, count, pct: list.length ? (count / list.length) * 100 : 0 };
+    });
+  });
+
   readonly visibleCount = computed(() => this.testimonials().filter((t) => t.visible).length);
 
   constructor() {

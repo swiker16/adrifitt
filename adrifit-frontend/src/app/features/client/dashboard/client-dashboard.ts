@@ -19,6 +19,7 @@ export class ClientDashboard {
   private readonly dashboardService = inject(DashboardService);
 
   readonly statusLabel = SUBSCRIPTION_STATUS_LABEL;
+  readonly today = new Date();
 
   readonly data = signal<ClientDashboardData | null>(null);
   readonly loading = signal(true);

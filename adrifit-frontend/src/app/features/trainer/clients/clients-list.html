@@ -17,15 +17,16 @@
   @if (showForm()) {
     <form class="client-form" [formGroup]="form" (ngSubmit)="save()">
       <div class="cf-head">
-        <div class="cf-icon"><mat-icon>person_add</mat-icon></div>
-        <div>
+        <span class="tile orange"><mat-icon>person_add</mat-icon></span>
+        <div class="cf-head-text">
           <h3>Nuevo cliente</h3>
           <p>Rellena los datos básicos y asigna un plan. Se generará un usuario y una contraseña temporal.</p>
         </div>
+        <button type="button" class="modal-close" (click)="toggleForm()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
       </div>
 
       @if (formError()) {
-        <div class="form-alert"><mat-icon>error</mat-icon> {{ formError() }}</div>
+        <div class="alert error"><mat-icon>error_outline</mat-icon> {{ formError() }}</div>
       }
 
       <div class="cf-section">
@@ -80,15 +81,15 @@
             }
           </label>
         </div>
-        <div class="email-info"><mat-icon>info</mat-icon> Se generará un correo de bienvenida con sus credenciales (modo prueba: no se envía, queda en la bandeja de correos). Deberá cambiar la contraseña en su primer acceso.</div>
+        <div class="alert info email-info"><mat-icon>info</mat-icon> Se generará un correo de bienvenida con sus credenciales (modo prueba: no se envía, queda en la bandeja de correos). Deberá cambiar la contraseña en su primer acceso.</div>
       </div>
 
       <div class="cf-section">
         <div class="cf-section-title"><mat-icon>workspace_premium</mat-icon> Asignación inicial</div>
         @if (plansError()) {
-          <div class="form-alert" style="margin: 0 0 12px"><mat-icon>error</mat-icon> {{ plansError() }}</div>
+          <div class="alert error"><mat-icon>error_outline</mat-icon> {{ plansError() }}</div>
         } @else if (plans().length === 0) {
-          <p class="notes-hint">No hay planes activos. Crea uno en la sección Planes.</p>
+          <div class="alert warn"><mat-icon>info</mat-icon> No hay planes activos. Crea uno en la sección Planes.</div>
         }
         <div class="plan-picker">
           @for (p of plans(); track p.id) {
@@ -101,9 +102,7 @@
               </div>
               <p class="po-desc">{{ p.description }}</p>
               <span class="po-freq"><mat-icon>event_repeat</mat-icon> Revisión cada {{ p.reviewFrequencyDays }} días</span>
-              @if (form.controls.planId.value === p.id) {
-                <mat-icon class="po-check">check_circle</mat-icon>
-              }
+              <span class="po-radio"><mat-icon>check</mat-icon></span>
             </button>
           }
         </div>
@@ -120,7 +119,7 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="toggleForm()">Cancelar</button>
+        <button type="button" class="btn btn-light" (click)="toggleForm()">Cancelar</button>
         <button type="submit" class="btn btn-primary" [disabled]="saving()">
           <mat-icon>{{ saving() ? 'hourglass_empty' : 'person_add' }}</mat-icon>
           {{ saving() ? 'Creando...' : 'Crear cliente' }}
@@ -129,73 +128,108 @@
     </form>
   }
 
-  @if (!(showForm() && filtered().length === 0)) {
-  <div class="panel">
-    <div class="panel-body">
-      @if (loading()) {
-        <div class="loading">Cargando clientes...</div>
-      } @else if (error()) {
-        <div class="empty">
-          <mat-icon>cloud_off</mat-icon>
-          <p>No se pudieron cargar los clientes.</p>
-        </div>
-      } @else if (filtered().length === 0) {
-        <div class="empty">
-          <mat-icon>group_add</mat-icon>
-          <p>Aún no tienes clientes.</p>
-          <button class="btn btn-primary" (click)="toggleForm()"><mat-icon>add</mat-icon> Crear el primero</button>
-        </div>
-      } @else {
-        <!-- Tabla: desktop -->
-        <table class="table desktop-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Objetivo</th>
-              <th>Teléfono</th>
-              <th>Alta</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (c of filtered(); track c.id) {
-              <tr [routerLink]="['/trainer/clients', c.id]">
-                <td>
-                  <div class="cell-user">
-                    <span class="avatar">{{ initials(c) }}</span>
-                    <div>
-                      <div class="name">{{ c.firstName }} {{ c.lastName }}</div>
-                      <div class="sub">Cliente #{{ c.id }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{{ c.objective || '—' }}</td>
-                <td>{{ c.phone || '—' }}</td>
-                <td>{{ c.createdAt | date: 'dd/MM/yyyy' }}</td>
-                <td><mat-icon style="color: var(--text-gray)">chevron_right</mat-icon></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <!-- Cards: móvil -->
-        <div class="client-cards">
-          @for (c of filtered(); track c.id) {
-            <div class="client-card" [routerLink]="['/trainer/clients', c.id]">
-              <span class="cc-avatar">{{ initials(c) }}</span>
-              <div class="cc-info">
-                <div class="cc-name">{{ c.firstName }} {{ c.lastName }}</div>
-                <div class="cc-meta">
-                  @if (c.objective) { <span>{{ c.objective }}</span> }
-                  @if (c.phone) { <span><mat-icon>phone</mat-icon>{{ c.phone }}</span> }
-                  <span><mat-icon>calendar_today</mat-icon>{{ c.createdAt | date: 'dd/MM/yy' }}</span>
-                </div>
-              </div>
-              <mat-icon class="cc-chevron">chevron_right</mat-icon>
-            </div>
-          }
-        </div>
+  @if (!(showForm() && clients().length === 0)) {
+  <div class="toolbar">
+    <label class="search">
+      <mat-icon>search</mat-icon>
+      <input type="search" placeholder="Buscar por nombre, email, teléfono…" [value]="search()" (input)="search.set($any($event.target).value)" />
+      @if (search()) {
+        <button type="button" class="search-clear" (click)="search.set('')" aria-label="Limpiar búsqueda"><mat-icon>close</mat-icon></button>
       }
+    </label>
+    <div class="segmented">
+      <button type="button" [class.active]="sort() === 'recent'" (click)="sort.set('recent')">Recientes</button>
+      <button type="button" [class.active]="sort() === 'name'" (click)="sort.set('name')">A–Z</button>
     </div>
+    @if (!loading() && !error()) {
+      <span class="count">{{ filtered().length }} cliente{{ filtered().length !== 1 ? 's' : '' }}</span>
+    }
+  </div>
+
+  <div class="panel">
+    @if (loading()) {
+      <div class="sk-list">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="sk-row"><div class="skeleton sk-av"></div><div class="sk-lines"><div class="skeleton sk-l1"></div><div class="skeleton sk-l2"></div></div></div>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>No se pudieron cargar los clientes.</p>
+        <button class="btn btn-outline" (click)="load()"><mat-icon>refresh</mat-icon> Reintentar</button>
+      </div>
+    } @else if (clients().length === 0) {
+      <div class="empty">
+        <mat-icon>group_add</mat-icon>
+        <p>Aún no tienes clientes.</p>
+        <button class="btn btn-primary" (click)="toggleForm()"><mat-icon>add</mat-icon> Crear el primero</button>
+      </div>
+    } @else if (filtered().length === 0) {
+      <div class="empty">
+        <mat-icon>search_off</mat-icon>
+        <p>Ningún cliente coincide con «{{ search() }}».</p>
+      </div>
+    } @else {
+      <!-- Tabla: desktop -->
+      <table class="table desktop-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Objetivo</th>
+            <th>Teléfono</th>
+            <th>Alta</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of filtered(); track c.id) {
+            <tr [routerLink]="['/trainer/clients', c.id]">
+              <td>
+                <div class="cell-user">
+                  @if (c.photoBase64) {
+                    <img class="avatar photo" [src]="c.photoBase64" alt="" />
+                  } @else {
+                    <span class="avatar">{{ initials(c) }}</span>
+                  }
+                  <div class="min0">
+                    <div class="name">{{ c.firstName }} {{ c.lastName }}</div>
+                    <div class="sub">{{ c.email || ('Cliente #' + c.id) }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                @if (c.objective) { <span class="objective">{{ c.objective }}</span> } @else { <span class="muted">—</span> }
+              </td>
+              <td class="muted">{{ c.phone || '—' }}</td>
+              <td class="muted">{{ c.createdAt | date: 'dd/MM/yyyy' }}</td>
+              <td class="chev"><mat-icon>chevron_right</mat-icon></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <!-- Cards: móvil -->
+      <div class="client-cards">
+        @for (c of filtered(); track c.id) {
+          <a class="client-card" [routerLink]="['/trainer/clients', c.id]">
+            @if (c.photoBase64) {
+              <img class="avatar photo" [src]="c.photoBase64" alt="" />
+            } @else {
+              <span class="avatar">{{ initials(c) }}</span>
+            }
+            <div class="cc-info">
+              <div class="cc-name">{{ c.firstName }} {{ c.lastName }}</div>
+              @if (c.objective) { <div class="cc-obj">{{ c.objective }}</div> }
+              <div class="cc-meta">
+                @if (c.phone) { <span><mat-icon>call</mat-icon>{{ c.phone }}</span> }
+                <span><mat-icon>event</mat-icon>{{ c.createdAt | date: 'dd/MM/yy' }}</span>
+              </div>
+            </div>
+            <mat-icon class="cc-chevron">chevron_right</mat-icon>
+          </a>
+        }
+      </div>
+    }
   </div>
   }
 </div>
@@ -210,7 +244,7 @@
       </div>
       <div class="modal-body">
         <div class="created-top">
-          <span class="cb-icon"><mat-icon>check_circle</mat-icon></span>
+          <span class="tile green"><mat-icon>check_circle</mat-icon></span>
           <div>
             <strong>{{ info.name }}</strong>
             <span>{{ info.email }}</span>

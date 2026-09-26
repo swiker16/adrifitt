@@ -41,8 +41,9 @@ export class DietList {
 
   constructor() { this.load(); }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
+    this.error.set(false);
     this.dietService.findAll().subscribe({
       next: (d) => { this.diets.set(d); this.loading.set(false); },
       error: () => { this.error.set(true); this.loading.set(false); },

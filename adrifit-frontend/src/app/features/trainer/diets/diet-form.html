@@ -1,189 +1,185 @@
 <div class="topbar">
   <div>
+    <a routerLink="/trainer/diets" class="back-link"><mat-icon>arrow_back</mat-icon> Dietas</a>
     <div class="page-title">{{ editId() ? 'Editar dieta' : 'Nueva dieta' }}</div>
     <div class="subtitle">{{ editId() ? 'Modifica el plan nutricional' : 'Crea un nuevo plan nutricional' }}</div>
-  </div>
-  <div class="topbar-actions">
-    <a routerLink="/trainer/diets" class="btn btn-secondary">Cancelar</a>
-    <button class="btn btn-primary" [disabled]="saving()" (click)="save()">
-      <mat-icon>save</mat-icon> {{ saving() ? 'Guardando...' : 'Guardar dieta' }}
-    </button>
   </div>
 </div>
 
 <div class="content">
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando dieta...</div></div>
+    <div class="skeleton" style="height: 220px; margin-bottom: 20px"></div>
+    <div class="skeleton" style="height: 360px"></div>
   } @else {
-    @if (error()) {
-      <div class="error-banner"><mat-icon>error_outline</mat-icon> {{ error() }}</div>
-    }
+    <div class="editor">
+      @if (error()) {
+        <div class="alert error"><mat-icon>error_outline</mat-icon> {{ error() }}</div>
+      }
 
-    <form [formGroup]="form">
-      <!-- ── Info básica ── -->
-      <div class="panel">
-        <div class="panel-head"><h2>Información general</h2></div>
-        <div class="panel-body form-grid">
-          <div class="field field-wide">
-            <label>Nombre <span class="req">*</span></label>
-            <input type="text" formControlName="name" placeholder="Ej: Plan hipocalórico fase 1" />
-            @if (form.get('name')?.invalid && form.get('name')?.touched) {
-              <span class="field-error">El nombre es obligatorio</span>
-            }
+      <form class="editor" [formGroup]="form">
+        <!-- Info básica -->
+        <section class="section">
+          <div class="section-head">
+            <div class="t">
+              <span class="lib-tile green"><mat-icon>info</mat-icon></span>
+              <div><h2>Información general</h2><p>Nombre, objetivo y descripción del plan.</p></div>
+            </div>
           </div>
-          <div class="field">
-            <label>Objetivo</label>
-            <input type="text" formControlName="objective" placeholder="Ej: Pérdida de grasa" />
+          <div class="section-body">
+            <div class="form-grid">
+              <div class="field">
+                <label for="d-name">Nombre <span class="req">*</span></label>
+                <input id="d-name" type="text" formControlName="name" placeholder="Ej: Plan hipocalórico fase 1" />
+                @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                  <span class="err">El nombre es obligatorio</span>
+                }
+              </div>
+              <div class="field">
+                <label for="d-obj">Objetivo</label>
+                <input id="d-obj" type="text" formControlName="objective" placeholder="Ej: Pérdida de grasa" />
+              </div>
+              <div class="field full">
+                <label for="d-desc">Descripción</label>
+                <textarea id="d-desc" formControlName="description" rows="3" placeholder="Descripción general del plan..."></textarea>
+              </div>
+            </div>
           </div>
-          <div class="field field-wide">
-            <label>Descripción</label>
-            <textarea formControlName="description" rows="3" placeholder="Descripción general del plan..."></textarea>
-          </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- ── Días ── -->
-      <div class="panel days-panel" formArrayName="days">
-        <div class="panel-head">
-          <h2>Días ({{ days.length }})</h2>
-          <button type="button" class="btn btn-primary btn-sm" (click)="addDay()">
-            <mat-icon>add</mat-icon> Añadir día
-          </button>
-        </div>
-        <div class="panel-body p0">
+        <!-- Días -->
+        <section class="section" formArrayName="days">
+          <div class="section-head">
+            <div class="t">
+              <span class="lib-tile"><mat-icon>calendar_month</mat-icon></span>
+              <div><h2>Días ({{ days.length }})</h2><p>Cada día agrupa sus comidas y alimentos.</p></div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" (click)="addDay()">
+              <mat-icon>add</mat-icon> Añadir día
+            </button>
+          </div>
 
           @if (days.length === 0) {
-            <div class="empty-hint"><mat-icon>calendar_today</mat-icon><p>Añade al menos un día para estructurar la dieta.</p></div>
+            <div class="empty">
+              <mat-icon>calendar_today</mat-icon>
+              <p>Añade al menos un día para estructurar la dieta.</p>
+              <button type="button" class="btn btn-primary empty-cta" (click)="addDay()"><mat-icon>add</mat-icon> Añadir día</button>
+            </div>
           }
 
-          <!-- Day tabs -->
           @if (days.length > 0) {
-            <div class="day-tabs">
+            <div class="day-tabs" role="tablist">
               @for (day of days.controls; track $index) {
-                <button type="button" class="day-tab" [class.active]="activeDayIndex() === $index"
-                  (click)="activeDayIndex.set($index)">
-                  Día {{ $index + 1 }}
-                  @if (days.at($index).get('name')?.value) {
-                    <span class="day-tab-name">{{ days.at($index).get('name')?.value }}</span>
-                  }
+                <button type="button" class="day-tab" role="tab" [class.active]="activeDayIndex() === $index"
+                  [attr.aria-selected]="activeDayIndex() === $index" (click)="activeDayIndex.set($index)">
+                  <span class="dt-num">Día {{ $index + 1 }}</span>
+                  <span class="dt-name">{{ days.at($index).get('name')?.value || 'Sin nombre' }}</span>
                 </button>
               }
             </div>
           }
 
-          <!-- Active day content -->
           @for (dayCtrl of days.controls; track di; let di = $index) {
             @if (activeDayIndex() === di) {
-              <div class="day-section" [formGroupName]="di">
-                <div class="day-header">
-                  <div class="day-fields">
-                    <div class="field">
-                      <label>Nombre del día <span class="req">*</span></label>
-                      <input type="text" formControlName="name" placeholder="Ej: Lunes / Día de pierna" />
-                    </div>
-                    <div class="field field-sm">
-                      <label>Nº día</label>
-                      <input type="number" formControlName="dayNumber" min="1" placeholder="1" />
-                    </div>
-                    <div class="field field-wide">
-                      <label>Notas del día</label>
-                      <input type="text" formControlName="notes" placeholder="Notas opcionales..." />
-                    </div>
+              <div class="section-body day-body" [formGroupName]="di">
+                <div class="day-fields">
+                  <div class="field f-name">
+                    <label>Nombre del día <span class="req">*</span></label>
+                    <input type="text" formControlName="name" placeholder="Ej: Lunes / Día de pierna" />
                   </div>
-                  <button type="button" class="btn-remove-day" title="Eliminar día" (click)="removeDay(di)">
+                  <div class="field f-num">
+                    <label>Nº día</label>
+                    <input type="number" formControlName="dayNumber" min="1" placeholder="1" />
+                  </div>
+                  <div class="field f-notes">
+                    <label>Notas del día</label>
+                    <input type="text" formControlName="notes" placeholder="Notas opcionales..." />
+                  </div>
+                  <button type="button" class="icon-btn danger day-del" title="Eliminar día" (click)="removeDay(di)">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
 
-                <!-- Meals -->
-                <div class="meals-section" formArrayName="meals">
-                  <div class="meals-header">
-                    <h4>Comidas ({{ getMeals(di).length }})</h4>
-                    <button type="button" class="btn btn-secondary btn-sm" (click)="addMeal(di)">
+                <!-- Comidas -->
+                <div class="meals" formArrayName="meals">
+                  <div class="meals-head">
+                    <h3 class="section-title">Comidas <span class="count">{{ getMeals(di).length }}</span></h3>
+                    <button type="button" class="btn btn-light btn-sm" (click)="addMeal(di)">
                       <mat-icon>add</mat-icon> Añadir comida
                     </button>
                   </div>
 
                   @if (getMeals(di).length === 0) {
-                    <div class="empty-hint sm"><mat-icon>restaurant</mat-icon><p>Añade comidas a este día.</p></div>
+                    <div class="empty sm"><mat-icon>restaurant</mat-icon><p>Añade comidas a este día.</p></div>
                   }
 
                   @for (mealCtrl of getMeals(di).controls; track mi; let mi = $index) {
                     <div class="meal-card" [formGroupName]="mi">
-                      <div class="meal-header">
+                      <div class="meal-head">
+                        <span class="meal-idx"><mat-icon>restaurant_menu</mat-icon></span>
                         <div class="meal-fields">
-                          <div class="field">
+                          <div class="field m-name">
                             <label>Nombre <span class="req">*</span></label>
                             <input type="text" formControlName="name" placeholder="Ej: Desayuno" />
                           </div>
-                          <div class="field field-sm">
+                          <div class="field m-time">
                             <label>Hora</label>
                             <input type="text" formControlName="time" placeholder="08:00" />
                           </div>
-                          <div class="field field-wide">
+                          <div class="field m-notes">
                             <label>Notas</label>
                             <input type="text" formControlName="notes" placeholder="Notas opcionales..." />
                           </div>
                         </div>
-                        <button type="button" class="icon-btn danger" title="Eliminar comida" (click)="removeMeal(di, mi)">
+                        <button type="button" class="icon-btn sm danger" title="Eliminar comida" (click)="removeMeal(di, mi)">
                           <mat-icon>close</mat-icon>
                         </button>
                       </div>
 
-                      <!-- Foods -->
-                      <div class="foods-section" formArrayName="foods">
+                      <!-- Alimentos -->
+                      <div class="foods" formArrayName="foods">
+                        @if (getFoods(di, mi).length > 0) {
+                          <div class="food-grid food-header" aria-hidden="true">
+                            <span>Alimento</span><span>Cant.</span><span>Unidad</span><span>Kcal</span>
+                            <span>P (g)</span><span>HC (g)</span><span>G (g)</span><span>Notas</span><span></span>
+                          </div>
+                        }
                         @for (foodCtrl of getFoods(di, mi).controls; track fi; let fi = $index) {
-                          <div class="food-row" [formGroupName]="fi">
-                            <div class="food-main">
-                              <div class="field food-name">
-                                <input type="text" formControlName="foodName" placeholder="Alimento *" />
-                              </div>
-                              <div class="field food-qty">
-                                <input type="number" formControlName="quantity" placeholder="Cant." min="0" step="0.1" />
-                              </div>
-                              <div class="field food-unit">
-                                <input type="text" formControlName="unit" placeholder="Unidad" />
-                              </div>
-                              <div class="field food-macro">
-                                <input type="number" formControlName="calories" placeholder="Kcal" min="0" step="0.1" />
-                              </div>
-                              <div class="field food-macro">
-                                <input type="number" formControlName="proteinGrams" placeholder="P(g)" min="0" step="0.1" />
-                              </div>
-                              <div class="field food-macro">
-                                <input type="number" formControlName="carbsGrams" placeholder="HC(g)" min="0" step="0.1" />
-                              </div>
-                              <div class="field food-macro">
-                                <input type="number" formControlName="fatGrams" placeholder="G(g)" min="0" step="0.1" />
-                              </div>
-                              <div class="field food-notes">
-                                <input type="text" formControlName="notes" placeholder="Notas" />
-                              </div>
-                              <button type="button" class="icon-btn danger" title="Eliminar alimento" (click)="removeFood(di, mi, fi)">
+                          <div class="food-item" [formGroupName]="fi">
+                            <div class="food-grid">
+                              <div class="c c-name"><label>Alimento *</label><input type="text" formControlName="foodName" placeholder="Alimento *" /></div>
+                              <div class="c c-3"><label>Cant.</label><input type="number" formControlName="quantity" placeholder="Cant." min="0" step="0.1" /></div>
+                              <div class="c c-3"><label>Unidad</label><input type="text" formControlName="unit" placeholder="Unidad" /></div>
+                              <div class="c c-m"><label>Kcal</label><input type="number" formControlName="calories" placeholder="Kcal" min="0" step="0.1" /></div>
+                              <div class="c c-m"><label>P (g)</label><input type="number" formControlName="proteinGrams" placeholder="P(g)" min="0" step="0.1" /></div>
+                              <div class="c c-m"><label>HC (g)</label><input type="number" formControlName="carbsGrams" placeholder="HC(g)" min="0" step="0.1" /></div>
+                              <div class="c c-m"><label>G (g)</label><input type="number" formControlName="fatGrams" placeholder="G(g)" min="0" step="0.1" /></div>
+                              <div class="c c-notes"><label>Notas</label><input type="text" formControlName="notes" placeholder="Notas" /></div>
+                              <button type="button" class="icon-btn sm danger c-del" title="Eliminar alimento" (click)="removeFood(di, mi, fi)">
                                 <mat-icon>close</mat-icon>
                               </button>
                             </div>
-                            <!-- Alternatives -->
-                            <div class="alts-section" formArrayName="alternatives">
+
+                            <!-- Alternativas -->
+                            <div class="alts" formArrayName="alternatives">
                               @for (altCtrl of getAlternatives(di, mi, fi).controls; track ai; let ai = $index) {
                                 <div class="alt-row" [formGroupName]="ai">
                                   <mat-icon class="alt-icon">swap_horiz</mat-icon>
-                                  <input type="text" formControlName="alternativeName" placeholder="Alternativa" />
+                                  <input type="text" formControlName="alternativeName" placeholder="Alternativa" class="a-name" />
                                   <input type="number" formControlName="quantity" placeholder="Cant." min="0" step="0.1" />
                                   <input type="text" formControlName="unit" placeholder="Unidad" />
-                                  <input type="text" formControlName="notes" placeholder="Notas" />
-                                  <button type="button" class="icon-btn danger" (click)="removeAlternative(di, mi, fi, ai)">
+                                  <input type="text" formControlName="notes" placeholder="Notas" class="a-notes" />
+                                  <button type="button" class="icon-btn sm danger" title="Eliminar alternativa" (click)="removeAlternative(di, mi, fi, ai)">
                                     <mat-icon>close</mat-icon>
                                   </button>
                                 </div>
                               }
-                              <button type="button" class="btn-alt-add" (click)="addAlternative(di, mi, fi)">
+                              <button type="button" class="link-btn" (click)="addAlternative(di, mi, fi)">
                                 <mat-icon>add</mat-icon> Alternativa
                               </button>
                             </div>
                           </div>
                         }
-                        <button type="button" class="btn-food-add" (click)="addFood(di, mi)">
+                        <button type="button" class="add-row" (click)="addFood(di, mi)">
                           <mat-icon>add</mat-icon> Añadir alimento
                         </button>
                       </div>
@@ -193,8 +189,20 @@
               </div>
             }
           }
-        </div>
+        </section>
+      </form>
+
+      <div class="save-bar">
+        @if (error()) {
+          <span class="save-msg err">{{ error() }}</span>
+        } @else {
+          <span class="save-msg">{{ days.length }} día{{ days.length !== 1 ? 's' : '' }} en el plan</span>
+        }
+        <a routerLink="/trainer/diets" class="btn btn-outline">Cancelar</a>
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          <mat-icon>save</mat-icon> {{ saving() ? 'Guardando...' : 'Guardar dieta' }}
+        </button>
       </div>
-    </form>
+    </div>
   }
 </div>

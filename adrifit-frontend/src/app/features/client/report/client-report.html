@@ -8,60 +8,78 @@
 <div class="content">
   @if (submitted()) {
     <div class="success">
-      <mat-icon>check_circle</mat-icon>
-      <div>
+      <span class="tile green"><mat-icon>check_circle</mat-icon></span>
+      <div class="grow">
         <h3>¡Seguimiento registrado!</h3>
         <p>Tu coach lo revisará y recibirás feedback en breve. <a class="inline-link" routerLink="/client/photos">¿Añadir fotos de progreso?</a></p>
       </div>
-      <button class="btn btn-light" style="margin-left:auto" (click)="reset()">Enviar otro</button>
+      <button class="btn btn-outline" (click)="reset()">Enviar otro</button>
     </div>
   } @else {
     <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="alert info photo-hint">
-        <mat-icon>photo_camera</mat-icon>
-        <div>
-          Acompaña tu seguimiento con fotos de progreso (frente, perfil y espalda) para que tu entrenador vea tu evolución.
-          <a routerLink="/client/photos">Subir fotos de progreso</a>
-        </div>
-      </div>
-      <div class="form-grid">
+      <a routerLink="/client/photos" class="photo-hint">
+        <span class="tile violet"><mat-icon>photo_camera</mat-icon></span>
+        <span class="grow">
+          <strong>Añade fotos de progreso</strong>
+          <span>Frente, perfil y espalda para que tu entrenador vea tu evolución.</span>
+        </span>
+        <mat-icon class="chev">chevron_right</mat-icon>
+      </a>
+
+      <h3 class="group-title">Medidas</h3>
+      <div class="measures">
         <div class="field">
-          <label>Peso (kg) *</label>
-          <input type="number" step="0.1" formControlName="weight" placeholder="79.8" />
+          <label for="r-weight">Peso (kg) *</label>
+          <input id="r-weight" type="number" inputmode="decimal" step="0.1" formControlName="weight" placeholder="79.8" />
           @if (form.controls.weight.touched && form.controls.weight.invalid) {
             <small class="err">Introduce un peso válido (20–400).</small>
           }
         </div>
         <div class="field">
-          <label>Cintura (cm)</label>
-          <input type="number" step="0.1" formControlName="waist" placeholder="84" />
+          <label for="r-waist">Cintura (cm)</label>
+          <input id="r-waist" type="number" inputmode="decimal" step="0.1" formControlName="waist" placeholder="84" />
         </div>
         <div class="field">
-          <label>% Grasa corporal</label>
-          <input type="number" step="0.1" formControlName="bodyFat" placeholder="18" />
-        </div>
-        <div class="field">
-          <label>Nivel de energía: <span class="range-value">{{ form.controls.energyLevel.value }}/10</span></label>
-          <input type="range" min="1" max="10" formControlName="energyLevel" />
-        </div>
-        <div class="field">
-          <label>Adherencia dieta: <span class="range-value">{{ form.controls.dietAdherence.value }}%</span></label>
-          <input type="range" min="0" max="100" step="5" formControlName="dietAdherence" />
-        </div>
-        <div class="field">
-          <label>Adherencia entreno: <span class="range-value">{{ form.controls.trainingAdherence.value }}%</span></label>
-          <input type="range" min="0" max="100" step="5" formControlName="trainingAdherence" />
-        </div>
-        <div class="field full">
-          <label>Comentarios</label>
-          <textarea rows="4" formControlName="comments" placeholder="¿Cómo te has sentido esta semana?"></textarea>
+          <label for="r-fat">% Grasa corporal</label>
+          <input id="r-fat" type="number" inputmode="decimal" step="0.1" formControlName="bodyFat" placeholder="18" />
         </div>
       </div>
+
+      <h3 class="group-title">¿Cómo ha ido la semana?</h3>
+      <div class="sliders">
+        <div class="slider">
+          <div class="slider-top">
+            <label for="r-energy">Nivel de energía</label>
+            <span class="range-value">{{ form.controls.energyLevel.value }}<small>/10</small></span>
+          </div>
+          <input id="r-energy" type="range" min="1" max="10" formControlName="energyLevel" />
+        </div>
+        <div class="slider">
+          <div class="slider-top">
+            <label for="r-diet">Adherencia dieta</label>
+            <span class="range-value">{{ form.controls.dietAdherence.value }}<small>%</small></span>
+          </div>
+          <input id="r-diet" type="range" min="0" max="100" step="5" formControlName="dietAdherence" />
+        </div>
+        <div class="slider">
+          <div class="slider-top">
+            <label for="r-training">Adherencia entreno</label>
+            <span class="range-value">{{ form.controls.trainingAdherence.value }}<small>%</small></span>
+          </div>
+          <input id="r-training" type="range" min="0" max="100" step="5" formControlName="trainingAdherence" />
+        </div>
+      </div>
+
+      <div class="field comments">
+        <label for="r-comments">Comentarios</label>
+        <textarea id="r-comments" rows="4" formControlName="comments" placeholder="¿Cómo te has sentido esta semana?"></textarea>
+      </div>
+
       @if (submitError()) {
-        <div class="error-banner"><mat-icon>error</mat-icon> {{ submitError() }}</div>
+        <div class="alert error mt"><mat-icon>error</mat-icon><span>{{ submitError() }}</span></div>
       }
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        <button type="submit" class="btn btn-primary btn-lg" [disabled]="saving()">
           <mat-icon>{{ saving() ? 'hourglass_empty' : 'send' }}</mat-icon>
           {{ saving() ? 'Enviando...' : 'Enviar seguimiento' }}
         </button>
@@ -70,39 +88,39 @@
   }
 
   @if (historyLoaded()) {
-    <div class="panel" style="margin-top:24px">
+    <div class="panel history">
       <div class="panel-head"><h2>Mis seguimientos anteriores</h2></div>
-      <div class="panel-body">
-        @if (historyError()) {
-          <div class="error-banner"><mat-icon>error</mat-icon> {{ historyError() }}</div>
-        } @else if (history().length === 0) {
-          <div class="empty-sm"><mat-icon>inbox</mat-icon><p>Aún no has enviado ningún seguimiento.</p></div>
-        } @else {
-          @for (r of history(); track r.id) {
-            <div class="report-row">
-              <div class="report-meta">
-                <span class="report-date">{{ r.createdAt | date:'dd/MM/yyyy' }}</span>
-                <span class="tag" [class.orange]="r.status === 'PENDING'" [class.green]="r.status === 'REVIEWED'">
-                  {{ r.status === 'PENDING' ? 'Pendiente' : 'Revisado' }}
-                </span>
-              </div>
-              <div class="report-data">
-                <span><strong>{{ r.weight }} kg</strong></span>
-                @if (r.waist) { <span>Cin. {{ r.waist }} cm</span> }
-                @if (r.bodyFat) { <span>Grasa {{ r.bodyFat }}%</span> }
-                @if (r.energyLevel) { <span>Energía {{ r.energyLevel }}/10</span> }
-              </div>
-              @if (r.coachFeedback) {
-                <div class="feedback-box">
-                  <mat-icon>chat</mat-icon>
+      @if (historyError()) {
+        <div class="pad"><div class="alert error"><mat-icon>error</mat-icon><span>{{ historyError() }}</span></div></div>
+      } @else if (history().length === 0) {
+        <div class="empty"><mat-icon>inbox</mat-icon><p>Aún no has enviado ningún seguimiento.</p></div>
+      } @else {
+        @for (r of history(); track r.id) {
+          <div class="report-row">
+            <div class="report-meta">
+              <span class="report-date">{{ r.createdAt | date:'dd/MM/yyyy' }}</span>
+              <span class="badge" [class.orange]="r.status === 'PENDING'" [class.green]="r.status === 'REVIEWED'">
+                {{ r.status === 'PENDING' ? 'Pendiente' : 'Revisado' }}
+              </span>
+            </div>
+            <div class="report-data">
+              <span><strong>{{ r.weight }}</strong> kg</span>
+              @if (r.waist) { <span>Cin. <strong>{{ r.waist }}</strong> cm</span> }
+              @if (r.bodyFat) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
+              @if (r.energyLevel) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
+            </div>
+            @if (r.coachFeedback) {
+              <div class="feedback-box">
+                <mat-icon>sports</mat-icon>
+                <div class="grow">
                   <p>{{ r.coachFeedback }}</p>
                   <span class="feedback-date">Revisado {{ r.reviewedAt | date:'dd/MM/yyyy' }}</span>
                 </div>
-              }
-            </div>
-          }
+              </div>
+            }
+          </div>
         }
-      </div>
+      }
     </div>
   }
 </div>

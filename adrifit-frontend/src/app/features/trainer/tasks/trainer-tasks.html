@@ -19,7 +19,7 @@
   <!-- ════════ Calendario de revisiones ════════ -->
   <div class="panel section">
     <div class="panel-head">
-      <h2>Calendario de revisiones</h2>
+      <div class="ph-title"><span class="tile orange"><mat-icon>event_repeat</mat-icon></span><h2>Calendario de revisiones</h2></div>
       <div class="head-badges">
         @if (overdueCount() > 0) { <span class="badge red">{{ overdueCount() }} vencidas</span> }
         @if (dueSoonCount() > 0) { <span class="badge orange">{{ dueSoonCount() }} próximas</span> }
@@ -31,7 +31,11 @@
     </div>
     <div class="panel-body">
       @if (scheduleLoading()) {
-        <div class="loading">Cargando calendario...</div>
+        <div class="sk-rows">
+          @for (i of [1,2,3]; track i) {
+            <div class="sk-row"><div class="skeleton sk-sq"></div><div class="sk-lines"><div class="skeleton"></div><div class="skeleton short"></div></div></div>
+          }
+        </div>
       } @else if (scheduleError()) {
         <div class="empty">
           <mat-icon>cloud_off</mat-icon><p>No se pudo cargar el calendario de revisiones.</p>
@@ -79,7 +83,7 @@
   <!-- ════════ Tareas ════════ -->
   <div class="panel section">
     <div class="panel-head tasks-head">
-      <h2>Tareas</h2>
+      <div class="ph-title"><span class="tile blue"><mat-icon>task_alt</mat-icon></span><h2>Tareas</h2></div>
       <div class="segmented">
         <button [class.active]="filter() === 'PENDING'" (click)="setFilter('PENDING')">Pendientes</button>
         <button [class.active]="filter() === 'DONE'" (click)="setFilter('DONE')">Hechas</button>
@@ -88,7 +92,11 @@
     </div>
     <div class="panel-body">
       @if (tasksLoading()) {
-        <div class="loading">Cargando tareas...</div>
+        <div class="sk-rows">
+          @for (i of [1,2,3]; track i) {
+            <div class="sk-row"><div class="skeleton sk-sq"></div><div class="sk-lines"><div class="skeleton"></div><div class="skeleton short"></div></div></div>
+          }
+        </div>
       } @else if (tasksError()) {
         <div class="empty">
           <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar las tareas.</p>
@@ -98,6 +106,7 @@
         <div class="empty">
           <mat-icon>task_alt</mat-icon>
           <p>{{ filter() === 'PENDING' ? '¡Nada pendiente! Estás al día.' : 'No hay tareas en esta categoría.' }}</p>
+          <button class="btn btn-primary btn-sm" (click)="openNew()"><mat-icon>add</mat-icon> Nueva tarea</button>
         </div>
       } @else {
         <ul class="task-list">
@@ -106,7 +115,7 @@
               <button class="check" [class.checked]="t.status === 'DONE'" [disabled]="busyId() === t.id"
                       (click)="toggle(t)" [attr.aria-label]="t.status === 'DONE' ? 'Reabrir tarea' : 'Completar tarea'"
                       [title]="t.status === 'DONE' ? 'Reabrir' : 'Marcar como hecha'">
-                <mat-icon>{{ t.status === 'DONE' ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                <span class="check-box"><mat-icon>check</mat-icon></span>
               </button>
               <div class="task-main">
                 <div class="task-title">{{ t.title }}</div>

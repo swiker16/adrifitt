@@ -4,7 +4,7 @@
     <div class="subtitle">Tu plan, tus cobros y tu historial</div>
   </div>
   <div class="topbar-actions">
-    <span class="test-mode"><mat-icon style="font-size:15px;width:15px;height:15px">science</mat-icon> Modo prueba</span>
+    <span class="test-mode"><mat-icon class="ic-sm">science</mat-icon> Modo prueba</span>
   </div>
 </div>
 
@@ -12,11 +12,11 @@
   <!-- ═══ Current plan ═══ -->
   @switch (subState()) {
     @case ('loading') {
-      <div class="panel"><div class="loading">Cargando tu suscripción...</div></div>
+      <div class="skeleton sk-current" aria-busy="true" aria-label="Cargando tu suscripción"></div>
     }
     @case ('error') {
-      <div class="alert error"><mat-icon>error</mat-icon> {{ subError() }}
-        <button class="btn btn-sm btn-outline" style="margin-left:auto" (click)="loadSubscription()">Reintentar</button>
+      <div class="alert error"><mat-icon>error</mat-icon><div class="grow">{{ subError() }}</div>
+        <button class="btn btn-sm btn-outline" (click)="loadSubscription()">Reintentar</button>
       </div>
     }
     @case ('none') {
@@ -92,15 +92,16 @@
   <!-- ═══ Pending payments ═══ -->
   @if (!paymentsLoading() && pending().length > 0) {
     <section class="section">
-      <h2 class="section-title"><mat-icon>pending_actions</mat-icon> Pagos pendientes</h2>
+      <h2 class="section-title">Pagos pendientes</h2>
       <div class="pending-list">
         @for (p of pending(); track p.id) {
           <article class="pending-card" [class.overdue]="p.overdue">
+            <span class="pc-icon"><mat-icon>{{ p.overdue ? 'warning' : 'receipt_long' }}</mat-icon></span>
             <div class="pc-info">
               <div class="pc-concept">{{ p.concept }}</div>
               <div class="pc-meta">
                 @if (p.overdue) {
-                  <span class="badge red"><mat-icon style="font-size:14px;width:14px;height:14px">warning</mat-icon> Vencido</span>
+                  <span class="badge red">Vencido</span>
                 } @else {
                   <span class="badge orange">Pendiente</span>
                 }
@@ -128,10 +129,10 @@
   <!-- ═══ Plans ═══ -->
   <section class="section">
     <h2 class="section-title">
-      <mat-icon>swap_horiz</mat-icon> {{ subState() === 'none' ? 'Elige tu plan' : 'Cambiar de plan' }}
+      {{ subState() === 'none' ? 'Elige tu plan' : 'Cambiar de plan' }}
     </h2>
     @if (plansLoading()) {
-      <div class="loading">Cargando planes...</div>
+      <div class="plans" aria-busy="true" aria-label="Cargando planes"><div class="skeleton sk-plan"></div><div class="skeleton sk-plan"></div><div class="skeleton sk-plan"></div></div>
     } @else if (plans().length === 0) {
       <div class="empty"><mat-icon>workspace_premium</mat-icon><p>No hay planes disponibles ahora mismo.</p></div>
     } @else {
@@ -169,7 +170,7 @@
         @if (paymentsLoading()) {
           <div class="loading">Cargando pagos...</div>
         } @else if (paymentsError()) {
-          <div class="alert error" style="margin: 12px 24px"><mat-icon>error</mat-icon> {{ paymentsError() }}</div>
+          <div class="alert error pay-err"><mat-icon>error</mat-icon><span>{{ paymentsError() }}</span></div>
         } @else if (done().length === 0) {
           <div class="empty"><mat-icon>receipt_long</mat-icon><p>Todavía no hay pagos en tu historial.</p></div>
         } @else {
@@ -329,10 +330,27 @@
         </div>
 
         @if (payError()) {
-          <div class="alert error" role="alert"><mat-icon>error</mat-icon> {{ payError() }}</div>
+          <div class="alert error" role="alert"><mat-icon>error</mat-icon><span>{{ payError() }}</span></div>
         }
 
         @if (payTab() === 'card') {
+          <div class="card-visual" aria-hidden="true">
+            <div class="cv-top">
+              <span class="cv-chip"></span>
+              <mat-icon>contactless</mat-icon>
+            </div>
+            <div class="cv-number">{{ cardForm.controls.cardNumber.value || '•••• •••• •••• ••••' }}</div>
+            <div class="cv-bottom">
+              <div class="cv-holder">
+                <span>Titular</span>
+                <strong>{{ cardForm.controls.holderName.value || 'Nombre Apellido' }}</strong>
+              </div>
+              <div>
+                <span>Caduca</span>
+                <strong>{{ cardForm.controls.expiry.value || 'MM/AA' }}</strong>
+              </div>
+            </div>
+          </div>
           <form class="form-grid pay-form" [formGroup]="cardForm" (ngSubmit)="submitPay()" autocomplete="on" id="payForm">
             <div class="field full">
               <label for="cc-name">Titular</label>

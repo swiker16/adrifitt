@@ -7,10 +7,12 @@ import { Plan } from '../../shared/models/plan.model';
 import { TestimonialService } from '../../core/services/testimonial.service';
 import { PublicTestimonial } from '../../shared/models/testimonial.model';
 
-interface Benefit {
+interface Feature {
   icon: string;
+  tone: 'orange' | 'green' | 'blue' | 'violet';
   title: string;
   text: string;
+  size?: 'wide' | 'tall';
 }
 
 interface Step {
@@ -40,11 +42,23 @@ export class Landing implements OnInit {
     return plans[mid]?.id ?? null;
   });
 
-  readonly benefits: Benefit[] = [
-    { icon: 'fitness_center', title: 'Entrenamiento a medida', text: 'Rutinas diseñadas para tu nivel, objetivos y disponibilidad.' },
-    { icon: 'restaurant', title: 'Nutrición personalizada', text: 'Planes de alimentación adaptados a tu día a día.' },
-    { icon: 'event_repeat', title: 'Seguimiento semanal', text: 'Revisión constante de tu progreso semana a semana.' },
-    { icon: 'trending_up', title: 'Evolución con reportes', text: 'Visualiza tu evolución con datos reales y feedback.' },
+  toggleMenu(): void {
+    this.menuOpen.update((v) => !v);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  readonly menuOpen = signal(false);
+
+  readonly features: Feature[] = [
+    { icon: 'fitness_center', tone: 'orange', size: 'wide', title: 'Rutinas y registro de entrenos con RIR', text: 'Tu rutina en el móvil: apunta series, kilos y RIR en cada sesión y tu entrenador ve exactamente cómo rindes.' },
+    { icon: 'restaurant', tone: 'green', title: 'Dieta a medida', text: 'Plan de alimentación adaptado a tus objetivos y a tu día a día.' },
+    { icon: 'event_repeat', tone: 'blue', title: 'Seguimiento y revisiones', text: 'Check-ins periódicos de peso, medidas y sensaciones con feedback.' },
+    { icon: 'forum', tone: 'violet', title: 'Chat con tu entrenador', text: 'Resuelve dudas al momento, sin esperar a la próxima revisión.' },
+    { icon: 'photo_camera', tone: 'orange', title: 'Fotos y progreso', text: 'Compara fotos y gráficas de evolución semana a semana.' },
+    { icon: 'credit_card', tone: 'green', size: 'wide', title: 'Pagos con tarjeta o Bizum', text: 'Paga tu cuota mensual en segundos, sin permanencia ni letra pequeña.' },
   ];
 
   readonly steps: Step[] = [

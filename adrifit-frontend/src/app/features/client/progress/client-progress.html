@@ -11,7 +11,10 @@
 
 <div class="content">
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando tu progreso...</div></div>
+    <div class="sk" aria-busy="true" aria-label="Cargando tu progreso">
+      <div class="sk-stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      <div class="skeleton sk-chart"></div>
+    </div>
   } @else {
     @if (partialError()) {
       <div class="alert warn mb"><mat-icon>warning</mat-icon><span>No se pudieron cargar todos los datos. Algunas secciones pueden estar incompletas.</span></div>
@@ -87,17 +90,17 @@
     } @else {
       <div class="panel mb">
         <div class="panel-head"><h2>Peso corporal</h2><span class="unit">kg</span></div>
-        <div class="chart-body"><app-line-chart [points]="weightPoints()" unit="kg" color="#FF7A1A" /></div>
+        <div class="chart-body"><app-line-chart [points]="weightPoints()" unit="kg" color="#FF6B1A" /></div>
       </div>
 
       <div class="charts-2 mb">
         <div class="panel">
           <div class="panel-head"><h2>Cintura</h2><span class="unit">cm</span></div>
-          <div class="chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#3b82f6" emptyText="Registra tu cintura en al menos dos reportes." /></div>
+          <div class="chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#2F6FEB" emptyText="Registra tu cintura en al menos dos reportes." /></div>
         </div>
         <div class="panel">
           <div class="panel-head"><h2>% Grasa corporal</h2><span class="unit">%</span></div>
-          <div class="chart-body"><app-line-chart [points]="fatPoints()" unit="%" color="#8b5cf6" emptyText="Registra tu % de grasa en al menos dos reportes." /></div>
+          <div class="chart-body"><app-line-chart [points]="fatPoints()" unit="%" color="#7C5CFA" emptyText="Registra tu % de grasa en al menos dos reportes." /></div>
         </div>
       </div>
 
@@ -120,7 +123,7 @@
           <app-bar-chart
             [points]="secondaryPoints()"
             [unit]="secondary() === 'energy' ? '/10' : '%'"
-            [color]="secondary() === 'energy' ? '#f59e0b' : secondary() === 'diet' ? '#22c55e' : '#FF7A1A'"
+            [color]="secondary() === 'energy' ? '#D97706' : secondary() === 'diet' ? '#16A34A' : '#FF6B1A'"
             emptyText="Sin datos en tus reportes."
           />
         </div>
@@ -162,11 +165,11 @@
         <div class="charts-2 inner">
           <div>
             <div class="chart-title">Peso máximo</div>
-            <app-line-chart [points]="maxWeightPoints()" unit="kg" color="#FF7A1A" emptyText="Necesitas al menos dos sesiones de este ejercicio." />
+            <app-line-chart [points]="maxWeightPoints()" unit="kg" color="#FF6B1A" emptyText="Necesitas al menos dos sesiones de este ejercicio." />
           </div>
           <div>
             <div class="chart-title">1RM estimado</div>
-            <app-line-chart [points]="oneRmPoints()" unit="kg" color="#3b82f6" emptyText="Necesitas al menos dos sesiones con reps registradas." />
+            <app-line-chart [points]="oneRmPoints()" unit="kg" color="#2F6FEB" emptyText="Necesitas al menos dos sesiones con reps registradas." />
           </div>
         </div>
         <div class="table-wrap">

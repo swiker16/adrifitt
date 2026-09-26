@@ -15,14 +15,15 @@
   </div>
 
   @if (loading()) {
-    <div class="loading">Cargando reseñas...</div>
+    <div class="skeleton sk-summary"></div>
+    <div class="cards">
+      @for (i of [1, 2, 3]; track i) { <div class="skeleton sk-card"></div> }
+    </div>
   } @else if (error()) {
-    <div class="panel">
-      <div class="empty">
-        <mat-icon>cloud_off</mat-icon>
-        <p>No se pudieron cargar las reseñas.</p>
-        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
-      </div>
+    <div class="alert error">
+      <mat-icon>cloud_off</mat-icon>
+      <span class="grow">No se pudieron cargar las reseñas.</span>
+      <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
     </div>
   } @else if (testimonials().length === 0) {
     <div class="panel">
@@ -36,7 +37,7 @@
       <div class="avg">
         <span class="avg-value">{{ average() | number: '1.1-1' }}</span>
         <div>
-          <div class="stars" [attr.aria-label]="'Media ' + (average() | number: '1.1-1') + ' de 5'">
+          <div class="stars lg" [attr.aria-label]="'Media ' + (average() | number: '1.1-1') + ' de 5'">
             @for (s of stars; track s) {
               <span [class.on]="s <= average() + 0.25">★</span>
             }
@@ -46,6 +47,15 @@
             {{ visibleCount() }} {{ visibleCount() === 1 ? 'visible' : 'visibles' }} en la web
           </div>
         </div>
+      </div>
+      <div class="dist" aria-hidden="true">
+        @for (row of distribution(); track row.star) {
+          <div class="dist-row">
+            <span class="dist-star">{{ row.star }}★</span>
+            <div class="dist-bar"><span [style.width.%]="row.pct"></span></div>
+            <span class="dist-n">{{ row.count }}</span>
+          </div>
+        }
       </div>
       <div class="segmented">
         <button type="button" [class.active]="filter() === 'all'" (click)="filter.set('all')">Todas</button>
@@ -60,29 +70,29 @@
       <div class="cards">
         @for (t of filtered(); track t.id) {
           <article class="review" [class.hidden-review]="!t.visible">
-            <header class="review-head">
+            <div class="review-top">
+              <div class="stars" [attr.aria-label]="t.rating + ' de 5 estrellas'">
+                @for (s of stars; track s) {
+                  <span [class.on]="s <= t.rating">★</span>
+                }
+              </div>
+              @if (t.visible) {
+                <span class="badge green">Visible en la web</span>
+              } @else {
+                <span class="badge gray">Oculta</span>
+              }
+            </div>
+            <p class="review-text">{{ t.content }}</p>
+            <footer class="review-foot">
               <div class="cell-user">
                 <span class="avatar">{{ initials(t.authorName) }}</span>
-                <div>
+                <div class="min0">
                   <div class="name">{{ t.authorName }}</div>
                   <div class="sub">
                     @if (t.planName) { Plan {{ t.planName }} · }{{ t.createdAt | date: 'd MMM yyyy' }}
                   </div>
                 </div>
               </div>
-              @if (t.visible) {
-                <span class="badge green"><mat-icon>visibility</mat-icon> Visible en la web</span>
-              } @else {
-                <span class="badge gray"><mat-icon>visibility_off</mat-icon> Oculta</span>
-              }
-            </header>
-            <div class="stars" [attr.aria-label]="t.rating + ' de 5 estrellas'">
-              @for (s of stars; track s) {
-                <span [class.on]="s <= t.rating">★</span>
-              }
-            </div>
-            <p class="review-text">“{{ t.content }}”</p>
-            <footer class="review-foot">
               <button class="btn btn-sm" type="button"
                       [class.btn-outline]="t.visible" [class.btn-primary]="!t.visible"
                       [disabled]="busyId() === t.id" (click)="toggle(t)">

@@ -4,30 +4,36 @@
     <div class="subtitle">Revisa los seguimientos (check-ins) de tus clientes y dales feedback. Al responder se completa su revisión.</div>
   </div>
   @if (pendingCount() > 0) {
-    <div class="topbar-badge"><span class="badge orange">{{ pendingCount() }} pendientes</span></div>
+    <div class="topbar-actions"><span class="badge orange">{{ pendingCount() }} pendientes</span></div>
   }
 </div>
 
 <div class="content">
   <div class="filter-bar">
-    <button class="filter-btn" [class.active]="filter() === 'all'" (click)="filter.set('all')">Todos</button>
-    <button class="filter-btn" [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
-      Pendientes @if (pendingCount() > 0) { <span class="badge-sm">{{ pendingCount() }}</span> }
-    </button>
-    <button class="filter-btn" [class.active]="filter() === 'reviewed'" (click)="filter.set('reviewed')">Revisados</button>
+    <div class="segmented">
+      <button [class.active]="filter() === 'all'" (click)="filter.set('all')">Todos</button>
+      <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
+        Pendientes @if (pendingCount() > 0) { <span class="count-pill">{{ pendingCount() }}</span> }
+      </button>
+      <button [class.active]="filter() === 'reviewed'" (click)="filter.set('reviewed')">Revisados</button>
+    </div>
   </div>
 
   <div class="panel">
     <div class="panel-body">
       @if (loading()) {
-        <div class="loading">Cargando seguimientos...</div>
+        <div class="sk-rows">
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="sk-row"><div class="skeleton sk-av"></div><div class="skeleton sk-l1"></div><div class="skeleton sk-l2"></div></div>
+          }
+        </div>
       } @else if (error()) {
         <div class="empty"><mat-icon>cloud_off</mat-icon><p>No se pudieron cargar los seguimientos.</p></div>
       } @else if (filtered().length === 0) {
         <div class="empty"><mat-icon>inbox</mat-icon><p>No hay seguimientos en esta categoría.</p></div>
       } @else {
         <div class="table-wrap">
-        <table class="table">
+        <table class="table reports-table">
           <thead>
             <tr>
               <th>Cliente</th>
@@ -41,16 +47,16 @@
           </thead>
           <tbody>
             @for (r of filtered(); track r.id) {
-              <tr [class.expanded-row]="expandedId() === r.id">
-                <td>
+              <tr class="main-row" [class.expanded-row]="expandedId() === r.id" (click)="toggleExpand(r.id)">
+                <td class="c-user">
                   <div class="cell-user">
                     <span class="avatar">{{ initials(r) }}</span>
-                    <a class="name client-link" [routerLink]="['/trainer/clients', r.clientId]">{{ clientName(r) }}</a>
+                    <a class="name client-link" [routerLink]="['/trainer/clients', r.clientId]" (click)="$event.stopPropagation()">{{ clientName(r) }}</a>
                   </div>
                 </td>
-                <td>{{ r.createdAt | date:'dd/MM/yy' }}</td>
-                <td><strong>{{ r.weight }} kg</strong></td>
-                <td>
+                <td class="c-date" data-label="Fecha">{{ r.createdAt | date:'dd/MM/yy' }}</td>
+                <td class="c-weight" data-label="Peso"><strong>{{ r.weight }} kg</strong></td>
+                <td class="c-adh" data-label="Dieta">
                   @if (r.dietAdherence != null) {
                     <div class="adherence-cell">
                       <div class="progress"><span [style.width.%]="r.dietAdherence"></span></div>
@@ -58,7 +64,7 @@
                     </div>
                   } @else { <span class="na">—</span> }
                 </td>
-                <td>
+                <td class="c-adh" data-label="Entreno">
                   @if (r.trainingAdherence != null) {
                     <div class="adherence-cell">
                       <div class="progress"><span [style.width.%]="r.trainingAdherence"></span></div>
@@ -66,15 +72,15 @@
                     </div>
                   } @else { <span class="na">—</span> }
                 </td>
-                <td>
+                <td class="c-status">
                   @if (r.status === 'PENDING') {
-                    <span class="tag orange">Pendiente</span>
+                    <span class="badge orange">Pendiente</span>
                   } @else {
-                    <span class="tag green">Revisado</span>
+                    <span class="badge green">Revisado</span>
                   }
                 </td>
-                <td>
-                  <button class="mini-btn" (click)="toggleExpand(r.id)" [title]="expandedId() === r.id ? 'Cerrar' : 'Ver y responder'">
+                <td class="c-toggle">
+                  <button class="icon-btn" (click)="$event.stopPropagation(); toggleExpand(r.id)" [title]="expandedId() === r.id ? 'Cerrar' : 'Ver y responder'">
                     <mat-icon>{{ expandedId() === r.id ? 'expand_less' : 'expand_more' }}</mat-icon>
                   </button>
                 </td>

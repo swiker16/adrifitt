@@ -7,20 +7,20 @@
 
 <div class="content">
   @if (loading()) {
-    <div class="card"><div class="loading">Cargando...</div></div>
+    <div class="card" aria-busy="true" aria-label="Cargando"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-block"></div></div>
   } @else if (loadError()) {
     <div class="alert error">
       <mat-icon>error</mat-icon>
-      <div style="flex:1">{{ loadError() }}</div>
+      <div class="grow">{{ loadError() }}</div>
       <button class="btn btn-sm btn-outline" (click)="load()">Reintentar</button>
     </div>
   } @else if (mine(); as t) {
     <!-- Read-only published review -->
     <div class="card published">
       <div class="pub-head">
-        <span class="badge green"><mat-icon style="font-size:14px;width:14px;height:14px">check_circle</mat-icon> Publicada el {{ t.createdAt | date: 'dd/MM/yyyy' }}</span>
+        <span class="badge green">Publicada el {{ t.createdAt | date: 'dd/MM/yyyy' }}</span>
         @if (!t.visible) {
-          <span class="badge gray"><mat-icon style="font-size:14px;width:14px;height:14px">visibility_off</mat-icon> Oculta por el entrenador</span>
+          <span class="badge gray">Oculta por el entrenador</span>
         }
       </div>
       <div class="stars-ro" [attr.aria-label]="t.rating + ' de 5 estrellas'">
@@ -28,7 +28,8 @@
           <mat-icon [class.on]="s <= t.rating">{{ s <= t.rating ? 'star' : 'star_border' }}</mat-icon>
         }
       </div>
-      <blockquote>“{{ t.content }}”</blockquote>
+      <mat-icon class="quote-mark">format_quote</mat-icon>
+      <blockquote>{{ t.content }}</blockquote>
       <div class="author">
         <strong>{{ t.authorName }}</strong>
         @if (t.planName) { <span>· Plan {{ t.planName }}</span> }
@@ -87,7 +88,7 @@
       </div>
 
       @if (saveError()) {
-        <div class="alert error"><mat-icon>error</mat-icon> {{ saveError() }}</div>
+        <div class="alert error"><mat-icon>error</mat-icon><span>{{ saveError() }}</span></div>
       }
 
       <div class="actions">

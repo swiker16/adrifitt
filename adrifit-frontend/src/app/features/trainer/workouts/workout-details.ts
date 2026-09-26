@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { WorkoutService } from '../../../core/services/workout.service';
@@ -12,7 +12,7 @@ export interface DayGroup { dayNumber: number; dayName: string; exercises: Worko
 
 @Component({
   selector: 'app-workout-details',
-  imports: [RouterLink, DatePipe, FormsModule, MatIconModule],
+  imports: [RouterLink, DatePipe, NgTemplateOutlet, FormsModule, MatIconModule],
   templateUrl: './workout-details.html',
   styleUrl: './workout-details.scss',
 })
@@ -37,6 +37,9 @@ export class WorkoutDetails {
     }
     return Array.from(map.values()).sort((a, b) => a.dayNumber - b.dayNumber);
   });
+
+  readonly totalSets = computed(() =>
+    (this.workout()?.exercises ?? []).reduce((sum, e) => sum + (e.sets || 0), 0));
 
   readonly clients = signal<Client[]>([]);
   readonly selectedClientId = signal<number | null>(null);

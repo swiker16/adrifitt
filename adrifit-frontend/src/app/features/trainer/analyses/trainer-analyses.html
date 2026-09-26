@@ -20,7 +20,11 @@
     </div>
     <div class="panel-body">
       @if (loading()) {
-        <div class="loading">Cargando analíticas...</div>
+        <div class="sk-rows">
+          @for (i of [1,2,3]; track i) {
+            <div class="sk-row"><div class="skeleton sk-sq"></div><div class="sk-lines"><div class="skeleton"></div><div class="skeleton short"></div></div></div>
+          }
+        </div>
       } @else if (error()) {
         <div class="empty">
           <mat-icon>cloud_off</mat-icon><p>No se pudieron cargar las analíticas.</p>
@@ -35,7 +39,7 @@
         <div class="analysis-list">
           @for (a of analyses(); track a.id) {
             <div class="analysis">
-              <div class="an-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+              <span class="an-icon"><mat-icon>picture_as_pdf</mat-icon></span>
               <div class="an-main">
                 <div class="an-top">
                   <span class="an-title">{{ a.title }}</span>

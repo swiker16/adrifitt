@@ -1,43 +1,55 @@
 @use '../../page';
 
-.count { font-size: 0.84rem; color: var(--text-gray); }
+.count { font-size: 0.84rem; color: var(--text-muted); font-weight: 500; }
+.panel-body { padding: 6px 8px; }
 .analysis-list { display: flex; flex-direction: column; }
 .analysis {
-  display: flex; align-items: flex-start; gap: 14px; padding: 16px 22px;
-  border-bottom: 1px solid var(--border);
-  &:last-child { border-bottom: none; }
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 14px; border-radius: var(--radius-md);
+  transition: background 0.15s;
+  &:hover { background: var(--surface-2); }
+  & + .analysis { box-shadow: 0 -1px 0 var(--ink-100); }
 }
 .an-icon {
   width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
-  background: rgba(239,68,68,0.1); color: #dc2626; display: grid; place-items: center;
+  background: var(--danger-bg); color: var(--danger); display: grid; place-items: center;
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
 }
 .an-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .an-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.an-title { font-weight: 700; font-size: 0.97rem; word-break: break-word; }
+.an-title { font-weight: 600; font-size: 0.97rem; word-break: break-word; }
 .an-meta {
-  display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--text-gray);
+  display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--text-muted);
   span, a { display: inline-flex; align-items: center; gap: 4px; }
-  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+  mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--text-subtle); }
 }
-.an-client { color: var(--orange); font-weight: 700; text-decoration: none; }
-.an-client:hover { text-decoration: underline; }
-.muted { color: #94a3b8; }
+.an-client {
+  color: var(--brand-600) !important; font-weight: 600; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--brand-50);
+  mat-icon { color: var(--brand) !important; }
+  &:hover { background: var(--brand-100); }
+}
+.muted { color: var(--text-subtle); }
 .an-comment, .an-note {
-  display: flex; align-items: flex-start; gap: 6px; font-size: 0.84rem; padding: 8px 10px; border-radius: 8px;
-  mat-icon { font-size: 16px; width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+  display: flex; align-items: flex-start; gap: 8px; font-size: 0.84rem; padding: 9px 12px; border-radius: 10px; margin-top: 2px;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
 }
-.an-comment { background: #f8fafc; color: #475569; font-style: italic; }
-.an-note { background: rgba(139,92,246,0.07); color: #5b21b6; }
+.an-comment { background: var(--surface-2); border: 1px solid var(--ink-100); color: var(--ink-600); font-style: italic; }
+.an-note { background: var(--violet-bg); color: #5b3fd6; }
 .an-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-.an-actions .btn { min-height: 40px; justify-content: flex-start; }
-.modal-intro { margin: 0 0 14px; font-size: 0.9rem; color: #475569; }
+.an-actions .btn { justify-content: flex-start; }
+.modal-intro { margin: 0 0 16px; font-size: 0.9rem; color: var(--text-muted); strong { color: var(--text); } }
+
+/* ── Skeleton ── */
+.sk-rows { padding: 6px; }
+.sk-row { display: flex; align-items: center; gap: 14px; padding: 12px 8px; }
+.sk-sq { width: 44px; height: 44px; flex-shrink: 0; }
+.sk-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; .skeleton { height: 12px; width: 45%; border-radius: 6px; } .short { width: 28%; } }
 
 @media (max-width: 760px) {
-  .analysis { flex-wrap: wrap; padding: 14px 16px; }
+  .analysis { flex-wrap: wrap; padding: 14px 10px; }
   .an-main { flex-basis: calc(100% - 58px); }
-  .an-actions { flex-direction: row; flex-wrap: wrap; width: 100%; margin-left: 58px; }
+  .an-actions { flex-direction: row; flex-wrap: wrap; width: 100%; padding-left: 58px; }
 }
 @media (max-width: 480px) {
-  .an-actions { margin-left: 0; }
+  .an-actions { padding-left: 0; }
   .an-actions .btn { flex: 1; justify-content: center; }
 }

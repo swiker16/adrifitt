@@ -21,7 +21,7 @@
     <section class="panel">
       <div class="panel-head"><h2>Datos personales</h2></div>
       @if (loading()) {
-        <div class="loading">Cargando...</div>
+        <div class="sk-profile" aria-busy="true" aria-label="Cargando"><div class="skeleton sk-avatar"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div></div>
       } @else {
         <div class="profile-top">
           <span class="avatar">{{ initials() || '?' }}</span>
@@ -31,7 +31,7 @@
           </div>
         </div>
         @if (error()) {
-          <div class="alert error" style="margin: 0 24px 16px"><mat-icon>error</mat-icon> {{ error() }}</div>
+          <div class="alert error data-err"><mat-icon>error</mat-icon><span>{{ error() }}</span></div>
         }
         <dl class="data">
           <div><dt><mat-icon>badge</mat-icon> Nombre</dt><dd>{{ fullName() || '—' }}</dd></div>
@@ -81,7 +81,7 @@
         </label>
 
         @if (pwError()) {
-          <div class="alert error"><mat-icon>error</mat-icon> {{ pwError() }}</div>
+          <div class="alert error"><mat-icon>error</mat-icon><span>{{ pwError() }}</span></div>
         }
 
         <button type="submit" class="btn btn-primary" [disabled]="saving()">

@@ -21,7 +21,9 @@
       </div>
       <div class="conv-scroll">
         @if (listLoading()) {
-          <div class="loading">Cargando conversaciones...</div>
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="sk-conv"><div class="skeleton sk-av"></div><div class="sk-lines"><div class="skeleton"></div><div class="skeleton short"></div></div></div>
+          }
         } @else if (listError()) {
           <div class="empty">
             <mat-icon>cloud_off</mat-icon>
@@ -73,8 +75,9 @@
     <section class="chat">
       @if (selectedId() === null) {
         <div class="chat-placeholder">
-          <mat-icon>chat_bubble_outline</mat-icon>
-          <p>Selecciona una conversación para empezar.</p>
+          <span class="ph-tile"><mat-icon>forum</mat-icon></span>
+          <h3>Tus conversaciones</h3>
+          <p>Selecciona un cliente de la lista para ver el historial y responder.</p>
         </div>
       } @else {
         <header class="chat-head">
@@ -95,7 +98,9 @@
 
         <div class="chat-scroll" #scroller>
           @if (chatLoading() && !conversation()) {
-            <div class="loading">Cargando conversación...</div>
+            <div class="sk-chat">
+              <div class="skeleton b1"></div><div class="skeleton b2"></div><div class="skeleton b3"></div>
+            </div>
           } @else if (chatError() && !conversation()) {
             <div class="empty"><mat-icon>cloud_off</mat-icon><p>No se pudo cargar la conversación.</p></div>
           } @else if (conversation(); as conv) {

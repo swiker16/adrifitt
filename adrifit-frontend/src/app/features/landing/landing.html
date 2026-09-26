@@ -1,127 +1,129 @@
 <div class="landing">
-  <!-- Header -->
-  <header class="header">
-    <div class="container header-inner">
-      <a class="brand" href="#inicio">
+  <!-- Navbar -->
+  <header class="nav" [class.open]="menuOpen()">
+    <div class="container nav-inner">
+      <a class="brand" href="#inicio" (click)="closeMenu()" aria-label="AdriFit, inicio">
         <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
         Adri<span class="dot">Fit</span>
       </a>
-      <nav class="main-nav">
-        <a href="#inicio">Inicio</a>
-        <a href="#servicios">Servicios</a>
-        <a href="#como-funciona">Cómo funciona</a>
-        @if (testimonials().length > 0) { <a href="#testimonios">Testimonios</a> }
-        <a href="#contacto">Contacto</a>
+      <nav class="nav-links" id="nav-links" aria-label="Principal">
+        <a href="#servicios" (click)="closeMenu()">Servicios</a>
+        <a href="#como-funciona" (click)="closeMenu()">Cómo funciona</a>
+        @if (testimonials().length > 0) { <a href="#opiniones" (click)="closeMenu()">Opiniones</a> }
+        <a href="#planes" (click)="closeMenu()">Planes</a>
+        <a routerLink="/login" class="btn btn-primary btn-block nav-cta-mobile">Acceder</a>
       </nav>
-      <a routerLink="/login" class="btn btn-primary">Acceder</a>
+      <div class="nav-actions">
+        <a routerLink="/login" class="btn btn-primary btn-sm nav-cta">Acceder</a>
+        <button
+          type="button"
+          class="menu-btn"
+          (click)="toggleMenu()"
+          aria-controls="nav-links"
+          [attr.aria-expanded]="menuOpen()"
+          [attr.aria-label]="menuOpen() ? 'Cerrar menú' : 'Abrir menú'"
+        >
+          <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+        </button>
+      </div>
     </div>
   </header>
 
   <!-- Hero -->
   <section id="inicio" class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
     <div class="container hero-inner">
-      <span class="pill"><span class="ping"></span> Plazas abiertas este mes</span>
-      <h1>Entrenamiento personalizado.<br /><span class="accent">Resultados reales.</span></h1>
-      <p class="lead">
-        Planes de entrenamiento, nutrición a medida y seguimiento semanal con feedback de tu
-        entrenador personal. Todo en una plataforma diseñada para que progreses de verdad.
-      </p>
-      <div class="hero-actions">
-        <a href="#servicios" class="btn btn-primary">Ver servicios</a>
-        <a routerLink="/login" class="btn btn-ghost">Acceder al área privada</a>
+      <div class="hero-copy">
+        <span class="pill"><span class="ping"></span> Plazas abiertas este mes</span>
+        <h1>Entrena con un plan hecho para ti. <span class="accent">Progresa de verdad.</span></h1>
+        <p class="lead">
+          Rutinas, dieta y revisiones con tu entrenador personal en una sola app. Registra cada entreno,
+          sigue tu evolución y recibe feedback semana a semana.
+        </p>
+        <div class="hero-actions">
+          <a routerLink="/login" class="btn btn-primary btn-lg">Empezar ahora <mat-icon>arrow_forward</mat-icon></a>
+          <a href="#planes" class="btn btn-outline btn-lg">Ver planes</a>
+        </div>
+        <ul class="trust">
+          @if (averageRating(); as avg) {
+            <li>
+              <span class="trust-stars" aria-hidden="true"><mat-icon>star</mat-icon></span>
+              <strong>{{ avg | number: '1.1-1' }}</strong>&nbsp;· {{ testimonials().length }}
+              {{ testimonials().length === 1 ? 'opinión' : 'opiniones' }}
+            </li>
+          }
+          <li><mat-icon>verified</mat-icon> Sin permanencia</li>
+          <li><mat-icon>bolt</mat-icon> Tarjeta o Bizum</li>
+        </ul>
       </div>
-      <div class="hero-stats">
-        <div><strong>+250</strong><span>clientes activos</span></div>
-        @if (averageRating(); as avg) {
-          <div><strong>{{ avg | number: '1.1-1' }}/5</strong><span>valoración media</span></div>
-        }
-        <div><strong>92%</strong><span>cumplen su objetivo</span></div>
+
+      <!-- Product mockup (pure HTML/CSS) -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="app-head">
+              <span class="app-over">Hoy · Pierna</span>
+              <strong>Registrar entreno</strong>
+            </div>
+            <div class="ex-card">
+              <div class="ex-title">
+                <span class="ex-icon"><mat-icon>fitness_center</mat-icon></span>
+                <div><strong>Sentadilla</strong><span>4 series · 6-8 reps</span></div>
+              </div>
+              <div class="sets">
+                <div class="set-row set-head"><span>Serie</span><span>kg</span><span>Reps</span><span>RIR</span></div>
+                <div class="set-row done"><span>1</span><span>100</span><span>8</span><span>2</span></div>
+                <div class="set-row done"><span>2</span><span>105</span><span>7</span><span>2</span></div>
+                <div class="set-row current"><span>3</span><span>105</span><span>7</span><span>1</span></div>
+                <div class="set-row"><span>4</span><span>—</span><span>—</span><span>—</span></div>
+              </div>
+              <div class="fake-btn">Guardar serie</div>
+            </div>
+            <div class="mini-chart">
+              <span>Volumen semanal</span>
+              <div class="bars"><i style="height:40%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:70%"></i><i style="height:82%"></i><i class="hi" style="height:96%"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="float-chip chip-progress">
+          <span class="chip-icon"><mat-icon>trending_up</mat-icon></span>
+          <div><strong>+12,5 kg</strong><span>en sentadilla este mes</span></div>
+        </div>
+        <div class="float-chip chip-review">
+          <span class="chip-icon green"><mat-icon>check</mat-icon></span>
+          <div><strong>Revisión enviada</strong><span>Tu coach responde hoy</span></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Benefits -->
-  <section class="benefits container">
-    @for (b of benefits; track b.title) {
-      <article class="benefit-card">
-        <span class="benefit-icon"><mat-icon>{{ b.icon }}</mat-icon></span>
-        <h3>{{ b.title }}</h3>
-        <p>{{ b.text }}</p>
-      </article>
-    }
-  </section>
-
-  <!-- Services -->
-  <section id="servicios" class="services">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Servicios</span>
-        <h2>Elige el plan que encaja contigo</h2>
-        <p>Sin permanencia. Cambia o cancela cuando quieras.</p>
-      </div>
-      @if (plansLoading()) {
-        <div class="plans-loading">
-          <div class="plans-skeleton"></div>
-          <div class="plans-skeleton featured-skeleton"></div>
-          <div class="plans-skeleton"></div>
-        </div>
-      } @else if (apiPlans().length === 0) {
-        <div class="plans-empty">
-          <mat-icon>workspace_premium</mat-icon>
-          <p>Próximamente disponibles. Contáctanos para más información.</p>
-        </div>
-      } @else {
-        <div class="plans">
-          @for (p of apiPlans(); track p.id) {
-            <article class="plan-card" [class.featured]="isFeatured(p)">
-              @if (isFeatured(p)) { <span class="badge">Más popular</span> }
-              <h3>{{ p.name }}</h3>
-              <div class="price">{{ p.monthlyPrice | number:'1.0-0' }}€<span>/mes</span></div>
-              <ul>
-                @for (f of planFeatures(p); track f) {
-                  <li><mat-icon>check_circle</mat-icon> {{ f }}</li>
-                }
-              </ul>
-              <a routerLink="/login" class="btn" [class.btn-primary]="isFeatured(p)" [class.btn-light]="!isFeatured(p)">
-                Empezar
-              </a>
-            </article>
+  <!-- Opiniones (right after the hero; hidden only when there are none) -->
+  @if (testimonials().length > 0) {
+    <section id="opiniones" class="section reviews">
+      <div class="container">
+        <div class="reviews-head">
+          <div class="section-head left">
+            <span class="eyebrow">Opiniones reales</span>
+            <h2>Lo que dicen nuestros clientes</h2>
+          </div>
+          @if (averageRating(); as avg) {
+            <div class="rating-summary">
+              <span class="rating-big">{{ avg | number: '1.1-1' }}</span>
+              <div>
+                <div class="stars" [attr.aria-label]="'Valoración media ' + (avg | number: '1.1-1') + ' de 5'">
+                  @for (s of starSlots; track s) {
+                    <mat-icon [class.off]="s > avg + 0.25">{{ s <= avg + 0.25 ? 'star' : 'star_border' }}</mat-icon>
+                  }
+                </div>
+                <span class="rating-count">{{ testimonials().length }} {{ testimonials().length === 1 ? 'opinión verificada' : 'opiniones verificadas' }}</span>
+              </div>
+            </div>
           }
         </div>
-      }
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section id="como-funciona" class="how">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Cómo funciona</span>
-        <h2>Tu progreso en 4 pasos</h2>
-      </div>
-      <div class="steps">
-        @for (s of steps; track s.number) {
-          <article class="step-card">
-            <span class="step-number">{{ s.number }}</span>
-            <h3>{{ s.title }}</h3>
-            <p>{{ s.text }}</p>
-          </article>
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Testimonials (real reviews from clients; hidden when there are none) -->
-  @if (testimonials().length > 0) {
-    <section id="testimonios" class="testimonials">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">Testimonios</span>
-          <h2>Lo que dicen nuestros clientes</h2>
-        </div>
-        <div class="testimonial-grid">
+        <div class="review-track" role="list">
           @for (t of testimonials(); track t.id) {
-            <article class="testimonial-card">
+            <article class="review-card" role="listitem">
               <div class="stars" [attr.aria-label]="t.rating + ' de 5 estrellas'">
                 @for (s of starSlots; track s) {
                   <mat-icon [class.off]="s > t.rating">{{ s <= t.rating ? 'star' : 'star_border' }}</mat-icon>
@@ -132,7 +134,7 @@
                 <span class="avatar">{{ initials(t.authorName) }}</span>
                 <div>
                   <strong>{{ t.authorName }}</strong>
-                  <span>{{ t.planName ? 'Cliente ' + t.planName : 'Cliente' }}</span>
+                  <span>{{ t.planName ? 'Cliente · plan ' + t.planName : 'Cliente' }}</span>
                 </div>
               </div>
             </article>
@@ -142,12 +144,114 @@
     </section>
   }
 
-  <!-- CTA -->
-  <section id="contacto" class="cta">
-    <div class="container cta-inner">
-      <h2>¿Listo para empezar tu transformación?</h2>
-      <p>Únete hoy y consigue tu primer plan personalizado esta misma semana.</p>
-      <a routerLink="/login" class="btn btn-primary">Acceder al área privada</a>
+  <!-- Servicios (bento) -->
+  <section id="servicios" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Servicios</span>
+        <h2>Todo lo que necesitas para progresar</h2>
+        <p>Una plataforma completa entre tú y tu entrenador, desde el primer entreno hasta tu mejor marca.</p>
+      </div>
+      <div class="bento">
+        @for (f of features; track f.title) {
+          <article class="bento-card" [class.wide]="f.size === 'wide'">
+            <span [class]="'tile ' + f.tone"><mat-icon>{{ f.icon }}</mat-icon></span>
+            <h3>{{ f.title }}</h3>
+            <p>{{ f.text }}</p>
+            @if ($first) {
+              <div class="bento-demo" aria-hidden="true">
+                <span>100 kg × 8 <em>RIR 2</em></span>
+                <span>105 kg × 7 <em>RIR 2</em></span>
+                <span class="hot">105 kg × 7 <em>RIR 1</em></span>
+              </div>
+            }
+            @if ($last) {
+              <div class="bento-demo" aria-hidden="true">
+                <span><mat-icon>credit_card</mat-icon> Tarjeta</span>
+                <span><mat-icon>smartphone</mat-icon> Bizum</span>
+                <span class="ok"><mat-icon>check_circle</mat-icon> Pagado</span>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Cómo funciona -->
+  <section id="como-funciona" class="section how">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Cómo funciona</span>
+        <h2>Tu progreso en 4 pasos</h2>
+      </div>
+      <ol class="steps">
+        @for (s of steps; track s.number) {
+          <li class="step">
+            <span class="step-num">{{ s.number }}</span>
+            <h3>{{ s.title }}</h3>
+            <p>{{ s.text }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- Planes -->
+  <section id="planes" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Planes</span>
+        <h2>Elige el plan que encaja contigo</h2>
+        <p>Sin permanencia. Cambia o cancela cuando quieras.</p>
+      </div>
+      @if (plansLoading()) {
+        <div class="plans">
+          <div class="skeleton plan-skeleton"></div>
+          <div class="skeleton plan-skeleton"></div>
+          <div class="skeleton plan-skeleton"></div>
+        </div>
+      } @else if (apiPlans().length === 0) {
+        <div class="plans-empty">
+          <span class="tile orange"><mat-icon>workspace_premium</mat-icon></span>
+          <p>Próximamente disponibles. Escríbenos para más información.</p>
+          <a href="mailto:hola@adrifit.com" class="btn btn-primary">Contactar</a>
+        </div>
+      } @else {
+        <div class="plans">
+          @for (p of apiPlans(); track p.id) {
+            <article class="plan-card" [class.featured]="isFeatured(p)">
+              @if (isFeatured(p)) { <span class="plan-flag"><mat-icon>local_fire_department</mat-icon> Más popular</span> }
+              <h3>{{ p.name }}</h3>
+              <div class="price">{{ p.monthlyPrice | number: '1.0-0' }}€<span>/mes</span></div>
+              <ul>
+                @for (f of planFeatures(p); track f) {
+                  <li><mat-icon>check</mat-icon> {{ f }}</li>
+                }
+              </ul>
+              <a routerLink="/login" class="btn btn-lg btn-block" [class.btn-primary]="isFeatured(p)" [class.btn-outline]="!isFeatured(p)">
+                Empezar con {{ p.name }}
+              </a>
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- CTA band -->
+  <section id="contacto" class="section cta-wrap">
+    <div class="container">
+      <div class="cta">
+        <div>
+          <h2>¿Listo para empezar tu transformación?</h2>
+          <p>Únete hoy y recibe tu primer plan personalizado esta misma semana.</p>
+        </div>
+        <div class="cta-actions">
+          <a routerLink="/login" class="btn btn-primary btn-lg">Acceder al área privada</a>
+          <a href="mailto:hola@adrifit.com" class="btn btn-ghost btn-lg">Escríbenos</a>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -155,18 +259,19 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-brand">
-        <a class="brand">
+        <a class="brand" href="#inicio">
           <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
           Adri<span class="dot">Fit</span>
         </a>
-        <p>Entrenamiento personal y seguimiento profesional.</p>
+        <p>Entrenamiento personal y seguimiento profesional, desde cualquier lugar.</p>
       </div>
       <div class="footer-cols">
         <div>
           <h4>Producto</h4>
           <a href="#servicios">Servicios</a>
           <a href="#como-funciona">Cómo funciona</a>
-          @if (testimonials().length > 0) { <a href="#testimonios">Testimonios</a> }
+          @if (testimonials().length > 0) { <a href="#opiniones">Opiniones</a> }
+          <a href="#planes">Planes</a>
         </div>
         <div>
           <h4>Cuenta</h4>
@@ -178,6 +283,6 @@
         </div>
       </div>
     </div>
-    <div class="footer-bottom container">© 2026 AdriFit. Todos los derechos reservados.</div>
+    <div class="container footer-bottom">© 2026 AdriFit. Todos los derechos reservados.</div>
   </footer>
 </div>

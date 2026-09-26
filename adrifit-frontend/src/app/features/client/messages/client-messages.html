@@ -7,11 +7,15 @@
 
 <div class="content chat-content">
   @if (loading()) {
-    <div class="chat"><div class="loading">Cargando conversación...</div></div>
+    <div class="chat" aria-busy="true" aria-label="Cargando conversación">
+      <div class="chat-body sk-body">
+        <div class="skeleton sk-b"></div><div class="skeleton sk-b mine"></div><div class="skeleton sk-b wide"></div><div class="skeleton sk-b mine"></div>
+      </div>
+    </div>
   } @else if (error()) {
     <div class="alert error">
       <mat-icon>error</mat-icon>
-      <div style="flex:1">{{ error() }}</div>
+      <div class="grow">{{ error() }}</div>
       <button class="btn btn-sm btn-outline" (click)="load(true)">Reintentar</button>
     </div>
   } @else if (!enabled()) {
@@ -27,7 +31,7 @@
   } @else {
     <div class="chat">
       <div class="chat-head">
-        <span class="avatar"><mat-icon>sports</mat-icon></span>
+        <span class="avatar"><mat-icon>sports</mat-icon><i class="online"></i></span>
         <div>
           <div class="name">Tu entrenador</div>
           <div class="status">Plan {{ conversation()?.planName }} · se actualiza cada 10 s</div>

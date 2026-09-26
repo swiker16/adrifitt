@@ -4,7 +4,7 @@
     <div class="subtitle">Bandeja de salida y comunicaciones con tus clientes</div>
   </div>
   <div class="topbar-actions">
-    <button class="btn btn-primary btn-sm" type="button" (click)="openCompose()">
+    <button class="btn btn-primary" type="button" (click)="openCompose()">
       <mat-icon>edit</mat-icon> Redactar email
     </button>
   </div>
@@ -20,59 +20,78 @@
     </div>
   </div>
 
-  <div class="filters">
-    <div class="field">
-      <label for="f-client">Cliente</label>
-      <select id="f-client" [ngModel]="clientFilter() ?? ''" (ngModelChange)="setClient($event)">
-        <option value="">Todos los clientes</option>
-        @for (c of sortedClients(); track c.id) {
-          <option [value]="c.id">{{ fullName(c) }}</option>
-        }
-      </select>
+  <div class="panel inbox">
+    <div class="inbox-head">
+      <div class="inbox-title">
+        <span class="tile"><mat-icon>outbox</mat-icon></span>
+        <div>
+          <h2>Bandeja de salida</h2>
+          @if (!loading() && !error()) {
+            <div class="count">{{ filtered().length }} {{ filtered().length === 1 ? 'email' : 'emails' }}</div>
+          }
+        </div>
+      </div>
+      <div class="filters">
+        <div class="select-wrap">
+          <mat-icon>person</mat-icon>
+          <select id="f-client" aria-label="Cliente" [ngModel]="clientFilter() ?? ''" (ngModelChange)="setClient($event)">
+            <option value="">Todos los clientes</option>
+            @for (c of sortedClients(); track c.id) {
+              <option [value]="c.id">{{ fullName(c) }}</option>
+            }
+          </select>
+        </div>
+        <div class="select-wrap">
+          <mat-icon>filter_list</mat-icon>
+          <select id="f-type" aria-label="Tipo" [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
+            <option value="">Todos los tipos</option>
+            @for (t of typeOptions; track t[0]) {
+              <option [value]="t[0]">{{ t[1] }}</option>
+            }
+          </select>
+        </div>
+      </div>
     </div>
-    <div class="field">
-      <label for="f-type">Tipo</label>
-      <select id="f-type" [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
-        <option value="">Todos los tipos</option>
-        @for (t of typeOptions; track t[0]) {
-          <option [value]="t[0]">{{ t[1] }}</option>
-        }
-      </select>
-    </div>
-    @if (!loading() && !error()) {
-      <div class="count">{{ filtered().length }} {{ filtered().length === 1 ? 'email' : 'emails' }}</div>
-    }
-  </div>
 
-  <div class="panel">
     @if (loading()) {
-      <div class="loading">Cargando emails...</div>
+      <div class="skel-list">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="skel-row"><div class="skeleton sq"></div><div class="grow"><div class="skeleton l1"></div><div class="skeleton l2"></div></div></div>
+        }
+      </div>
     } @else if (error()) {
-      <div class="empty">
-        <mat-icon>cloud_off</mat-icon>
-        <p>No se pudieron cargar los emails.</p>
-        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+      <div class="pad">
+        <div class="alert error">
+          <mat-icon>cloud_off</mat-icon>
+          <span class="grow">No se pudieron cargar los emails.</span>
+          <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+        </div>
       </div>
     } @else if (filtered().length === 0) {
-      <div class="empty"><mat-icon>mark_email_read</mat-icon><p>No hay emails con estos filtros.</p></div>
+      <div class="empty">
+        <mat-icon>mark_email_read</mat-icon>
+        <p>No hay emails con estos filtros.</p>
+        <button class="btn btn-primary empty-cta" type="button" (click)="openCompose()"><mat-icon>edit</mat-icon> Redactar email</button>
+      </div>
     } @else {
       <ul class="mail-list">
         @for (e of filtered(); track e.id) {
           <li>
             <button type="button" class="mail-row" (click)="preview.set(e)">
-              <span class="mail-icon"><mat-icon>{{ typeIcon(e.type) }}</mat-icon></span>
+              <span class="mail-icon" [class.failed]="e.status === 'FAILED'"><mat-icon>{{ typeIcon(e.type) }}</mat-icon></span>
               <span class="mail-main">
+                <span class="mail-line">
+                  <span class="mail-to">{{ e.toName || e.toAddress }}</span>
+                  <span class="mail-date">{{ e.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </span>
                 <span class="mail-subject">{{ e.subject }}</span>
-                <span class="mail-to">
-                  Para: {{ e.toName ? e.toName + ' · ' : '' }}{{ e.toAddress }}
+                <span class="mail-line sub">
+                  <span class="mail-addr">{{ e.toName ? e.toAddress : '' }}</span>
+                  <span class="mail-badges">
+                    <span class="type-chip">{{ typeLabel[e.type] }}</span>
+                    <span class="badge" [class]="statusClass(e.status)">{{ statusLabel[e.status] }}</span>
+                  </span>
                 </span>
-              </span>
-              <span class="mail-meta">
-                <span class="mail-badges">
-                  <span class="badge gray">{{ typeLabel[e.type] }}</span>
-                  <span class="badge" [class]="statusClass(e.status)">{{ statusLabel[e.status] }}</span>
-                </span>
-                <span class="mail-date">{{ e.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
               </span>
             </button>
           </li>
@@ -122,25 +141,33 @@
         <div class="form-grid">
           <div class="field full">
             <label>Destinatarios</label>
-            <label class="check all-active">
-              <input type="checkbox" name="allActive" [ngModel]="allActive()" (ngModelChange)="allActive.set($event)" />
-              <span>Todos los clientes activos</span>
+            <label class="all-active" [class.on]="allActive()">
+              <span class="aa-icon"><mat-icon>groups</mat-icon></span>
+              <span class="aa-text">
+                <span class="aa-title">Todos los clientes activos</span>
+                <span class="aa-sub">Se generará un email para cada cliente activo</span>
+              </span>
+              <input type="checkbox" class="switch" name="allActive" [ngModel]="allActive()" (ngModelChange)="allActive.set($event)" />
             </label>
             @if (!allActive()) {
               <div class="recipients">
                 <div class="recipients-head">
-                  <input type="search" name="search" placeholder="Buscar cliente..." autocomplete="off"
-                         [ngModel]="search()" (ngModelChange)="search.set($event)" />
-                  <button class="btn btn-outline btn-sm" type="button" (click)="selectVisible()">Marcar todos</button>
+                  <div class="search">
+                    <mat-icon>search</mat-icon>
+                    <input type="search" name="search" placeholder="Buscar cliente..." autocomplete="off"
+                           [ngModel]="search()" (ngModelChange)="search.set($event)" />
+                  </div>
+                  <button class="btn btn-light btn-sm" type="button" (click)="selectVisible()">Marcar todos</button>
                   @if (selectedIds().size > 0) {
-                    <button class="btn btn-outline btn-sm" type="button" (click)="clearSelection()">Limpiar</button>
+                    <button class="btn btn-light btn-sm" type="button" (click)="clearSelection()">Limpiar</button>
                   }
                 </div>
                 <div class="recipients-list">
                   @for (c of searchedClients(); track c.id) {
-                    <label class="check">
+                    <label class="check" [class.on]="isSelected(c.id)">
                       <input type="checkbox" [checked]="isSelected(c.id)" (change)="toggleClient(c.id)" />
-                      <span>
+                      <span class="r-avatar">{{ (c.firstName || '?')[0] }}{{ (c.lastName || '')[0] }}</span>
+                      <span class="min0">
                         <span class="r-name">{{ fullName(c) }}</span>
                         @if (c.email) { <span class="r-mail">{{ c.email }}</span> }
                       </span>
@@ -149,7 +176,9 @@
                     <div class="r-empty">No hay clientes que coincidan.</div>
                   }
                 </div>
-                <span class="hint">{{ selectedIds().size }} seleccionado(s)</span>
+                <span class="sel-count" [class.has]="selectedIds().size > 0">
+                  <mat-icon>check_circle</mat-icon>{{ selectedIds().size }} seleccionado(s)
+                </span>
               </div>
             }
           </div>

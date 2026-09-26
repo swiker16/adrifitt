@@ -1,54 +1,86 @@
-<div class="topbar">
+<div class="topbar hero-top">
   <div>
+    <div class="overline">{{ today | date: "EEEE d 'de' MMMM" }}</div>
     <div class="page-title">{{ greeting() }}{{ firstName() ? ', ' + firstName() : '' }} 👋</div>
     <div class="subtitle">Este es el resumen de tu semana</div>
   </div>
-  <div class="topbar-actions">
+  <div class="topbar-actions desktop-only">
     <a routerLink="/client/report" class="btn btn-primary"><mat-icon>send</mat-icon> Enviar seguimiento</a>
   </div>
 </div>
 
 <div class="content">
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando tu panel...</div></div>
+    <div class="sk-wrap" aria-busy="true" aria-label="Cargando tu panel">
+      <div class="skeleton sk-hero"></div>
+      <div class="sk-tiles"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      <div class="sk-stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    </div>
   } @else if (error()) {
     <div class="alert error">
       <mat-icon>error</mat-icon>
-      <div style="flex:1">{{ error() }}</div>
+      <div class="grow">{{ error() }}</div>
       <button class="btn btn-sm btn-outline" (click)="load()">Reintentar</button>
     </div>
   } @else if (data(); as d) {
     <!-- ── Alerts ── -->
-    @if (d.pendingPayments > 0) {
-      <a routerLink="/client/subscription" class="alert pay-alert" [class.error]="d.overduePayments" [class.warn]="!d.overduePayments">
-        <mat-icon>{{ d.overduePayments ? 'warning' : 'payments' }}</mat-icon>
-        <div class="grow">
-          @if (d.overduePayments) {
-            <strong>Tienes pagos vencidos.</strong>
-          } @else {
-            <strong>Tienes {{ d.pendingPayments }} {{ d.pendingPayments === 1 ? 'pago pendiente' : 'pagos pendientes' }}.</strong>
-          }
-          Importe: {{ d.pendingAmount | number: '1.2-2' }} €
-        </div>
-        <span class="alert-cta">Pagar <mat-icon>chevron_right</mat-icon></span>
-      </a>
+    @if (d.pendingPayments > 0 || (d.messagingEnabled && d.unreadMessages > 0)) {
+      <div class="alerts">
+        @if (d.pendingPayments > 0) {
+          <a routerLink="/client/subscription" class="alert link-alert" [class.error]="d.overduePayments" [class.warn]="!d.overduePayments">
+            <mat-icon>{{ d.overduePayments ? 'warning' : 'payments' }}</mat-icon>
+            <div class="grow">
+              @if (d.overduePayments) {
+                <strong>Tienes pagos vencidos.</strong>
+              } @else {
+                <strong>Tienes {{ d.pendingPayments }} {{ d.pendingPayments === 1 ? 'pago pendiente' : 'pagos pendientes' }}.</strong>
+              }
+              Importe: {{ d.pendingAmount | number: '1.2-2' }} €
+            </div>
+            <span class="alert-cta">Pagar <mat-icon>chevron_right</mat-icon></span>
+          </a>
+        }
+
+        @if (d.messagingEnabled && d.unreadMessages > 0) {
+          <a routerLink="/client/messages" class="alert info link-alert">
+            <mat-icon>mark_chat_unread</mat-icon>
+            <div class="grow">
+              <strong>Tienes {{ d.unreadMessages }} {{ d.unreadMessages === 1 ? 'mensaje nuevo' : 'mensajes nuevos' }}</strong> de tu entrenador.
+            </div>
+            <span class="alert-cta">Leer <mat-icon>chevron_right</mat-icon></span>
+          </a>
+        }
+      </div>
     }
 
-    @if (d.messagingEnabled && d.unreadMessages > 0) {
-      <a routerLink="/client/messages" class="alert info pay-alert">
-        <mat-icon>mark_chat_unread</mat-icon>
-        <div class="grow">
-          <strong>Tienes {{ d.unreadMessages }} {{ d.unreadMessages === 1 ? 'mensaje nuevo' : 'mensajes nuevos' }}</strong> de tu entrenador.
-        </div>
-        <span class="alert-cta">Leer <mat-icon>chevron_right</mat-icon></span>
-      </a>
-    }
-
-    <!-- ── Hero: plan + next review ── -->
     <div class="hero-grid">
+      <!-- ── Highlight: next review ── -->
+      <section class="review-card" [class.late]="(reviewInDays() ?? 1) < 0">
+        <div class="rc-top">
+          <span class="rc-label"><mat-icon>event_repeat</mat-icon> Próxima revisión</span>
+          @if (d.nextReviewDate && reviewInDays() !== null && reviewInDays()! >= 0) {
+            <span class="rc-count"><b>{{ reviewInDays() }}</b><small>{{ reviewInDays() === 1 ? 'día' : 'días' }}</small></span>
+          }
+        </div>
+        @if (d.nextReviewDate) {
+          <div class="rc-date">{{ d.nextReviewDate | date: "EEEE d 'de' MMMM" }}</div>
+          <div class="rc-when">
+            @if (reviewInDays() === 0) { Es hoy }
+            @else if ((reviewInDays() ?? 0) < 0) { Pendiente desde hace {{ -(reviewInDays() ?? 0) }} días }
+            @else if (reviewInDays() === 1) { Mañana }
+            @else { Dentro de {{ reviewInDays() }} días }
+          </div>
+        } @else {
+          <div class="rc-date">Envía tu primer seguimiento</div>
+          <div class="rc-when">Tu entrenador lo revisará y ajustará tu plan.</div>
+        }
+        <a routerLink="/client/report" class="btn btn-primary rc-btn"><mat-icon>send</mat-icon> Enviar seguimiento</a>
+      </section>
+
+      <!-- ── Plan ── -->
       <section class="plan-card">
         <div class="pc-top">
-          <span class="pc-icon"><mat-icon>workspace_premium</mat-icon></span>
+          <span class="tile orange"><mat-icon>workspace_premium</mat-icon></span>
           <div class="grow">
             <div class="pc-label">Tu plan</div>
             @if (d.subscription; as s) {
@@ -81,55 +113,39 @@
         }
         <a routerLink="/client/subscription" class="pc-link">Gestionar suscripción <mat-icon>arrow_forward</mat-icon></a>
       </section>
-
-      <section class="review-card" [class.late]="(reviewInDays() ?? 1) < 0">
-        <div class="rc-label"><mat-icon>event_repeat</mat-icon> Próxima revisión</div>
-        @if (d.nextReviewDate) {
-          <div class="rc-date">{{ d.nextReviewDate | date: "EEEE d 'de' MMMM" }}</div>
-          <div class="rc-when">
-            @if (reviewInDays() === 0) { Es hoy }
-            @else if ((reviewInDays() ?? 0) < 0) { Pendiente desde hace {{ -(reviewInDays() ?? 0) }} días }
-            @else if (reviewInDays() === 1) { Mañana }
-            @else { Dentro de {{ reviewInDays() }} días }
-          </div>
-        } @else {
-          <div class="rc-date">Envía tu primer seguimiento</div>
-          <div class="rc-when">Tu entrenador lo revisará y ajustará tu plan.</div>
-        }
-        <a routerLink="/client/report" class="btn btn-light"><mat-icon>send</mat-icon> Enviar seguimiento</a>
-      </section>
     </div>
 
-    <!-- ── Today shortcuts ── -->
+    <!-- ── Quick actions ── -->
     <h2 class="section-title">Hoy</h2>
-    <div class="shortcuts">
-      <a routerLink="/client/workout" class="shortcut">
-        <span class="sc-icon orange"><mat-icon>fitness_center</mat-icon></span>
-        <div class="grow">
-          <div class="sc-title">Mi rutina</div>
-          <div class="sc-sub">{{ d.activeWorkoutName || 'Aún sin rutina asignada' }}</div>
+    <div class="tiles">
+      <a routerLink="/client/workout" class="qa wide">
+        <span class="tile orange"><mat-icon>fitness_center</mat-icon></span>
+        <div class="qa-text">
+          <div class="qa-title">Mi rutina</div>
+          <div class="qa-sub">{{ d.activeWorkoutName || 'Aún sin rutina asignada' }}</div>
         </div>
         <mat-icon class="chev">chevron_right</mat-icon>
       </a>
-      <a routerLink="/client/workout-log" class="shortcut">
-        <span class="sc-icon green"><mat-icon>edit_note</mat-icon></span>
-        <div class="grow">
-          <div class="sc-title">Registrar entreno</div>
-          <div class="sc-sub">Apunta series, pesos y sensaciones</div>
+      <a routerLink="/client/workout-log" class="qa">
+        <span class="tile green"><mat-icon>edit_note</mat-icon></span>
+        <div class="qa-text">
+          <div class="qa-title">Registrar entreno</div>
+          <div class="qa-sub">Series, pesos y sensaciones</div>
         </div>
         <mat-icon class="chev">chevron_right</mat-icon>
       </a>
-      <a routerLink="/client/diet" class="shortcut">
-        <span class="sc-icon blue"><mat-icon>restaurant</mat-icon></span>
-        <div class="grow">
-          <div class="sc-title">Mi dieta</div>
-          <div class="sc-sub">{{ d.activeDietName || 'Aún sin dieta asignada' }}</div>
+      <a routerLink="/client/diet" class="qa">
+        <span class="tile blue"><mat-icon>restaurant</mat-icon></span>
+        <div class="qa-text">
+          <div class="qa-title">Mi dieta</div>
+          <div class="qa-sub">{{ d.activeDietName || 'Aún sin dieta asignada' }}</div>
         </div>
         <mat-icon class="chev">chevron_right</mat-icon>
       </a>
     </div>
 
     <!-- ── Stats ── -->
+    <h2 class="section-title">Tu progreso</h2>
     <div class="stat-grid">
       <a routerLink="/client/workout-log" class="stat-card">
         <div class="stat-top"><span class="stat-icon orange"><mat-icon>local_fire_department</mat-icon></span></div>
@@ -171,53 +187,51 @@
         <h2>Último seguimiento</h2>
         <a routerLink="/client/report" class="link">Ver todos</a>
       </div>
-      <div class="panel-body">
-        @if (d.latestReport; as r) {
-          <div class="last-report">
-            <div class="lr-date">
-              {{ r.createdAt | date: 'dd/MM/yyyy' }}
-              <span class="badge" [class]="'badge ' + (r.status === 'REVIEWED' ? 'green' : 'orange')">{{ r.status === 'REVIEWED' ? 'Revisado' : 'Pendiente de revisión' }}</span>
-            </div>
-            <div class="lr-chips">
-              <span><strong>{{ r.weight }}</strong> kg</span>
-              @if (r.waist) { <span>Cintura <strong>{{ r.waist }}</strong> cm</span> }
-              @if (r.bodyFat) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
-              @if (r.energyLevel) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
-              @if (r.dietAdherence != null) { <span>Dieta <strong>{{ r.dietAdherence }}</strong>%</span> }
-              @if (r.trainingAdherence != null) { <span>Entreno <strong>{{ r.trainingAdherence }}</strong>%</span> }
-            </div>
-            @if (r.coachFeedback) {
-              <div class="feedback-block">
-                <mat-icon class="fb-icon">sports</mat-icon>
-                <div class="fb-body">
-                  <span class="fb-title">Feedback de tu entrenador</span>
-                  <p>{{ r.coachFeedback }}</p>
-                  @if (r.reviewedAt) { <span class="fb-date">Revisado el {{ r.reviewedAt | date: 'dd/MM/yyyy' }}</span> }
-                </div>
+      @if (d.latestReport; as r) {
+        <div class="last-report">
+          <div class="lr-date">
+            <span>{{ r.createdAt | date: 'dd/MM/yyyy' }}</span>
+            <span class="badge" [class]="'badge ' + (r.status === 'REVIEWED' ? 'green' : 'orange')">{{ r.status === 'REVIEWED' ? 'Revisado' : 'Pendiente de revisión' }}</span>
+          </div>
+          <div class="lr-chips">
+            <span><strong>{{ r.weight }}</strong> kg</span>
+            @if (r.waist) { <span>Cintura <strong>{{ r.waist }}</strong> cm</span> }
+            @if (r.bodyFat) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
+            @if (r.energyLevel) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
+            @if (r.dietAdherence != null) { <span>Dieta <strong>{{ r.dietAdherence }}</strong>%</span> }
+            @if (r.trainingAdherence != null) { <span>Entreno <strong>{{ r.trainingAdherence }}</strong>%</span> }
+          </div>
+          @if (r.coachFeedback) {
+            <div class="feedback-block">
+              <span class="tile orange sm"><mat-icon>sports</mat-icon></span>
+              <div class="fb-body">
+                <span class="fb-title">Feedback de tu entrenador</span>
+                <p>{{ r.coachFeedback }}</p>
+                @if (r.reviewedAt) { <span class="fb-date">Revisado el {{ r.reviewedAt | date: 'dd/MM/yyyy' }}</span> }
               </div>
-            } @else {
-              <p class="muted"><mat-icon>hourglass_empty</mat-icon> Tu entrenador aún no ha revisado este seguimiento.</p>
-            }
-          </div>
-        } @else {
-          <div class="empty">
-            <mat-icon>assignment</mat-icon>
-            <p>Envía tu primer seguimiento para recibir feedback de tu entrenador.</p>
-            <a routerLink="/client/report" class="btn btn-primary btn-sm"><mat-icon>send</mat-icon> Enviar seguimiento</a>
-          </div>
-        }
-      </div>
+            </div>
+          } @else {
+            <p class="muted"><mat-icon>hourglass_empty</mat-icon> Tu entrenador aún no ha revisado este seguimiento.</p>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <mat-icon>assignment</mat-icon>
+          <p>Envía tu primer seguimiento para recibir feedback de tu entrenador.</p>
+          <a routerLink="/client/report" class="btn btn-primary btn-sm"><mat-icon>send</mat-icon> Enviar seguimiento</a>
+        </div>
+      }
     </div>
 
     <!-- ── Review invite ── -->
     @if (!d.hasTestimonial) {
       <a routerLink="/client/testimonial" class="review-invite">
-        <span class="ri-stars"><mat-icon>star</mat-icon><mat-icon>star</mat-icon><mat-icon>star</mat-icon></span>
+        <span class="tile amber"><mat-icon>star</mat-icon></span>
         <div class="grow">
           <strong>¿Te está gustando la experiencia?</strong>
           <span>Escribe una reseña y ayuda a otras personas a dar el paso.</span>
         </div>
-        <span class="btn btn-outline btn-sm">Escribir reseña</span>
+        <mat-icon class="chev">chevron_right</mat-icon>
       </a>
     }
   }

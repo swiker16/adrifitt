@@ -1,9 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/auth/auth.service';
 import { apiErrorMessage } from '../../../shared/utils/download';
+import { TestimonialService } from '../../../core/services/testimonial.service';
+import { PublicTestimonial } from '../../../shared/models/testimonial.model';
 
 @Component({
   selector: 'app-login',
@@ -11,13 +13,16 @@ import { apiErrorMessage } from '../../../shared/utils/download';
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
+export class Login implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly testimonialService = inject(TestimonialService);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
+  /** Best public review, shown on the brand panel (desktop only). */
+  readonly quote = signal<PublicTestimonial | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
@@ -29,6 +34,18 @@ export class Login {
     if (this.auth.isAuthenticated()) {
       this.auth.redirectByRole();
     }
+  }
+
+  ngOnInit(): void {
+    this.testimonialService.findPublic().subscribe({
+      next: (list) => {
+        const best = [...list]
+          .filter((t) => t.content.length <= 220)
+          .sort((a, b) => b.rating - a.rating)[0];
+        this.quote.set(best ?? null);
+      },
+      error: () => this.quote.set(null),
+    });
   }
 
   togglePassword(): void {

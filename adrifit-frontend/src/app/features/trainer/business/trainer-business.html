@@ -4,39 +4,46 @@
     <div class="subtitle">Ingresos, suscripciones y evolución de tu cartera de clientes</div>
   </div>
   <div class="topbar-actions">
-    <button class="btn btn-outline btn-sm" type="button" [disabled]="loading()" (click)="load()">
-      <mat-icon>refresh</mat-icon> Actualizar
+    <button class="btn btn-outline" type="button" [disabled]="loading()" (click)="load()">
+      <mat-icon [class.spin]="loading()">refresh</mat-icon> Actualizar
     </button>
   </div>
 </div>
 
 <div class="content">
   @if (loading() && !data()) {
-    <div class="loading">Cargando métricas...</div>
+    <div class="kpi-grid">
+      <div class="skeleton sk-hero"></div>
+      <div class="skeleton sk-card"></div>
+      <div class="skeleton sk-card"></div>
+      <div class="skeleton sk-card"></div>
+    </div>
+    <div class="charts">
+      <div class="skeleton sk-chart"></div>
+      <div class="skeleton sk-chart"></div>
+    </div>
   } @else if (error()) {
-    <div class="panel">
-      <div class="empty">
-        <mat-icon>cloud_off</mat-icon>
-        <p>No se pudieron cargar las métricas del negocio.</p>
-        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
-      </div>
+    <div class="alert error">
+      <mat-icon>cloud_off</mat-icon>
+      <span class="grow">No se pudieron cargar las métricas del negocio.</span>
+      <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
     </div>
   } @else if (data(); as d) {
     <!-- Main KPIs -->
     <div class="kpi-grid">
-      <div class="stat-card highlight">
-        <div class="stat-top">
-          <span class="kpi-label">MRR</span>
-          <span class="stat-icon orange"><mat-icon>autorenew</mat-icon></span>
+      <div class="mrr-card">
+        <div class="mrr-top">
+          <span class="mrr-label"><mat-icon>autorenew</mat-icon> MRR</span>
+          <span class="mrr-pill">{{ d.activeSubscriptions }} suscripciones activas</span>
         </div>
-        <div class="stat-value">{{ d.monthlyRecurringRevenue | number: '1.2-2' }} €</div>
-        <div class="kpi-sub">Ingreso recurrente mensual</div>
+        <div class="mrr-value">{{ d.monthlyRecurringRevenue | number: '1.2-2' }}<span>€</span></div>
+        <div class="mrr-sub">Ingreso recurrente mensual</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-top">
-          <span class="kpi-label">Ingresos este mes</span>
           <span class="stat-icon green"><mat-icon>trending_up</mat-icon></span>
+          <span class="kicker">Este mes</span>
         </div>
         <div class="stat-value">{{ d.revenueThisMonth | number: '1.2-2' }} €</div>
         <div class="kpi-sub">
@@ -55,8 +62,8 @@
 
       <div class="stat-card">
         <div class="stat-top">
-          <span class="kpi-label">Ingresos 12 meses</span>
           <span class="stat-icon blue"><mat-icon>calendar_month</mat-icon></span>
+          <span class="kicker">12 meses</span>
         </div>
         <div class="stat-value">{{ d.revenueLast12Months | number: '1.2-2' }} €</div>
         <div class="kpi-sub">Cobrado en el último año</div>
@@ -64,8 +71,8 @@
 
       <div class="stat-card">
         <div class="stat-top">
-          <span class="kpi-label">Clientes activos</span>
           <span class="stat-icon violet"><mat-icon>group</mat-icon></span>
+          <span class="kicker">Clientes</span>
         </div>
         <div class="stat-value">{{ d.activeSubscriptions }} <small>/ {{ d.pausedSubscriptions }} pausados</small></div>
         <div class="kpi-sub">{{ d.totalClients }} clientes en total</div>
@@ -75,50 +82,56 @@
     <!-- Secondary KPIs -->
     <div class="mini-grid">
       <div class="mini">
-        <mat-icon>person</mat-icon>
+        <span class="m-tile"><mat-icon>person</mat-icon></span>
         <div><strong>{{ d.averageRevenuePerActiveClient | number: '1.2-2' }} €</strong><span>Ticket medio por cliente activo</span></div>
       </div>
       <div class="mini" [class.warn]="d.churnRatePercent > 10">
-        <mat-icon>logout</mat-icon>
+        <span class="m-tile"><mat-icon>logout</mat-icon></span>
         <div>
           <strong>{{ d.churnRatePercent | number: '1.0-1' }}%</strong>
           <span>Churn 30 días ({{ d.cancellationsLast30Days }} {{ d.cancellationsLast30Days === 1 ? 'baja' : 'bajas' }})</span>
         </div>
       </div>
       <div class="mini">
-        <mat-icon>schedule</mat-icon>
+        <span class="m-tile"><mat-icon>schedule</mat-icon></span>
         <div><strong>{{ d.pendingAmount | number: '1.2-2' }} €</strong><span>Pendiente de cobro</span></div>
       </div>
       <div class="mini" [class.danger]="d.overdueAmount > 0">
-        <mat-icon>error_outline</mat-icon>
+        <span class="m-tile"><mat-icon>error_outline</mat-icon></span>
         <div><strong>{{ d.overdueAmount | number: '1.2-2' }} €</strong><span>Vencido</span></div>
       </div>
       <div class="mini">
-        <mat-icon>undo</mat-icon>
+        <span class="m-tile"><mat-icon>undo</mat-icon></span>
         <div><strong>{{ d.refundedLast12Months | number: '1.2-2' }} €</strong><span>Devoluciones 12 meses</span></div>
       </div>
     </div>
 
     <!-- Charts -->
     <div class="charts">
-      <div class="panel">
-        <div class="panel-head"><h2>Ingresos por mes</h2></div>
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>Ingresos por mes</h2><div class="ph-sub">Pagos cobrados, últimos 12 meses</div></div>
+          <span class="legend"><i class="dot brand"></i>€</span>
+        </div>
         <div class="chart-body">
           <app-bar-chart [points]="revenuePoints()" unit="€" emptyText="Aún no hay ingresos registrados." />
         </div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h2>Altas de clientes por mes</h2></div>
-        <div class="chart-body">
-          <app-bar-chart [points]="newClientsPoints()" unit="clientes" color="#3b82f6" emptyText="Sin altas en este periodo." />
+      </section>
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>Altas de clientes por mes</h2><div class="ph-sub">Nuevos clientes, últimos 12 meses</div></div>
+          <span class="legend"><i class="dot info"></i>clientes</span>
         </div>
-      </div>
+        <div class="chart-body">
+          <app-bar-chart [points]="newClientsPoints()" unit="clientes" color="#2F6FEB" emptyText="Sin altas en este periodo." />
+        </div>
+      </section>
     </div>
 
     <div class="bottom">
       <!-- Plans -->
-      <div class="panel">
-        <div class="panel-head"><h2>Planes</h2></div>
+      <section class="panel">
+        <div class="panel-head"><h2>Planes</h2><span class="ph-sub">Aportación al MRR</span></div>
         @if (plans().length === 0) {
           <div class="empty"><mat-icon>inventory_2</mat-icon><p>No hay planes todavía.</p></div>
         } @else {
@@ -136,10 +149,10 @@
               <tbody>
                 @for (p of plans(); track p.planId) {
                   <tr>
-                    <td><strong>{{ p.planName }}</strong></td>
+                    <td><span class="plan-name">{{ p.planName }}</span></td>
                     <td class="num">{{ p.monthlyPrice | number: '1.2-2' }} €</td>
                     <td class="num">{{ p.activeClients }}</td>
-                    <td class="num"><strong>{{ p.mrr | number: '1.2-2' }} €</strong></td>
+                    <td class="num"><span class="amount">{{ p.mrr | number: '1.2-2' }} €</span></td>
                     <td class="share-col">
                       <div class="share">
                         <div class="progress"><span [style.width.%]="p.share"></span></div>
@@ -152,10 +165,10 @@
             </table>
           </div>
         }
-      </div>
+      </section>
 
       <!-- Methods -->
-      <div class="panel">
+      <section class="panel">
         <div class="panel-head"><h2>Por método de pago</h2></div>
         <ul class="methods">
           @for (m of methods(); track m.method) {
@@ -163,8 +176,8 @@
               <span class="m-icon"><mat-icon>{{ methodIcon(m.method) }}</mat-icon></span>
               <div class="m-main">
                 <div class="m-row">
-                  <strong>{{ methodLabel[m.method] }}</strong>
-                  <strong>{{ m.amount | number: '1.2-2' }} €</strong>
+                  <span class="m-name">{{ methodLabel[m.method] }}</span>
+                  <span class="amount">{{ m.amount | number: '1.2-2' }} €</span>
                 </div>
                 <div class="progress"><span [style.width.%]="m.share"></span></div>
                 <div class="m-sub">{{ m.payments }} {{ m.payments === 1 ? 'pago' : 'pagos' }} · {{ m.share | number: '1.0-0' }}%</div>
@@ -172,7 +185,7 @@
             </li>
           }
         </ul>
-      </div>
+      </section>
     </div>
   }
 </div>

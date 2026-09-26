@@ -16,32 +16,27 @@
 
 <div class="content">
   @if (summary(); as s) {
-    @if (s.gatewayMode === 'test') {
-      <div class="mode-row">
-        <span class="test-mode"><mat-icon>science</mat-icon> Pasarela en modo test</span>
-      </div>
-    }
     <div class="stat-grid three">
       <div class="stat-card">
         <div class="stat-top">
-          <span class="stat-label">Pendiente</span>
           <span class="stat-icon orange"><mat-icon>schedule</mat-icon></span>
+          <span class="kicker">Pendiente</span>
         </div>
         <div class="stat-value">{{ s.pendingAmount | number: '1.2-2' }} €</div>
         <div class="stat-label">{{ s.pendingCount }} {{ s.pendingCount === 1 ? 'cobro' : 'cobros' }} pendientes</div>
       </div>
       <div class="stat-card" [class.alarm]="s.overdueCount > 0">
         <div class="stat-top">
-          <span class="stat-label">Vencido</span>
           <span class="stat-icon red"><mat-icon>error_outline</mat-icon></span>
+          <span class="kicker">Vencido</span>
         </div>
         <div class="stat-value">{{ s.overdueAmount | number: '1.2-2' }} €</div>
         <div class="stat-label">{{ s.overdueCount }} {{ s.overdueCount === 1 ? 'cobro vencido' : 'cobros vencidos' }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-top">
-          <span class="stat-label">Cobrado este mes</span>
           <span class="stat-icon green"><mat-icon>payments</mat-icon></span>
+          <span class="kicker">Cobrado este mes</span>
         </div>
         <div class="stat-value">{{ s.paidThisMonthAmount | number: '1.2-2' }} €</div>
         <div class="stat-label">{{ s.paidThisMonthCount }} {{ s.paidThisMonthCount === 1 ? 'pago' : 'pagos' }}</div>
@@ -49,33 +44,49 @@
     </div>
   }
 
-  <div class="filters">
-    <div class="segmented">
-      @for (o of statusOptions; track o.value) {
-        <button type="button" [class.active]="statusFilter() === o.value" (click)="setStatus(o.value)">{{ o.label }}</button>
-      }
-    </div>
-    <div class="field client-filter">
-      <select aria-label="Filtrar por cliente" [ngModel]="clientFilter() ?? ''" (ngModelChange)="setClient($event)">
-        <option value="">Todos los clientes</option>
-        @for (c of sortedClients(); track c.id) {
-          <option [value]="c.id">{{ fullName(c) }}</option>
-        }
-      </select>
-    </div>
-  </div>
-
   <div class="panel">
+    <div class="filters">
+      <div class="segmented">
+        @for (o of statusOptions; track o.value) {
+          <button type="button" [class.active]="statusFilter() === o.value" (click)="setStatus(o.value)">{{ o.label }}</button>
+        }
+      </div>
+      <div class="filters-right">
+        @if (summary()?.gatewayMode === 'test') {
+          <span class="test-mode"><mat-icon>science</mat-icon> Pasarela en modo test</span>
+        }
+        <div class="select-wrap">
+          <mat-icon>person_search</mat-icon>
+          <select aria-label="Filtrar por cliente" [ngModel]="clientFilter() ?? ''" (ngModelChange)="setClient($event)">
+            <option value="">Todos los clientes</option>
+            @for (c of sortedClients(); track c.id) {
+              <option [value]="c.id">{{ fullName(c) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
     @if (loading()) {
-      <div class="loading">Cargando cobros...</div>
+      <div class="skel-list">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skel-row"><div class="skeleton sq"></div><div class="skeleton ln"></div><div class="skeleton sm"></div></div>
+        }
+      </div>
     } @else if (error()) {
-      <div class="empty">
-        <mat-icon>cloud_off</mat-icon>
-        <p>No se pudieron cargar los cobros.</p>
-        <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+      <div class="pad">
+        <div class="alert error">
+          <mat-icon>cloud_off</mat-icon>
+          <span class="grow">No se pudieron cargar los cobros.</span>
+          <button class="btn btn-outline btn-sm" type="button" (click)="load()">Reintentar</button>
+        </div>
       </div>
     } @else if (payments().length === 0) {
-      <div class="empty"><mat-icon>receipt_long</mat-icon><p>No hay cobros con estos filtros.</p></div>
+      <div class="empty">
+        <mat-icon>receipt_long</mat-icon>
+        <p>No hay cobros con estos filtros.</p>
+        <button class="btn btn-primary empty-cta" type="button" (click)="openCreate()"><mat-icon>add</mat-icon> Nuevo cobro</button>
+      </div>
     } @else {
       <!-- Desktop table -->
       <div class="table-wrap desktop-only">
@@ -104,13 +115,13 @@
                 <td>
                   <div class="concept">{{ p.concept }}</div>
                   @if (p.lastFailureReason && p.status === 'PENDING') {
-                    <div class="sub fail">{{ p.failedAttempts }} intento(s) fallido(s): {{ p.lastFailureReason }}</div>
+                    <div class="sub fail"><mat-icon>warning_amber</mat-icon>{{ p.failedAttempts }} intento(s) fallido(s): {{ p.lastFailureReason }}</div>
                   }
                   @if (p.trainerNotes) { <div class="sub">{{ p.trainerNotes }}</div> }
                 </td>
-                <td class="num"><strong>{{ p.amount | number: '1.2-2' }} €</strong></td>
+                <td class="num"><span class="amount">{{ p.amount | number: '1.2-2' }} €</span></td>
                 <td>
-                  <div>{{ p.dueDate | date: 'dd/MM/yyyy' }}</div>
+                  <div class="nowrap">{{ p.dueDate | date: 'dd/MM/yyyy' }}</div>
                   @if (p.overdue) { <span class="badge red">Vencido</span> }
                 </td>
                 <td><span class="badge" [class]="statusClass(p.status)">{{ statusLabel[p.status] }}</span></td>
@@ -120,11 +131,13 @@
                     @if (methodDetail(p)) { <div class="sub">{{ methodDetail(p) }}</div> }
                   } @else { <span class="na">—</span> }
                 </td>
-                <td>
+                <td class="nowrap">
                   @if (p.paidAt) { {{ p.paidAt | date: 'dd/MM/yyyy' }} } @else { <span class="na">—</span> }
                 </td>
                 <td class="actions">
-                  <ng-container *ngTemplateOutlet="rowActions; context: { $implicit: p }" />
+                  <div class="row-actions">
+                    <ng-container *ngTemplateOutlet="rowActions; context: { $implicit: p }" />
+                  </div>
                 </td>
               </tr>
             }
@@ -139,24 +152,24 @@
             <div class="pay-card-top">
               <a class="cell-user" [routerLink]="['/trainer/clients', p.clientId]">
                 <span class="avatar">{{ initials(p.clientName) }}</span>
-                <div>
+                <div class="min0">
                   <div class="name">{{ p.clientName ?? 'Cliente #' + p.clientId }}</div>
                   <div class="sub">{{ p.concept }}</div>
                 </div>
               </a>
-              <strong class="amount">{{ p.amount | number: '1.2-2' }} €</strong>
+              <span class="amount">{{ p.amount | number: '1.2-2' }} €</span>
             </div>
             <div class="pay-card-meta">
               <span class="badge" [class]="statusClass(p.status)">{{ statusLabel[p.status] }}</span>
               @if (p.overdue) { <span class="badge red">Vencido</span> }
-              <span class="meta">Vence {{ p.dueDate | date: 'dd/MM/yyyy' }}</span>
+              <span class="meta"><mat-icon>event</mat-icon>Vence {{ p.dueDate | date: 'dd/MM/yyyy' }}</span>
               @if (p.method) {
-                <span class="meta">{{ methodLabel[p.method] }} @if (methodDetail(p)) { · {{ methodDetail(p) }} }</span>
+                <span class="meta"><mat-icon>credit_card</mat-icon>{{ methodLabel[p.method] }} @if (methodDetail(p)) { · {{ methodDetail(p) }} }</span>
               }
-              @if (p.paidAt) { <span class="meta">Pagado {{ p.paidAt | date: 'dd/MM/yyyy' }}</span> }
+              @if (p.paidAt) { <span class="meta"><mat-icon>check_circle</mat-icon>Pagado {{ p.paidAt | date: 'dd/MM/yyyy' }}</span> }
             </div>
             @if (p.lastFailureReason && p.status === 'PENDING') {
-              <div class="sub fail">{{ p.failedAttempts }} intento(s) fallido(s): {{ p.lastFailureReason }}</div>
+              <div class="sub fail"><mat-icon>warning_amber</mat-icon>{{ p.failedAttempts }} intento(s) fallido(s): {{ p.lastFailureReason }}</div>
             }
             @if (p.status === 'PENDING' || p.status === 'PAID') {
               <div class="pay-card-actions">
@@ -194,9 +207,14 @@
         <button class="modal-close" type="button" aria-label="Cerrar" (click)="cashTarget.set(null)"><mat-icon>close</mat-icon></button>
       </div>
       <div class="modal-body">
-        <p class="modal-summary">
-          <strong>{{ p.clientName }}</strong> · {{ p.concept }} · <strong>{{ p.amount | number: '1.2-2' }} €</strong>
-        </p>
+        <div class="modal-summary">
+          <span class="ms-icon"><mat-icon>payments</mat-icon></span>
+          <div class="min0">
+            <div class="ms-name">{{ p.clientName }}</div>
+            <div class="sub">{{ p.concept }}</div>
+          </div>
+          <span class="amount">{{ p.amount | number: '1.2-2' }} €</span>
+        </div>
         <div class="field">
           <label for="cash-notes">Notas (opcional)</label>
           <textarea id="cash-notes" rows="3" placeholder="Ej.: entregado en mano en la sesión del lunes"

@@ -36,7 +36,9 @@
   </div>
 
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando fotos...</div></div>
+    <div class="gallery" aria-busy="true" aria-label="Cargando fotos">
+      @for (i of [1, 2, 3, 4]; track i) { <div class="skeleton sk-photo"></div> }
+    </div>
   } @else if (loadError()) {
     <div class="alert error mb"><mat-icon>error</mat-icon><span>{{ loadError() }}</span></div>
     <button type="button" class="btn btn-outline" (click)="load()">Reintentar</button>
