@@ -1,0 +1,483 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Suscripción y pagos</div>
+    <div class="subtitle">Tu plan, tus cobros y tu historial</div>
+  </div>
+  <div class="topbar-actions">
+    <span class="test-mode"><mat-icon class="ic-sm">science</mat-icon> Modo prueba</span>
+  </div>
+</div>
+
+<div class="content">
+  <!-- ═══ Current plan ═══ -->
+  @switch (subState()) {
+    @case ('loading') {
+      <div class="skeleton sk-current" aria-busy="true" aria-label="Cargando tu suscripción"></div>
+    }
+    @case ('error') {
+      <div class="alert error"><mat-icon>error</mat-icon><div class="grow">{{ subError() }}</div>
+        <button class="btn btn-sm btn-outline" (click)="loadSubscription()">Reintentar</button>
+      </div>
+    }
+    @case ('none') {
+      <div class="panel no-sub">
+        <div class="empty">
+          <mat-icon>card_membership</mat-icon>
+          <h3>No tienes suscripción activa</h3>
+          <p>Elige uno de los planes de abajo para empezar. El primer cobro se genera hoy.</p>
+        </div>
+      </div>
+    }
+    @case ('ok') {
+      @if (sub(); as s) {
+        <section class="current-card">
+          <div class="cc-main">
+            <div class="cc-icon"><mat-icon>workspace_premium</mat-icon></div>
+            <div class="cc-info">
+              <div class="cc-label">Tu plan actual</div>
+              <div class="cc-name">
+                {{ s.planName }}
+                <span class="badge" [class]="'badge ' + statusBadge(s)">
+                  {{ s.cancelAtPeriodEnd ? 'Cancelada' : statusLabel[s.status] }}
+                </span>
+              </div>
+              <div class="cc-price">
+                {{ s.effectivePrice | number: '1.0-2' }} €<span>{{ periodSuffix[s.billingPeriod] }}</span>
+                @if (s.customPrice !== null && planPriceOf(s) !== null) {
+                  <s class="cc-old">{{ planPriceOf(s) | number: '1.0-2' }} €</s>
+                }
+              </div>
+              <div class="cc-sub">
+                <span>Pago {{ periodLabel[s.billingPeriod].toLowerCase() }}</span>
+                @if (s.billingPeriod !== 'MONTHLY') { <span>· equivale a {{ s.monthlyEquivalent | number: '1.0-2' }} €/mes</span> }
+              </div>
+              @if (s.customPrice !== null) {
+                <div class="cc-special">
+                  <span class="special-badge"><mat-icon>verified</mat-icon> Condiciones especiales</span>
+                  @if (s.customPriceNote && s.customPriceNote.trim().toLowerCase() !== 'condiciones especiales') { <span class="cc-note">{{ s.customPriceNote }}</span> }
+                </div>
+              }
+            </div>
+            @if (!s.cancelAtPeriodEnd && s.status === 'ACTIVE') {
+              <div class="cc-next">
+                <mat-icon>event</mat-icon>
+                <div>
+                  <span>Próximo cobro</span>
+                  <strong>{{ s.renewalDate | date: 'dd/MM/yyyy' }}</strong>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (featureItems(s.plan).length) {
+            <ul class="cc-features">
+              @for (f of featureItems(s.plan); track $index) {
+                <li><mat-icon>check_circle</mat-icon><span><strong>{{ f.title }}</strong>@if (f.detail) { <small>{{ f.detail }}</small> }</span></li>
+              }
+            </ul>
+          }
+
+          @if (s.cancelAtPeriodEnd) {
+            <div class="alert warn cc-alert">
+              <mat-icon>event_busy</mat-icon>
+              <div class="grow">Cancelada: tendrás acceso hasta el <strong>{{ s.renewalDate | date: 'dd/MM/yyyy' }}</strong>. No se realizarán más cobros.</div>
+              <button class="btn btn-primary btn-sm" (click)="resume()" [disabled]="resuming()">
+                <mat-icon>replay</mat-icon> {{ resuming() ? 'Reactivando...' : 'Reactivar' }}
+              </button>
+            </div>
+          } @else if (s.status === 'PAUSED') {
+            <div class="alert info cc-alert">
+              <mat-icon>pause_circle</mat-icon>
+              <div>Tu suscripción está pausada por tu entrenador. Mientras esté pausada no se generan cobros. Habla con él para reactivarla.</div>
+            </div>
+          }
+
+          @if (canCancel()) {
+            <div class="cc-actions">
+              <button class="btn btn-outline btn-sm danger-link" (click)="showCancel.set(true)">
+                <mat-icon>cancel</mat-icon> Cancelar suscripción
+              </button>
+            </div>
+          }
+        </section>
+      }
+    }
+  }
+
+  <!-- ═══ Pending payments ═══ -->
+  @if (!paymentsLoading() && pending().length > 0) {
+    <section class="section">
+      <h2 class="section-title">Pagos pendientes</h2>
+      <div class="pending-list">
+        @for (p of pending(); track p.id) {
+          <article class="pending-card" [class.overdue]="p.overdue">
+            <span class="pc-icon"><mat-icon>{{ p.overdue ? 'warning' : 'receipt_long' }}</mat-icon></span>
+            <div class="pc-info">
+              <div class="pc-concept">{{ p.concept }}</div>
+              <div class="pc-meta">
+                @if (p.overdue) {
+                  <span class="badge red">Vencido</span>
+                } @else {
+                  <span class="badge orange">Pendiente</span>
+                }
+                <span>Vence el {{ p.dueDate | date: 'dd/MM/yyyy' }}</span>
+                @if (p.periodStart && p.periodEnd) {
+                  <span>· Periodo {{ p.periodStart | date: 'dd/MM' }}–{{ p.periodEnd | date: 'dd/MM/yyyy' }}</span>
+                }
+              </div>
+              @if (p.lastFailureReason) {
+                <div class="pc-fail"><mat-icon>error_outline</mat-icon> Último intento rechazado: {{ p.lastFailureReason }}</div>
+              }
+            </div>
+            <div class="pc-right">
+              <div class="pc-amount">{{ p.amount | number: '1.2-2' }} €</div>
+              <button class="btn btn-lg" [class.btn-danger]="p.overdue" [class.btn-primary]="!p.overdue" (click)="openPay(p)">
+                <mat-icon>lock</mat-icon> Pagar
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ═══ Plans ═══ -->
+  <section class="section">
+    <div class="plans-head">
+      <h2 class="section-title">{{ subState() === 'none' ? 'Elige tu plan' : 'Cambiar de plan' }}</h2>
+      @if (!plansLoading() && periods().length > 1) {
+        <div class="segmented period-seg" role="tablist" aria-label="Periodo de pago">
+          @for (b of periods(); track b) {
+            <button type="button" role="tab" [class.active]="period() === b" [attr.aria-selected]="period() === b" (click)="period.set(b)">{{ periodLabel[b] }}</button>
+          }
+        </div>
+      }
+    </div>
+    @if (plansLoading()) {
+      <div class="plans" aria-busy="true" aria-label="Cargando planes"><div class="skeleton sk-plan"></div><div class="skeleton sk-plan"></div></div>
+    } @else if (plans().length === 0) {
+      <div class="empty"><mat-icon>workspace_premium</mat-icon><p>No hay planes disponibles ahora mismo.</p></div>
+    } @else {
+      <div class="plans">
+        @for (p of plans(); track p.id) {
+          <article class="plan-card" [class.current]="isCurrent(p)">
+            @if (isCurrent(p)) { <span class="plan-flag">Tu plan</span> }
+            @else if (isCurrentPlan(p)) { <span class="plan-flag soft">Tu plan · {{ periodLabel[sub()!.billingPeriod].toLowerCase() }}</span> }
+            <h3>{{ p.name }}</h3>
+            @if (priceFor(p); as pp) {
+              <div class="plan-price">{{ pp.price | number: '1.0-2' }} €<span>{{ periodSuffix[pp.period] }}</span></div>
+              <div class="plan-eq">
+                @if (pp.months > 1) {
+                  <span>equivale a <strong>{{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes</strong></span>
+                  @if (pp.savingPercent > 0) { <span class="save-pill">Ahorra {{ pp.savingPercent | number: '1.0-0' }} %</span> }
+                } @else {
+                  <span>Pago mes a mes</span>
+                }
+              </div>
+            } @else {
+              <div class="plan-price">{{ p.monthlyPrice | number: '1.0-2' }} €<span>/mes</span></div>
+              <div class="plan-eq"><span>Sin pago {{ periodLabel[period()].toLowerCase() }} en este plan</span></div>
+            }
+            @if (p.description) { <p class="plan-desc">{{ p.description }}</p> }
+            @if (featureItems(p).length) {
+              <ul>
+                @for (f of featureItems(p); track $index) {
+                  <li [title]="f.detail"><mat-icon>check</mat-icon> {{ f.title }}</li>
+                }
+              </ul>
+            } @else {
+              <div class="grow"></div>
+            }
+            <button class="btn btn-block" [class.btn-primary]="!isCurrent(p)" [class.btn-outline]="isCurrent(p)"
+                    [disabled]="isCurrent(p) || sub()?.status === 'PAUSED'" (click)="askChange(p)">
+              @if (isCurrent(p)) { Plan actual }
+              @else if (subState() === 'none') { Suscribirme }
+              @else if (isCurrentPlan(p)) { Cambiar periodo de pago }
+              @else { Cambiar a {{ p.name }} }
+            </button>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ═══ Payment history ═══ -->
+  <section class="section">
+    <div class="panel">
+      <div class="panel-head"><h2>Historial de pagos</h2></div>
+      <div class="panel-body">
+        <div class="alert info cash-note">
+          <mat-icon>info</mat-icon>
+          <div>Los pagos en efectivo los registra tu entrenador. Aparecerán aquí cuando los marque como pagados.</div>
+        </div>
+        @if (paymentsLoading()) {
+          <div class="loading">Cargando pagos...</div>
+        } @else if (paymentsError()) {
+          <div class="alert error pay-err"><mat-icon>error</mat-icon><span>{{ paymentsError() }}</span></div>
+        } @else if (done().length === 0) {
+          <div class="empty"><mat-icon>receipt_long</mat-icon><p>Todavía no hay pagos en tu historial.</p></div>
+        } @else {
+          <div class="pay-rows">
+            @for (p of done(); track p.id) {
+              <div class="pay-row">
+                <span class="pr-icon"><mat-icon>{{ methodIcon(p.method) }}</mat-icon></span>
+                <div class="pr-info">
+                  <div class="pr-concept">{{ p.concept }}</div>
+                  <div class="pr-meta">
+                    @if (p.method) {
+                      <span>{{ methodLabel[p.method] }}
+                        @if (p.method === 'CARD' && p.cardLast4) { · {{ p.cardBrand || 'Tarjeta' }} •••• {{ p.cardLast4 }} }
+                        @if (p.method === 'BIZUM' && p.bizumPhone) { · {{ p.bizumPhone }} }
+                      </span>
+                    }
+                    <span>{{ (p.paidAt ?? p.refundedAt ?? p.createdAt) | date: 'dd/MM/yyyy' }}</span>
+                    @if (p.providerReference) { <span class="ref">Ref. {{ p.providerReference }}</span> }
+                  </div>
+                </div>
+                <div class="pr-right">
+                  <div class="pr-amount" [class.struck]="p.status === 'CANCELLED'">{{ p.amount | number: '1.2-2' }} €</div>
+                  <span class="badge" [class]="'badge ' + paymentBadge(p)">{{ paymentStatusLabel[p.status] }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Subscription history ═══ -->
+  @if (historyLoaded() && history().length > 0) {
+    <section class="section">
+      <div class="panel">
+        <div class="panel-head"><h2>Historial de suscripciones</h2></div>
+        <div class="panel-body">
+          <div class="pay-rows">
+            @for (h of history(); track h.id) {
+              <div class="pay-row">
+                <span class="pr-icon"><mat-icon>workspace_premium</mat-icon></span>
+                <div class="pr-info">
+                  <div class="pr-concept">{{ h.planName }} · {{ periodLabel[h.billingPeriod] }}</div>
+                  <div class="pr-meta">
+                    <span>{{ h.effectivePrice | number: '1.0-2' }} €{{ periodSuffix[h.billingPeriod] }}@if (h.customPrice !== null) { · precio especial }</span>
+                    <span>Desde {{ h.startDate | date: 'dd/MM/yyyy' }}</span>
+                    @if (h.endDate) { <span>hasta {{ h.endDate | date: 'dd/MM/yyyy' }}</span> }
+                    @else if (h.active) { <span>renueva {{ h.renewalDate | date: 'dd/MM/yyyy' }}</span> }
+                  </div>
+                </div>
+                <div class="pr-right">
+                  @if (h.active) {
+                    <span class="badge" [class]="'badge ' + statusBadge(h)">{{ h.cancelAtPeriodEnd ? 'Cancelada' : statusLabel[h.status] }}</span>
+                  } @else {
+                    <span class="badge gray">Finalizada</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+</div>
+
+<!-- ═══ Modal: change plan ═══ -->
+@if (changeTarget(); as plan) {
+  <div class="modal-backdrop" (click)="changing() ? null : changeTarget.set(null)">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>{{ subState() === 'none' ? 'Suscribirme a' : 'Cambiar a' }} {{ plan.name }}</h2>
+        <button class="modal-close" (click)="changeTarget.set(null)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="field-label">Periodo de pago</div>
+        <div class="period-options" role="radiogroup" aria-label="Periodo de pago">
+          @for (pp of plan.prices; track pp.period) {
+            <button type="button" class="period-opt" role="radio" [class.active]="changePeriod() === pp.period"
+                    [attr.aria-checked]="changePeriod() === pp.period" (click)="changePeriod.set(pp.period)">
+              <span class="po-l">{{ periodLabel[pp.period] }}</span>
+              <span class="po-v">{{ pp.price | number: '1.0-2' }} €<small>{{ periodSuffix[pp.period] }}</small></span>
+              <span class="po-m">
+                @if (pp.months > 1) { {{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes } @else { Sin permanencia }
+                @if (pp.savingPercent > 0) { <em>-{{ pp.savingPercent | number: '1.0-0' }}%</em> }
+              </span>
+            </button>
+          }
+        </div>
+        @if (priceFor(plan, changePeriod()); as sel) {
+          <ul class="explain">
+            <li><mat-icon>today</mat-icon> El nuevo plan empieza <strong>hoy</strong>.</li>
+            <li><mat-icon>receipt</mat-icon> Se crea un nuevo cobro de {{ sel.price | number: '1.2-2' }} € ({{ periodLabel[sel.period].toLowerCase() }}) que podrás pagar desde esta página.</li>
+            @if (subState() !== 'none') {
+              <li><mat-icon>block</mat-icon> Los cobros pendientes de tu plan actual se anulan.</li>
+            }
+          </ul>
+        }
+        @if (sub(); as cur) {
+          @if (cur.customPrice !== null) {
+            <div class="alert warn special-warn">
+              <mat-icon>warning</mat-icon>
+              <div>
+                Ahora tienes <strong>condiciones especiales</strong> ({{ cur.effectivePrice | number: '1.0-2' }} €{{ periodSuffix[cur.billingPeriod] }}).
+                Si cambias de plan o de periodo las perderás y pagarás el precio normal. Si quieres mantenerlas, habla antes con tu entrenador.
+              </div>
+            </div>
+          }
+        }
+        @if (isCurrent(plan, changePeriod())) {
+          <div class="alert info special-warn"><mat-icon>info</mat-icon><div>Ya tienes este plan con este periodo de pago.</div></div>
+        }
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="changeTarget.set(null)" [disabled]="changing()">Volver</button>
+        <button class="btn btn-primary" (click)="confirmChange()" [disabled]="changing() || isCurrent(plan, changePeriod())">
+          {{ changing() ? 'Procesando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══ Modal: cancel ═══ -->
+@if (showCancel() && sub(); as s) {
+  <div class="modal-backdrop" (click)="cancelling() ? null : showCancel.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>Cancelar suscripción</h2>
+        <button class="modal-close" (click)="showCancel.set(false)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <ul class="explain">
+          <li><mat-icon>event_available</mat-icon> Seguirás teniendo acceso hasta el <strong>{{ s.renewalDate | date: 'dd/MM/yyyy' }}</strong>.</li>
+          <li><mat-icon>money_off</mat-icon> No se realizarán más cobros.</li>
+          <li><mat-icon>replay</mat-icon> Puedes reactivarla en cualquier momento antes de esa fecha.</li>
+        </ul>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="showCancel.set(false)" [disabled]="cancelling()">Mantener mi plan</button>
+        <button class="btn btn-danger" (click)="confirmCancel()" [disabled]="cancelling()">
+          {{ cancelling() ? 'Cancelando...' : 'Sí, cancelar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══ Modal: pay ═══ -->
+@if (payTarget(); as p) {
+  <div class="modal-backdrop" (click)="closePay()">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>Pagar {{ p.amount | number: '1.2-2' }} €</h2>
+        <button class="modal-close" (click)="closePay()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="pay-concept">{{ p.concept }}</div>
+
+        <div class="pay-tabs">
+          <div class="segmented">
+            <button type="button" [class.active]="payTab() === 'card'" (click)="setTab('card')">
+              <mat-icon>credit_card</mat-icon> Tarjeta
+            </button>
+            <button type="button" [class.active]="payTab() === 'bizum'" (click)="setTab('bizum')">
+              <mat-icon>smartphone</mat-icon> Bizum
+            </button>
+          </div>
+          <span class="test-mode">Modo prueba</span>
+        </div>
+
+        <div class="test-data">
+          <strong>Datos de prueba (no se cobra dinero real):</strong>
+          @if (payTab() === 'card') {
+            <span>4242 4242 4242 4242 → aceptada</span>
+            <span>4000 0000 0000 0002 → rechazada</span>
+            <span>4000 0000 0000 9995 → fondos insuficientes</span>
+            <span>Cualquier caducidad futura y cualquier CVC.</span>
+          } @else {
+            <span>Cualquier móvil español → aceptado</span>
+            <span>600 000 000 → rechazado</span>
+          }
+        </div>
+
+        @if (payError()) {
+          <div class="alert error" role="alert"><mat-icon>error</mat-icon><span>{{ payError() }}</span></div>
+        }
+
+        @if (payTab() === 'card') {
+          <div class="card-visual" aria-hidden="true">
+            <div class="cv-top">
+              <span class="cv-chip"></span>
+              <mat-icon>contactless</mat-icon>
+            </div>
+            <div class="cv-number">{{ cardForm.controls.cardNumber.value || '•••• •••• •••• ••••' }}</div>
+            <div class="cv-bottom">
+              <div class="cv-holder">
+                <span>Titular</span>
+                <strong>{{ cardForm.controls.holderName.value || 'Nombre Apellido' }}</strong>
+              </div>
+              <div>
+                <span>Caduca</span>
+                <strong>{{ cardForm.controls.expiry.value || 'MM/AA' }}</strong>
+              </div>
+            </div>
+          </div>
+          <form class="form-grid pay-form" [formGroup]="cardForm" (ngSubmit)="submitPay()" autocomplete="on" id="payForm">
+            <div class="field full">
+              <label for="cc-name">Titular</label>
+              <input id="cc-name" type="text" formControlName="holderName" autocomplete="cc-name" placeholder="Nombre como aparece en la tarjeta" />
+              @if (cardForm.controls.holderName.touched && cardForm.controls.holderName.invalid) {
+                <span class="err">Indica el titular de la tarjeta.</span>
+              }
+            </div>
+            <div class="field full">
+              <label for="cc-number">Número de tarjeta</label>
+              <input id="cc-number" type="text" inputmode="numeric" autocomplete="cc-number" maxlength="23"
+                     formControlName="cardNumber" placeholder="1234 5678 9012 3456" (input)="onCardNumberInput($event)" />
+              @if (cardForm.controls.cardNumber.touched && cardForm.controls.cardNumber.invalid) {
+                <span class="err">Número de tarjeta no válido.</span>
+              }
+            </div>
+            <div class="field">
+              <label for="cc-exp">Caducidad</label>
+              <input id="cc-exp" type="text" inputmode="numeric" autocomplete="cc-exp" maxlength="5"
+                     formControlName="expiry" placeholder="MM/AA" (input)="onExpiryInput($event)" />
+              @if (cardForm.controls.expiry.touched && cardForm.controls.expiry.hasError('expired')) {
+                <span class="err">La tarjeta está caducada.</span>
+              } @else if (cardForm.controls.expiry.touched && cardForm.controls.expiry.invalid) {
+                <span class="err">Formato MM/AA.</span>
+              }
+            </div>
+            <div class="field">
+              <label for="cc-csc">CVC</label>
+              <input id="cc-csc" type="text" inputmode="numeric" autocomplete="cc-csc" maxlength="4"
+                     formControlName="cvc" placeholder="123" (input)="onCvcInput($event)" />
+              @if (cardForm.controls.cvc.touched && cardForm.controls.cvc.invalid) {
+                <span class="err">3 o 4 dígitos.</span>
+              }
+            </div>
+          </form>
+        } @else {
+          <form class="form-grid pay-form" [formGroup]="bizumForm" (ngSubmit)="submitPay()" id="payForm">
+            <div class="field full">
+              <label for="bizum-phone">Teléfono asociado a Bizum</label>
+              <input id="bizum-phone" type="tel" inputmode="tel" autocomplete="tel" formControlName="phone" placeholder="600 123 456" />
+              @if (bizumForm.controls.phone.touched && bizumForm.controls.phone.invalid) {
+                <span class="err">Introduce un móvil de 9 dígitos.</span>
+              } @else {
+                <span class="hint">Recibirás la solicitud en la app de tu banco (simulado).</span>
+              }
+            </div>
+          </form>
+        }
+        <p class="secure-note"><mat-icon>lock</mat-icon> No guardamos los datos de tu tarjeta.</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline" (click)="closePay()" [disabled]="paying()">Cancelar</button>
+        <button type="submit" form="payForm" class="btn btn-primary" [disabled]="paying()">
+          <mat-icon>{{ paying() ? 'hourglass_empty' : 'lock' }}</mat-icon>
+          {{ paying() ? 'Procesando...' : 'Pagar ' + (p.amount | number: '1.2-2') + ' €' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

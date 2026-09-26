@@ -8,11 +8,16 @@ import org.springframework.stereotype.Component;
 public class AnalysisMapper {
 
     public AnalysisResponse toResponse(ClientAnalysis a, String baseUrl) {
+        return toResponse(a, baseUrl, null);
+    }
+
+    public AnalysisResponse toResponse(ClientAnalysis a, String baseUrl, String clientName) {
         String downloadUrl = baseUrl + "/content?disposition=attachment";
         String viewUrl = baseUrl + "/content";
         return new AnalysisResponse(
                 a.getId(),
                 a.getClientId(),
+                clientName,
                 a.getTitle(),
                 a.getAnalysisDate(),
                 a.getClientComment(),

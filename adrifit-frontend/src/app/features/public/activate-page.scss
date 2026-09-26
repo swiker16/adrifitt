@@ -1,0 +1,20 @@
+@use 'public';
+
+.user-box {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px;
+  background: var(--brand-50); color: var(--brand-fg);
+}
+.user-box div { display: grid; }
+.user-box span { font-size: 0.78rem; color: var(--text-muted); }
+.user-box strong { font: 700 1.05rem 'Sora', sans-serif; color: var(--text); }
+.pw { position: relative; }
+.pw input { padding-right: 48px; }
+.toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: 0;
+  background: none; color: var(--text-subtle); cursor: pointer; display: grid; place-items: center; border-radius: 10px;
+}
+.strength { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 2px; }
+.strength span { height: 4px; border-radius: 99px; background: var(--ink-150); }
+.strength[data-level='1'] span:nth-child(1) { background: var(--danger); }
+.strength[data-level='2'] span:nth-child(-n + 2) { background: var(--warning); }
+.strength[data-level='3'] span { background: var(--success); }

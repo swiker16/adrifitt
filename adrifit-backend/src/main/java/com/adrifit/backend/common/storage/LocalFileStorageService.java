@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +57,15 @@ public class LocalFileStorageService implements FileStorageService {
             log.error("Failed to read file with key={}", key, e);
             throw new BusinessException("Failed to read file");
         }
+    }
+
+    @Override
+    public Resource loadResource(String key) {
+        Path target = resolve(key);
+        if (!Files.exists(target)) {
+            throw new ResourceNotFoundException("File not found: " + key);
+        }
+        return new FileSystemResource(target);
     }
 
     @Override

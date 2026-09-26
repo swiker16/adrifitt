@@ -1,0 +1,8 @@
+@use 'public';
+
+.opt { font-weight: 400; color: var(--text-subtle); }
+.hint { align-self: flex-end; }
+.login-hint { text-align: center; margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+.login-hint a { color: var(--brand-600); font-weight: 600; }
+/* Honeypot off-screen (not display:none, some bots skip hidden fields) */
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

@@ -1,81 +1,170 @@
 <div class="topbar">
   <div>
+    <a routerLink="/trainer/plans" class="back-link"><mat-icon>arrow_back</mat-icon> Planes</a>
     <div class="page-title">{{ isEdit() ? 'Editar plan' : 'Nuevo plan' }}</div>
-    <div class="subtitle">Define precio, frecuencia de revisión y funcionalidades</div>
+    <div class="subtitle">Precios por periodo, qué incluye y ajustes del plan</div>
   </div>
 </div>
 
 <div class="content">
-  <a routerLink="/trainer/plans" class="btn btn-secondary" style="margin-bottom:18px">
-    <mat-icon>arrow_back</mat-icon> Volver a planes
-  </a>
+  <form class="editor narrow" [formGroup]="form" (ngSubmit)="save()">
+    @if (error()) {
+      <div class="alert error"><mat-icon>error_outline</mat-icon> {{ error() }}</div>
+    }
 
-  @if (error()) {
-    <div class="form-alert"><mat-icon>error</mat-icon> {{ error() }}</div>
-  }
-
-  <form class="plan-form" [formGroup]="form" (ngSubmit)="save()">
-    <div class="form-grid">
-      <div class="field">
-        <label>Nombre *</label>
-        <input formControlName="name" placeholder="Premium" />
-        @if (form.controls.name.touched && form.controls.name.invalid) {
-          <small class="err">El nombre es obligatorio.</small>
-        }
+    <section class="section">
+      <div class="section-head">
+        <div class="t">
+          <span class="lib-tile violet"><mat-icon>workspace_premium</mat-icon></span>
+          <div><h2>Datos del plan</h2><p>Lo que verá el cliente al contratarlo.</p></div>
+        </div>
       </div>
-      <div class="field">
-        <label>Precio mensual (€) *</label>
-        <input type="number" step="0.01" formControlName="monthlyPrice" />
-        @if (form.controls.monthlyPrice.touched && form.controls.monthlyPrice.invalid) {
-          <small class="err">Introduce un precio válido.</small>
-        }
-      </div>
-      <div class="field full">
-        <label>Descripción</label>
-        <textarea rows="3" formControlName="description" placeholder="¿Qué incluye este plan?"></textarea>
-      </div>
-      <div class="field">
-        <label>Frecuencia de revisión (días) *</label>
-        <input type="number" formControlName="reviewFrequencyDays" />
-        @if (form.controls.reviewFrequencyDays.touched && form.controls.reviewFrequencyDays.invalid) {
-          <small class="err">Mínimo 1 día.</small>
-        }
-      </div>
-      <div class="field">
-        <label>Estado</label>
-        <label class="toggle-card">
-          <input type="checkbox" formControlName="active" />
-          <div>
-            <div class="t-title">Plan activo</div>
-            <div class="t-sub">Disponible para asignar a clientes</div>
+      <div class="section-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="p-name">Nombre *</label>
+            <input id="p-name" formControlName="name" placeholder="Premium" />
+            @if (form.controls.name.touched && form.controls.name.invalid) {
+              <small class="err">El nombre es obligatorio.</small>
+            }
           </div>
-        </label>
+          <div class="field full">
+            <label for="p-desc">Descripción</label>
+            <textarea id="p-desc" rows="3" formControlName="description" placeholder="Resumen breve del plan"></textarea>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <div class="toggles">
-        <label class="toggle-card">
-          <input type="checkbox" formControlName="messagingEnabled" />
-          <div><div class="t-title">Mensajería</div><div class="t-sub">Chat con el coach</div></div>
-        </label>
-        <label class="toggle-card">
-          <input type="checkbox" formControlName="analyticsEnabled" />
-          <div><div class="t-title">Analíticas</div><div class="t-sub">Gráficas de evolución</div></div>
-        </label>
-        <label class="toggle-card">
-          <input type="checkbox" formControlName="pdfExportEnabled" />
-          <div><div class="t-title">Exportar PDF</div><div class="t-sub">Descarga de informes</div></div>
-        </label>
-        <label class="toggle-card">
-          <input type="checkbox" formControlName="prioritySupport" />
-          <div><div class="t-title">Soporte prioritario</div><div class="t-sub">Respuesta preferente</div></div>
-        </label>
+    <section class="section">
+      <div class="section-head">
+        <div class="t">
+          <span class="lib-tile"><mat-icon>euro</mat-icon></span>
+          <div><h2>Precios</h2><p>El mensual es obligatorio; deja vacío un periodo para no ofrecerlo.</p></div>
+        </div>
       </div>
-    </div>
+      <div class="section-body">
+        <div class="price-grid">
+          @for (f of priceFields; track f.key) {
+            <div class="field price-field">
+              <label [for]="'p-' + f.key">{{ periodLabel[f.period] }}{{ f.period === 'MONTHLY' ? ' *' : '' }}</label>
+              <div class="affix">
+                <input [id]="'p-' + f.key" type="number" step="0.01" min="0" inputmode="decimal"
+                       [formControlName]="f.key" [placeholder]="f.period === 'MONTHLY' ? '0' : 'No se ofrece'" />
+                <span>€{{ periodSuffix[f.period] }}</span>
+              </div>
+              <div class="price-hint">
+                @if (monthlyEquivalent(f); as eq) {
+                  @if (f.period !== 'MONTHLY') {
+                    <span>equivale a <strong>{{ eq | number: '1.0-2' }} €/mes</strong></span>
+                  }
+                  @if (savingPct(f); as s) {
+                    @if (s > 0) { <span class="save-pill">Ahorra {{ s | number: '1.0-1' }} %</span> }
+                    @else { <span class="save-pill warn">{{ -s | number: '1.0-1' }} % más caro</span> }
+                  }
+                } @else if (f.period !== 'MONTHLY') {
+                  <span class="muted">No se ofrece</span>
+                }
+              </div>
+              @if (form.controls[f.key].touched && form.controls[f.key].invalid) {
+                <small class="err">{{ f.period === 'MONTHLY' ? 'El precio mensual es obligatorio.' : 'Introduce un precio válido.' }}</small>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
 
-    <div class="form-actions">
-      <a routerLink="/trainer/plans" class="btn btn-secondary">Cancelar</a>
+    <section class="section">
+      <div class="section-head">
+        <div class="t">
+          <span class="lib-tile green"><mat-icon>checklist</mat-icon></span>
+          <div><h2>Qué incluye</h2><p>Un punto por línea. Usa «Título: descripción» para destacar el título.</p></div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="feature-list">
+          @for (c of featureControls; track c; let i = $index; let first = $first; let last = $last) {
+            <div class="field feature-row">
+              <span class="f-num">{{ i + 1 }}</span>
+              <input [formControl]="c" placeholder="Nutrición: plan adaptado a tus objetivos" [attr.aria-label]="'Punto ' + (i + 1)" />
+              <div class="f-actions">
+                <button type="button" class="icon-btn sm" (click)="moveFeature(i, -1)" [disabled]="first" title="Subir">
+                  <mat-icon>arrow_upward</mat-icon>
+                </button>
+                <button type="button" class="icon-btn sm" (click)="moveFeature(i, 1)" [disabled]="last" title="Bajar">
+                  <mat-icon>arrow_downward</mat-icon>
+                </button>
+                <button type="button" class="icon-btn sm danger" (click)="removeFeature(i)" title="Quitar">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+          <button type="button" class="add-row" (click)="addFeature()"><mat-icon>add</mat-icon> Añadir punto</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="t">
+          <span class="lib-tile blue"><mat-icon>tune</mat-icon></span>
+          <div><h2>Ajustes del plan</h2><p>Frecuencia de revisión y funciones de la app.</p></div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="form-grid settings-grid">
+          <div class="field">
+            <label for="p-review">Frecuencia de revisión (días) *</label>
+            <div class="affix">
+              <input id="p-review" type="number" formControlName="reviewFrequencyDays" />
+              <span>días</span>
+            </div>
+            @if (form.controls.reviewFrequencyDays.touched && form.controls.reviewFrequencyDays.invalid) {
+              <small class="err">Mínimo 1 día.</small>
+            }
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <label class="toggle-card">
+              <div class="tc-text">
+                <div class="t-title">Plan activo</div>
+                <div class="t-sub">Disponible para asignar a clientes</div>
+              </div>
+              <input type="checkbox" class="switch" formControlName="active" />
+            </label>
+          </div>
+        </div>
+        <div class="toggles">
+          <label class="toggle-card">
+            <span class="lib-tile blue"><mat-icon>chat</mat-icon></span>
+            <div class="tc-text"><div class="t-title">Chat</div><div class="t-sub">Mensajería con el coach</div></div>
+            <input type="checkbox" class="switch" formControlName="messagingEnabled" />
+          </label>
+          <label class="toggle-card">
+            <span class="lib-tile violet"><mat-icon>insights</mat-icon></span>
+            <div class="tc-text"><div class="t-title">Analíticas</div><div class="t-sub">Gráficas de evolución</div></div>
+            <input type="checkbox" class="switch" formControlName="analyticsEnabled" />
+          </label>
+          <label class="toggle-card">
+            <span class="lib-tile"><mat-icon>picture_as_pdf</mat-icon></span>
+            <div class="tc-text"><div class="t-title">PDF</div><div class="t-sub">Descarga de informes</div></div>
+            <input type="checkbox" class="switch" formControlName="pdfExportEnabled" />
+          </label>
+          <label class="toggle-card">
+            <span class="lib-tile green"><mat-icon>support_agent</mat-icon></span>
+            <div class="tc-text"><div class="t-title">Soporte prioritario</div><div class="t-sub">Respuesta preferente</div></div>
+            <input type="checkbox" class="switch" formControlName="prioritySupport" />
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="save-bar">
+      <a routerLink="/trainer/plans" class="btn btn-outline">Cancelar</a>
       <button type="submit" class="btn btn-primary" [disabled]="saving()">
-        {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Crear plan') }}
+        <mat-icon>check</mat-icon> {{ saving() ? 'Guardando...' : (isEdit() ? 'Guardar cambios' : 'Crear plan') }}
       </button>
     </div>
   </form>

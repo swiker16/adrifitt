@@ -3,24 +3,23 @@
   <!-- ── Topbar móvil ── -->
   <header class="mobile-topbar">
     <div class="brand">
-      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
-      <span>Adri<span class="dot">Fit</span></span>
+      <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
+      <span>Adri<span class="dot">Fitt</span></span>
     </div>
-    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Menú">
       <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+      @if (totalBadges() > 0 && !menuOpen()) { <span class="hamburger-dot"></span> }
     </button>
   </header>
 
-  <!-- ── Overlay oscuro ── -->
   @if (menuOpen()) {
     <div class="drawer-overlay" (click)="closeMenu()"></div>
   }
 
-  <!-- ── Drawer desplegable (móvil) + Sidebar (desktop) ── -->
   <aside class="sidebar" [class.open]="menuOpen()">
     <div class="brand desktop-only">
-      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
-      <span>Adri<span class="dot">Fit</span></span>
+      <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
+      <span>Adri<span class="dot">Fitt</span></span>
     </div>
 
     <nav class="nav">
@@ -30,38 +29,82 @@
       <a routerLink="/trainer/clients" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>group</mat-icon> <span>Clientes</span>
       </a>
+      <a routerLink="/trainer/leads" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>person_add</mat-icon> <span>Solicitudes</span>
+        @if (pendingLeads() > 0) { <span class="nav-badge">{{ pendingLeads() }}</span> }
+      </a>
+      <a routerLink="/trainer/messages" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>chat_bubble</mat-icon> <span>Mensajes</span>
+        @if (unreadMessages() > 0) { <span class="nav-badge">{{ unreadMessages() }}</span> }
+      </a>
 
       <span class="nav-divider"></span>
-      <span class="nav-label">Gestión</span>
+      <span class="nav-label">Seguimiento</span>
 
-      <a routerLink="/trainer/plans" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>workspace_premium</mat-icon> <span>Planes</span>
+      <a routerLink="/trainer/tasks" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>event_available</mat-icon> <span>Revisiones y tareas</span>
+        @if (tasksDue() > 0) { <span class="nav-badge">{{ tasksDue() }}</span> }
       </a>
+      <a routerLink="/trainer/reports" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>monitoring</mat-icon> <span>Seguimientos</span>
+      </a>
+      <a routerLink="/trainer/videos" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>videocam</mat-icon> <span>Vídeos de técnica</span>
+        @if (pendingVideos() > 0) { <span class="nav-badge">{{ pendingVideos() }}</span> }
+      </a>
+      <a routerLink="/trainer/analyses" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>biotech</mat-icon> <span>Analíticas</span>
+        @if (pendingAnalyses() > 0) { <span class="nav-badge">{{ pendingAnalyses() }}</span> }
+      </a>
+
+      <span class="nav-divider"></span>
+      <span class="nav-label">Programación</span>
+
       <a routerLink="/trainer/workouts" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>fitness_center</mat-icon> <span>Rutinas</span>
       </a>
       <a routerLink="/trainer/diets" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>restaurant</mat-icon> <span>Dietas</span>
       </a>
+      <a routerLink="/trainer/plans" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>workspace_premium</mat-icon> <span>Planes</span>
+      </a>
 
       <span class="nav-divider"></span>
-      <span class="nav-label">Seguimiento</span>
+      <span class="nav-label">Negocio</span>
 
-      <a routerLink="/trainer/reports" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>monitoring</mat-icon> <span>Reportes</span>
+      <a routerLink="/trainer/business" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>insights</mat-icon> <span>Negocio</span>
       </a>
-      <a routerLink="/trainer/reports" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">
-        <mat-icon>event_available</mat-icon> <span>Revisiones</span>
-      </a>
-      <a routerLink="/trainer/clients" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">
+      <a routerLink="/trainer/payments" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>payments</mat-icon> <span>Cobros</span>
+        @if (overduePayments() > 0) { <span class="nav-badge red">{{ overduePayments() }}</span> }
       </a>
-      <a routerLink="/trainer/clients" [queryParams]="{tab:'analiticas'}" routerLinkActive="active" [routerLinkActiveOptions]="{exact:false}" (click)="closeMenu()">
-        <mat-icon>biotech</mat-icon> <span>Analíticas</span>
+      <a routerLink="/trainer/emails" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>mail</mat-icon> <span>Emails</span>
       </a>
+      <a routerLink="/trainer/testimonials" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>reviews</mat-icon> <span>Reseñas</span>
+      </a>
+      <a routerLink="/trainer/settings" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>settings</mat-icon> <span>Ajustes</span>
+      </a>
+      @if (install.available()) {
+        <a class="install-link" role="button" tabindex="0" (click)="closeMenu(); installer.start()" (keydown.enter)="installer.start()">
+          <mat-icon>install_mobile</mat-icon> <span>Instalar la app</span>
+        </a>
+      }
     </nav>
 
     <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">{{ initials() }}</div>
+        <div class="user-meta">
+          <span class="name">{{ username() }}</span>
+          <span class="role">Entrenador</span>
+        </div>
+      </div>
+      <app-theme-toggle variant="sidebar" />
       <button class="logout" (click)="logout()">
         <mat-icon>logout</mat-icon> Cerrar sesión
       </button>
@@ -71,4 +114,7 @@
   <section class="main">
     <router-outlet />
   </section>
+
+  <app-device-setup-prompt />
+  <app-install-button #installer variant="none" />
 </div>

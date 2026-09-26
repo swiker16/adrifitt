@@ -1,0 +1,10 @@
+@use '../../page';
+@use '../../videos';
+
+.client-filter { min-width: 220px; }
+.client-filter select { min-height: 40px; padding: 8px 12px; }
+.client-link { color: var(--brand-600); font-weight: 600; text-decoration: none; }
+.client-link:hover { text-decoration: underline; }
+.video-card textarea { min-height: 80px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 560px) { .client-filter { flex: 1 1 100%; } }

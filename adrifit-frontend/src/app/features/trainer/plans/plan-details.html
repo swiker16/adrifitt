@@ -1,5 +1,6 @@
 <div class="topbar">
   <div>
+    <a routerLink="/trainer/plans" class="back-link"><mat-icon>arrow_back</mat-icon> Planes</a>
     <div class="page-title">Detalle del plan</div>
     <div class="subtitle">Información y funcionalidades incluidas</div>
   </div>
@@ -13,43 +14,87 @@
 </div>
 
 <div class="content">
-  <a routerLink="/trainer/plans" class="btn btn-secondary" style="background:#f1f5f9;margin-bottom:18px">
-    <mat-icon>arrow_back</mat-icon> Volver a planes
-  </a>
-
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando plan...</div></div>
+    <div class="skeleton" style="height: 170px; margin-bottom: 20px"></div>
+    <div class="skeleton" style="height: 300px"></div>
   } @else if (error() || !plan()) {
-    <div class="panel"><div class="empty"><mat-icon>error_outline</mat-icon><p>No se encontró el plan.</p></div></div>
+    <div class="panel">
+      <div class="empty">
+        <mat-icon>error_outline</mat-icon>
+        <p>No se encontró el plan.</p>
+        <a routerLink="/trainer/plans" class="btn btn-outline empty-cta">Volver a planes</a>
+      </div>
+    </div>
   } @else {
     <div class="plan-hero">
-      <div class="icon-lg"><mat-icon>workspace_premium</mat-icon></div>
-      <div>
-        <h1>{{ plan()!.name }}</h1>
-        <p class="desc">{{ plan()!.description || 'Sin descripción.' }}</p>
-        <div class="info-row">
-          <span class="info-pill"><mat-icon>event_repeat</mat-icon> Revisión cada {{ plan()!.reviewFrequencyDays }} días</span>
-          @if (plan()!.active) { <span class="info-pill" style="color:#15803d"><mat-icon>check_circle</mat-icon> Activo</span> }
-          @else { <span class="info-pill"><mat-icon>block</mat-icon> Inactivo</span> }
+      <div class="ph-main">
+        <span class="lib-tile violet"><mat-icon>workspace_premium</mat-icon></span>
+        <div class="min0">
+          <div class="title-row">
+            <h2>{{ plan()!.name }}</h2>
+            @if (plan()!.active) { <span class="badge green">Activo</span> }
+            @else { <span class="badge gray">Inactivo</span> }
+          </div>
+          <p class="hero-desc">{{ plan()!.description || 'Sin descripción.' }}</p>
+          <div class="chips">
+            <span class="chip"><mat-icon>event_repeat</mat-icon>Revisión cada {{ plan()!.reviewFrequencyDays }} días</span>
+          </div>
         </div>
       </div>
-      <div class="price">
-        <strong>{{ plan()!.monthlyPrice | number: '1.0-2' }}€</strong>
-        <span>/mes</span>
+      <div class="ph-price">
+        <span class="overline">Precio mensual</span>
+        <div><strong>{{ plan()!.monthlyPrice | number: '1.0-2' }}€</strong><span>/mes</span></div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-head"><h2>Funcionalidades incluidas</h2></div>
-      <div class="panel-body feature-list">
-        @for (f of features(); track f.label) {
-          <div class="feature-item" [class.on]="f.enabled" [class.off]="!f.enabled">
-            <span class="f-icon"><mat-icon>{{ f.icon }}</mat-icon></span>
-            <span class="f-label">{{ f.label }}</span>
-            <span class="f-state">{{ f.enabled ? 'Incluido' : 'No incluido' }}</span>
+    <section class="panel">
+      <div class="panel-head"><h2>Precios por periodo</h2></div>
+      <div class="price-cards">
+        @for (pp of plan()!.prices; track pp.period) {
+          <div class="pcard">
+            <span class="overline">{{ periodLabel[pp.period] }}</span>
+            <div class="pc-price"><strong>{{ pp.price | number: '1.0-2' }}€</strong><span>{{ periodSuffix[pp.period] }}</span></div>
+            <div class="pc-meta">
+              @if (pp.months > 1) { <span>equivale a {{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes</span> }
+              @else { <span>Pago mes a mes</span> }
+              @if (pp.savingPercent > 0) { <span class="save-pill">Ahorra {{ pp.savingPercent | number: '1.0-1' }} %</span> }
+            </div>
           </div>
         }
       </div>
-    </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Qué incluye</h2></div>
+      @if (featureItems().length) {
+        <ul class="feat-list">
+          @for (f of featureItems(); track $index) {
+            <li>
+              <span class="lib-tile green"><mat-icon>check</mat-icon></span>
+              <div class="min0">
+                <div class="f-title">{{ f.title }}</div>
+                @if (f.detail) { <div class="f-detail">{{ f.detail }}</div> }
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="empty"><mat-icon>checklist</mat-icon><p>Este plan aún no tiene puntos descritos.</p></div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Ajustes del plan</h2></div>
+      <div class="feature-grid">
+        @for (f of features(); track f.label) {
+          <div class="feature" [class.on]="f.enabled">
+            <span class="lib-tile" [class.green]="f.enabled" [class.gray]="!f.enabled"><mat-icon>{{ f.icon }}</mat-icon></span>
+            <span class="f-label">{{ f.label }}</span>
+            @if (f.enabled) { <span class="badge green">Activado</span> }
+            @else { <span class="badge gray">Desactivado</span> }
+          </div>
+        }
+      </div>
+    </section>
   }
 </div>

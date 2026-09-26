@@ -1,0 +1,210 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Solicitudes</div>
+    <div class="subtitle">Personas que quieren entrenar contigo: revisa, envía el cuestionario y decide.</div>
+  </div>
+  <div class="topbar-actions">
+    <a routerLink="/empezar" target="_blank" class="btn btn-outline"><mat-icon>open_in_new</mat-icon> Ver formulario público</a>
+  </div>
+</div>
+
+<div class="content">
+  <div class="filters">
+    <div class="segmented" role="tablist" aria-label="Filtrar solicitudes">
+      @for (t of tabs; track t.id) {
+        <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" [class.active]="tab() === t.id" (click)="tab.set(t.id)">
+          {{ t.label }}@if (countFor(t.id) !== null) { ({{ countFor(t.id) }}) }
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="layout" [class.has-detail]="selected() || loadingDetail()">
+    <!-- List -->
+    <section class="list">
+      @if (loading()) {
+        @for (i of [1, 2, 3]; track i) { <div class="skeleton sk-row"></div> }
+      } @else if (loadError()) {
+        <div class="alert error"><mat-icon>error</mat-icon><span>{{ loadError() }}</span></div>
+      } @else if (visible().length === 0) {
+        <div class="panel"><div class="empty">
+          <mat-icon>{{ tab() === 'PENDING' ? 'inbox' : 'filter_alt_off' }}</mat-icon>
+          @if (tab() === 'PENDING') {
+            <p><strong>No tienes solicitudes pendientes</strong></p>
+            <p class="tip">Cuando alguien rellene el formulario «Quiero empezar» de tu web te llegará un aviso aquí, por email y en el móvil.</p>
+          } @else {
+            <p>No hay solicitudes en este apartado.</p>
+          }
+        </div></div>
+      } @else {
+        @for (l of visible(); track l.id) {
+          <button type="button" class="lead-row" [class.active]="selected()?.lead?.id === l.id" (click)="open(l.id)">
+            <span class="avatar">{{ initials(l) }}</span>
+            <span class="lead-main">
+              <span class="lead-top">
+                <strong>{{ l.firstName }} {{ l.lastName }}</strong>
+                <span class="badge" [class]="'badge ' + badgeClass(l.status)">{{ statusLabel[l.status] }}</span>
+              </span>
+              <span class="lead-obj">{{ l.objective }}</span>
+              <span class="lead-meta">
+                {{ l.createdAt | date: "d MMM, HH:mm" }}
+                @if (l.preferredPlanName) { · {{ l.preferredPlanName }} }
+                @if (l.healthFlag) { <span class="health-dot" title="Indica lesiones o condiciones médicas"><mat-icon>warning</mat-icon> salud</span> }
+              </span>
+            </span>
+          </button>
+        }
+      }
+    </section>
+
+    <!-- Detail -->
+    <section class="detail">
+      @if (loadingDetail()) {
+        <div class="panel"><div class="skeleton" style="height: 420px"></div></div>
+      } @else if (selected(); as d) {
+        <div class="panel detail-panel">
+          <div class="d-head">
+            <button type="button" class="icon-btn back" (click)="close()" aria-label="Volver a la lista"><mat-icon>arrow_back</mat-icon></button>
+            <span class="avatar lg">{{ initials(d.lead) }}</span>
+            <div class="d-title">
+              <h2>{{ d.lead.firstName }} {{ d.lead.lastName }}</h2>
+              <span [class]="'badge ' + badgeClass(d.lead.status)">{{ statusLabel[d.lead.status] }}</span>
+              @if (d.questionnaireExpired) { <span class="badge red">Enlace caducado</span> }
+            </div>
+          </div>
+
+          <div class="contact">
+            <a [href]="'mailto:' + d.lead.email"><mat-icon>mail</mat-icon> {{ d.lead.email }}</a>
+            @if (d.lead.phone) {
+              <a [href]="'tel:' + d.lead.phone"><mat-icon>call</mat-icon> {{ d.lead.phone }}</a>
+              <a [href]="whatsapp(d.lead.phone)" target="_blank" rel="noopener"><mat-icon>chat</mat-icon> WhatsApp</a>
+            }
+            @if (d.lead.preferredPlanName) { <span><mat-icon>workspace_premium</mat-icon> Le interesa {{ d.lead.preferredPlanName }}</span> }
+          </div>
+
+          <blockquote class="objective">
+            <span>Su objetivo</span>
+            {{ d.lead.objective }}
+          </blockquote>
+
+          <ol class="steps">
+            <li class="done"><mat-icon>edit_note</mat-icon><div><strong>Solicitud</strong><span>{{ d.lead.createdAt | date: "d MMM y, HH:mm" }}</span></div></li>
+            <li [class.done]="d.lead.questionnaireSentAt"><mat-icon>forward_to_inbox</mat-icon><div><strong>Cuestionario enviado</strong>
+              <span>{{ d.lead.questionnaireSentAt ? (d.lead.questionnaireSentAt | date: "d MMM, HH:mm") : '—' }}</span></div></li>
+            <li [class.done]="d.lead.questionnaireCompletedAt"><mat-icon>assignment_turned_in</mat-icon><div><strong>Cuestionario recibido</strong>
+              <span>{{ d.lead.questionnaireCompletedAt ? (d.lead.questionnaireCompletedAt | date: "d MMM, HH:mm") : '—' }}</span></div></li>
+            <li [class.done]="d.lead.decidedAt" [class.rejected]="d.lead.status === 'REJECTED'">
+              <mat-icon>{{ d.lead.status === 'REJECTED' ? 'block' : 'how_to_reg' }}</mat-icon>
+              <div><strong>{{ d.lead.status === 'REJECTED' ? 'Rechazada' : 'Alta como cliente' }}</strong>
+              <span>{{ d.lead.decidedAt ? (d.lead.decidedAt | date: "d MMM, HH:mm") : '—' }}</span></div></li>
+          </ol>
+
+          @if (d.questionnaire) {
+            <h3 class="section-title">Cuestionario</h3>
+            <app-questionnaire-view [q]="d.questionnaire" [planName]="d.questionnairePlanName" />
+          } @else if (d.lead.status === 'QUESTIONNAIRE_SENT') {
+            <div class="alert info"><mat-icon>hourglass_top</mat-icon>
+              <span>Esperando a que {{ d.lead.firstName }} rellene el cuestionario@if (d.questionnaireExpiresAt) {<span> (el enlace caduca el {{ d.questionnaireExpiresAt | date: "d MMM" }})</span>}.</span></div>
+          }
+
+          @if (d.lead.status === 'ACCEPTED') {
+            <div class="alert" [class.success]="!d.activationPending" [class.warn]="d.activationPending">
+              <mat-icon>{{ d.activationPending ? 'mark_email_unread' : 'verified_user' }}</mat-icon>
+              <span>{{ d.activationPending ? 'Todavía no ha activado su cuenta.' : 'Cuenta activada: ya puede entrar en la app.' }}</span>
+            </div>
+          }
+
+          <div class="field note">
+            <label for="lead-note">Nota privada</label>
+            <textarea id="lead-note" rows="2" maxlength="2000" [(ngModel)]="note" (blur)="saveNote()" placeholder="Solo la ves tú"></textarea>
+          </div>
+
+          <div class="d-actions">
+            <button type="button" class="btn btn-light btn-sm" (click)="remove()" aria-label="Eliminar solicitud"><mat-icon>delete</mat-icon></button>
+            <span class="grow"></span>
+            @switch (d.lead.status) {
+              @case ('NEW') {
+                <button type="button" class="btn btn-outline" (click)="startAction('reject')"><mat-icon>block</mat-icon> Rechazar</button>
+                <button type="button" class="btn btn-primary" (click)="startAction('questionnaire')"><mat-icon>send</mat-icon> Enviar cuestionario</button>
+              }
+              @case ('QUESTIONNAIRE_SENT') {
+                <button type="button" class="btn btn-outline" (click)="startAction('reject')"><mat-icon>block</mat-icon> Rechazar</button>
+                <button type="button" class="btn btn-primary" (click)="startAction('questionnaire')"><mat-icon>forward_to_inbox</mat-icon> Reenviar cuestionario</button>
+              }
+              @case ('QUESTIONNAIRE_COMPLETED') {
+                <button type="button" class="btn btn-outline" (click)="startAction('reject')"><mat-icon>block</mat-icon> Rechazar</button>
+                <button type="button" class="btn btn-primary" (click)="startAction('approve')"><mat-icon>how_to_reg</mat-icon> Aceptar y crear cuenta</button>
+              }
+              @case ('ACCEPTED') {
+                @if (d.activationPending) {
+                  <button type="button" class="btn btn-outline" (click)="resendActivation()"><mat-icon>forward_to_inbox</mat-icon> Reenviar activación</button>
+                }
+                @if (d.lead.clientId) {
+                  <a class="btn btn-primary" [routerLink]="['/trainer/clients', d.lead.clientId]"><mat-icon>person</mat-icon> Ver ficha del cliente</a>
+                }
+              }
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="panel placeholder"><div class="empty">
+          <mat-icon>touch_app</mat-icon><p>Elige una solicitud para ver los detalles.</p>
+        </div></div>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- Action dialog -->
+@if (action(); as a) {
+  <div class="modal-backdrop" (click)="busy() || action.set(null)">
+    <div class="modal" [class.wide]="a === 'approve'" role="dialog" aria-modal="true" aria-labelledby="lead-action-title" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h2 id="lead-action-title">
+          @switch (a) {
+            @case ('questionnaire') { Enviar cuestionario a {{ selected()?.lead?.firstName }} }
+            @case ('reject') { Rechazar solicitud }
+            @case ('approve') { Aceptar a {{ selected()?.lead?.firstName }} como cliente }
+          }
+        </h2>
+        <button type="button" class="icon-btn" (click)="action.set(null)" [disabled]="busy()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        @switch (a) {
+          @case ('questionnaire') {
+            <p class="muted">Recibirá un email con un enlace personal (válido 14 días) para rellenar el cuestionario.</p>
+          }
+          @case ('reject') {
+            <p class="muted">Le enviaremos un email amable de «lo sentimos». Puedes añadir el motivo si quieres.</p>
+          }
+          @case ('approve') {
+            <p class="muted">Se creará su cuenta con este plan y recibirá un email para activarla eligiendo su contraseña.</p>
+            <app-plan-pricing-picker
+              [plans]="plans()"
+              [showErrors]="submitted()"
+              [(planId)]="planId"
+              [(period)]="period"
+              [(special)]="special"
+              [(customPrice)]="customPrice"
+              [(customNote)]="customNote" />
+          }
+        }
+        <div class="field">
+          <label for="lead-msg">Mensaje personal <span class="opt">(opcional, va en el email)</span></label>
+          <textarea id="lead-msg" rows="3" maxlength="2000" [(ngModel)]="message"
+                    [placeholder]="a === 'reject' ? 'p. ej. Ahora mismo tengo la agenda completa; escríbeme en unos meses' : 'p. ej. ¡Me encanta tu objetivo, vamos a por ello!'"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline" (click)="action.set(null)" [disabled]="busy()">Cancelar</button>
+        <button type="button" class="btn" [class.btn-primary]="a !== 'reject'" [class.btn-danger]="a === 'reject'" (click)="confirmAction()" [disabled]="busy()">
+          @switch (a) {
+            @case ('questionnaire') { <mat-icon>send</mat-icon> Enviar cuestionario }
+            @case ('reject') { <mat-icon>block</mat-icon> Rechazar y enviar email }
+            @case ('approve') { <mat-icon>how_to_reg</mat-icon> Crear cuenta y enviar activación }
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

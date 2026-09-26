@@ -1,0 +1,150 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Mensajes</div>
+    <div class="subtitle">Conversaciones con tus clientes (la mensajería depende del plan de cada cliente)</div>
+  </div>
+  <div class="topbar-actions">
+    @if (totalUnread() > 0) {
+      <span class="badge orange">{{ totalUnread() }} sin leer</span>
+    }
+  </div>
+</div>
+
+<div class="content chat-content">
+  <div class="inbox" [class.chat-open]="selectedId() !== null">
+    <!-- ── Conversation list ── -->
+    <aside class="conv-list">
+      <div class="conv-search">
+        <mat-icon>search</mat-icon>
+        <input type="search" placeholder="Buscar cliente..." autocomplete="off"
+               [ngModel]="search()" (ngModelChange)="search.set($event)" aria-label="Buscar cliente" />
+      </div>
+      <div class="conv-scroll">
+        @if (listLoading()) {
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="sk-conv"><div class="skeleton sk-av"></div><div class="sk-lines"><div class="skeleton"></div><div class="skeleton short"></div></div></div>
+          }
+        } @else if (listError()) {
+          <div class="empty">
+            <mat-icon>cloud_off</mat-icon>
+            <p>No se pudieron cargar las conversaciones.</p>
+            <button class="btn btn-outline btn-sm" (click)="loadConversations()">Reintentar</button>
+          </div>
+        } @else if (filtered().length === 0) {
+          <div class="empty"><mat-icon>forum</mat-icon><p>No hay conversaciones.</p></div>
+        } @else {
+          @for (c of filtered(); track c.clientId) {
+            <button class="conv-item" [class.active]="c.clientId === selectedId()" [class.disabled]="!c.messagingEnabled"
+                    (click)="open(c.clientId)">
+              @if (c.photoBase64) {
+                <img class="conv-avatar" [src]="c.photoBase64" alt="" />
+              } @else {
+                <span class="conv-avatar initials">{{ initials(c.clientName) }}</span>
+              }
+              <div class="conv-main">
+                <div class="conv-top">
+                  <span class="conv-name">{{ c.clientName }}</span>
+                  @if (c.lastMessageAt) {
+                    <span class="conv-time">{{ isToday(c.lastMessageAt) ? (c.lastMessageAt | date: 'HH:mm') : (c.lastMessageAt | date: 'd MMM') }}</span>
+                  }
+                </div>
+                <div class="conv-badges">
+                  @if (c.planName) { <span class="conv-plan">{{ c.planName }}</span> }
+                  @if (c.prioritySupport) { <span class="badge violet">Prioritario</span> }
+                </div>
+                @if (!c.messagingEnabled) {
+                  <div class="conv-preview muted">Sin mensajería en su plan</div>
+                } @else if (c.lastMessage) {
+                  <div class="conv-preview" [class.unread]="c.unreadCount > 0">
+                    @if (c.lastMessageFrom === 'TRAINER') { <span class="muted">Tú: </span> }{{ c.lastMessage }}
+                  </div>
+                } @else {
+                  <div class="conv-preview muted">Sin mensajes todavía</div>
+                }
+              </div>
+              @if (c.unreadCount > 0) {
+                <span class="unread-badge">{{ c.unreadCount }}</span>
+              }
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <!-- ── Chat ── -->
+    <section class="chat">
+      @if (selectedId() === null) {
+        <div class="chat-placeholder">
+          <span class="ph-tile"><mat-icon>forum</mat-icon></span>
+          <h3>Tus conversaciones</h3>
+          <p>Selecciona un cliente de la lista para ver el historial y responder.</p>
+        </div>
+      } @else {
+        <header class="chat-head">
+          <button class="back-btn" (click)="back()" aria-label="Volver a la lista">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          @if (selectedSummary()?.photoBase64) {
+            <img class="conv-avatar sm" [src]="selectedSummary()!.photoBase64" alt="" />
+          } @else {
+            <span class="conv-avatar sm initials">{{ initials(conversation()?.clientName ?? selectedSummary()?.clientName ?? '') }}</span>
+          }
+          <div class="chat-title">
+            <a [routerLink]="['/trainer/clients', selectedId()]">{{ conversation()?.clientName ?? selectedSummary()?.clientName }}</a>
+            <span>{{ conversation()?.planName ?? selectedSummary()?.planName ?? 'Sin plan' }}</span>
+          </div>
+          @if (selectedSummary()?.prioritySupport) { <span class="badge violet">Prioritario</span> }
+        </header>
+
+        <div class="chat-scroll" #scroller>
+          @if (chatLoading() && !conversation()) {
+            <div class="sk-chat">
+              <div class="skeleton b1"></div><div class="skeleton b2"></div><div class="skeleton b3"></div>
+            </div>
+          } @else if (chatError() && !conversation()) {
+            <div class="empty"><mat-icon>cloud_off</mat-icon><p>No se pudo cargar la conversación.</p></div>
+          } @else if (conversation(); as conv) {
+            @if (conv.messages.length === 0) {
+              <div class="empty"><mat-icon>forum</mat-icon><p>Aún no hay mensajes con este cliente.</p></div>
+            }
+            @for (g of groups(); track g.day) {
+              <div class="day-sep"><span>{{ dayLabel(g.day) }}</span></div>
+              @for (m of g.messages; track m.id) {
+                <div class="bubble-row" [class.mine]="m.senderRole === 'TRAINER'">
+                  <div class="bubble">
+                    <div class="bubble-text">{{ m.content }}</div>
+                    <div class="bubble-meta">
+                      {{ m.createdAt | date: 'HH:mm' }}
+                      @if (m.senderRole === 'TRAINER') {
+                        <mat-icon [class.read]="m.readAt">{{ m.readAt ? 'done_all' : 'done' }}</mat-icon>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          }
+        </div>
+
+        @if (conversation() && !conversation()!.messagingEnabled) {
+          <div class="alert warn chat-alert">
+            <mat-icon>lock</mat-icon>
+            <span>El plan de este cliente no incluye mensajería. Solo puedes consultar el historial.</span>
+          </div>
+        }
+
+        <form class="composer" (submit)="$event.preventDefault(); send()">
+          <textarea rows="1" placeholder="Escribe un mensaje... (Enter para enviar, Mayús+Enter para salto de línea)"
+                    [ngModel]="draft()" (ngModelChange)="draft.set($event)" name="draft"
+                    (keydown)="onKeydown($event)" maxlength="2000"
+                    [disabled]="!conversation() || !conversation()!.messagingEnabled || sending()"
+                    aria-label="Mensaje"></textarea>
+          <button type="submit" class="send-btn" aria-label="Enviar"
+                  [disabled]="!draft().trim() || sending() || !conversation()?.messagingEnabled">
+            <mat-icon>{{ sending() ? 'hourglass_empty' : 'send' }}</mat-icon>
+          </button>
+        </form>
+      }
+    </section>
+  </div>
+</div>

@@ -2,7 +2,7 @@ export interface WorkoutExercise {
   id?: number;
   exerciseName: string;
   sets: number;
-  reps: number;
+  reps: number | null;
   rir?: number | null;
   restSeconds?: number | null;
   notes?: string | null;

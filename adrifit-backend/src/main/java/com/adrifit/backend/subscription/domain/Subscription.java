@@ -1,5 +1,6 @@
 package com.adrifit.backend.subscription.domain;
 
+import com.adrifit.backend.plan.domain.BillingPeriod;
 import com.adrifit.backend.plan.domain.Plan;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +17,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -58,9 +60,34 @@ public class Subscription {
     @Column(nullable = false, length = 20)
     private SubscriptionStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "billing_period", nullable = false, length = 20)
+    @ColumnDefault("'MONTHLY'")
+    @Builder.Default
+    private BillingPeriod billingPeriod = BillingPeriod.MONTHLY;
+
+    /**
+     * Special conditions: price agreed with this client for each billing period, overriding the
+     * plan price (e.g. Premium features for 85 €/month). Null = plan price.
+     */
+    @Column(name = "custom_price", precision = 10, scale = 2)
+    private java.math.BigDecimal customPrice;
+
+    @Column(name = "custom_price_note", length = 200)
+    private String customPriceNote;
+
+    /** "Current" subscription of the client (only one per client). PAUSED ones are still current. */
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    /** The client asked to cancel: stays ACTIVE until renewalDate, then it is closed without charging. */
+    @Column(name = "cancel_at_period_end", nullable = false)
+    @ColumnDefault("false")
+    private boolean cancelAtPeriodEnd;
+
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -69,4 +96,18 @@ public class Subscription {
     @LastModifiedDate
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    /** Amount charged every billing period (special price if any, else the plan price). */
+    public java.math.BigDecimal effectivePrice() {
+        if (customPrice != null) {
+            return customPrice;
+        }
+        java.math.BigDecimal price = plan.priceFor(billingPeriod);
+        return price != null ? price : plan.getMonthlyPrice().multiply(java.math.BigDecimal.valueOf(billingPeriod.months()));
+    }
+
+    /** Effective price normalised to one month (for MRR). */
+    public java.math.BigDecimal monthlyEquivalent() {
+        return effectivePrice().divide(java.math.BigDecimal.valueOf(billingPeriod.months()), 2, java.math.RoundingMode.HALF_UP);
+    }
 }

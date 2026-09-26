@@ -51,8 +51,8 @@ export class DietService {
     return this.http.get<ClientDiet[]>(`${this.base}/clients/${clientId}/diets`);
   }
 
-  getClientPdfUrl(clientId: number): string {
-    return `${this.base}/clients/${clientId}/diets/active/pdf`;
+  downloadClientPdf(clientId: number): Observable<Blob> {
+    return this.http.get(`${this.base}/clients/${clientId}/diets/active/pdf`, { responseType: 'blob' });
   }
 
   // ── Client ─────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ export class DietService {
     return this.http.get<ClientDiet>(`${this.base}/client/diet`);
   }
 
-  getMyDietPdfUrl(): string {
-    return `${this.base}/client/diet/pdf`;
+  downloadMyDietPdf(): Observable<Blob> {
+    return this.http.get(`${this.base}/client/diet/pdf`, { responseType: 'blob' });
   }
 }

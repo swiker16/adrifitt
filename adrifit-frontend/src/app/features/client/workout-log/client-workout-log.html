@@ -1,0 +1,287 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Registrar entreno</div>
+    <div class="subtitle">Apunta el peso y el RIR de cada serie</div>
+  </div>
+  <div class="topbar-actions">
+    <div class="segmented">
+      <button type="button" [class.active]="tab() === 'log'" (click)="tab.set('log')">
+        {{ editingId() ? 'Editando' : 'Registrar' }}
+      </button>
+      <button type="button" [class.active]="tab() === 'history'" (click)="tab.set('history')">
+        Historial ({{ history().length }})
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  @if (tab() === 'log') {
+    @if (loadingDays()) {
+      <div class="sk-list" aria-busy="true" aria-label="Cargando tu rutina"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    } @else if (noRoutine()) {
+      <div class="panel">
+        <div class="empty">
+          <mat-icon>fitness_center</mat-icon>
+          <p><strong>Todavía no tienes una rutina asignada</strong></p>
+          <p>Cuando tu entrenador te asigne una rutina podrás registrar aquí tus entrenos.</p>
+        </div>
+      </div>
+    } @else if (daysError()) {
+      <div class="alert error"><mat-icon>error</mat-icon><span>{{ daysError() }}</span></div>
+    } @else if (selectedDay() === null) {
+      <!-- ── Paso 1: fecha + día ── -->
+      <div class="panel step-panel">
+        <div class="panel-head"><h2><span class="step-num">1</span> ¿Qué día has entrenado?</h2></div>
+        <div class="step-body">
+          <div class="field date-field">
+            <label for="performedOn">Fecha del entreno</label>
+            <input id="performedOn" type="date" [value]="performedOn()" [max]="today" (change)="onDate($event)" />
+            @if (dateError()) { <small class="err">{{ dateError() }}</small> }
+          </div>
+
+          <div class="day-grid">
+            @for (d of days(); track d.dayNumber) {
+              <button type="button" class="day-card" (click)="selectDay(d.dayNumber)">
+                <span class="day-badge">Día {{ d.dayNumber }}</span>
+                <span class="day-name">{{ d.dayName }}</span>
+                <span class="day-meta">
+                  {{ d.exerciseCount }} {{ d.exerciseCount === 1 ? 'ejercicio' : 'ejercicios' }} ·
+                  {{ d.totalSets }} series
+                </span>
+                <mat-icon class="day-go">chevron_right</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+      <p class="hint-link"><a routerLink="/client/workout"><mat-icon>list_alt</mat-icon> Ver mi rutina completa</a></p>
+    } @else {
+      <!-- ── Paso 2: series ── -->
+      <div class="log-head panel">
+        <div class="log-head-main">
+          @if (!editingId()) {
+            <button type="button" class="btn btn-outline btn-sm back-btn" (click)="backToDays()">
+              <mat-icon>arrow_back</mat-icon> Días
+            </button>
+          }
+          <div>
+            <div class="log-title">
+              <span class="day-badge">Día {{ selectedDay() }}</span>
+              {{ template()?.dayName }}
+            </div>
+            @if (template()) { <div class="log-sub">{{ template()!.workoutName }}</div> }
+          </div>
+        </div>
+        <div class="field date-inline">
+          <label for="performedOn2">Fecha</label>
+          <input id="performedOn2" type="date" [value]="performedOn()" [max]="today" (change)="onDate($event)" />
+          @if (dateError()) { <small class="err">{{ dateError() }}</small> }
+        </div>
+      </div>
+
+      @if (editingId()) {
+        <div class="alert info mb">
+          <mat-icon>edit</mat-icon>
+          <span>
+            Estás editando un entreno ya registrado. El día no se puede cambiar.
+            @if (editingDropped() > 0) {
+              <br /><strong>{{ editingDropped() }} series</strong> de ejercicios que ya no están en tu rutina se eliminarán al guardar.
+            }
+          </span>
+        </div>
+      }
+
+      @if (loadingTemplate()) {
+        <div class="sk-list" aria-busy="true" aria-label="Cargando ejercicios"><div class="skeleton tall"></div><div class="skeleton tall"></div></div>
+      } @else if (templateError()) {
+        <div class="alert error mb"><mat-icon>error</mat-icon><span>{{ templateError() }}</span></div>
+        <button type="button" class="btn btn-outline" (click)="selectDay(selectedDay()!)">Reintentar</button>
+      } @else if (exercises().length === 0) {
+        <div class="panel"><div class="empty"><mat-icon>info</mat-icon><p>Este día no tiene ejercicios.</p></div></div>
+      } @else {
+        @for (e of exercises(); track e.ex.exerciseId; let ei = $index) {
+          <div class="panel ex-card">
+            <div class="ex-head">
+              <div class="ex-num">{{ ei + 1 }}</div>
+              <div class="ex-info">
+                <div class="ex-name">{{ e.ex.exerciseName }}</div>
+                <div class="ex-target">
+                  <span class="chip"><mat-icon>repeat</mat-icon>{{ targetText(e.ex) }}</span>
+                  @if (e.ex.targetRir != null) { <span class="chip"><mat-icon>speed</mat-icon>RIR {{ e.ex.targetRir }}</span> }
+                  @if (e.ex.restSeconds) { <span class="chip"><mat-icon>timer</mat-icon>{{ restText(e.ex.restSeconds) }}</span> }
+                </div>
+                @if (e.ex.notes) { <div class="ex-notes"><mat-icon>sticky_note_2</mat-icon>{{ e.ex.notes }}</div> }
+              </div>
+              @if (e.ex.previous.length > 0) {
+                <button type="button" class="btn btn-light btn-sm copy-btn" (click)="copyPrevious(ei)" title="Copiar última sesión">
+                  <mat-icon>content_copy</mat-icon><span class="copy-label">Copiar última sesión</span>
+                </button>
+              }
+            </div>
+
+            <div class="sets">
+              <div class="set-row set-header">
+                <span></span><span>Peso kg</span><span>Reps</span><span>RIR</span><span class="c">Hecha</span>
+              </div>
+              @for (r of e.rows; track r.setNumber; let ri = $index) {
+                @let err = errors()[ei][ri];
+                @let prev = previousFor(e.ex, r.setNumber);
+                <div class="set-row" [class.done]="r.done">
+                  <span class="set-label"><small>Serie</small>{{ r.setNumber }}</span>
+                  <input
+                    class="in"
+                    [class.invalid]="!!err.weight"
+                    type="text"
+                    inputmode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    step="0.5"
+                    enterkeyhint="next"
+                    autocomplete="off"
+                    [attr.aria-label]="'Peso serie ' + r.setNumber"
+                    [placeholder]="prev ? prev.weightKg : 'kg'"
+                    [value]="r.weight"
+                    (input)="onInput(ei, ri, 'weight', $event)"
+                  />
+                  <input
+                    class="in"
+                    [class.invalid]="!!err.reps"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    enterkeyhint="next"
+                    autocomplete="off"
+                    [attr.aria-label]="'Repeticiones serie ' + r.setNumber"
+                    [placeholder]="prev?.reps ?? e.ex.targetReps ?? 'reps'"
+                    [value]="r.reps"
+                    (input)="onInput(ei, ri, 'reps', $event)"
+                  />
+                  <select
+                    class="in"
+                    [class.invalid]="!!err.rir"
+                    [attr.aria-label]="'RIR serie ' + r.setNumber"
+                    (change)="onRir(ei, ri, $event)"
+                  >
+                    <option value="" [selected]="r.rir === ''">{{ prev ? prev.rir : '—' }}</option>
+                    @for (o of rirOptions; track o) {
+                      <option [value]="o" [selected]="r.rir === '' + o">{{ o }}</option>
+                    }
+                  </select>
+                  <label class="done-toggle" [attr.aria-label]="'Serie ' + r.setNumber + ' hecha'">
+                    <input type="checkbox" [checked]="r.done" (change)="toggleDone(ei, ri, $event)" />
+                    <span class="check"><mat-icon>check</mat-icon></span>
+                  </label>
+                </div>
+                @if (prev || err.weight || err.reps || err.rir) {
+                  <div class="set-sub">
+                    @if (prev) { <span class="prev"><mat-icon>history</mat-icon>Última vez: {{ previousText(prev) }}</span> }
+                    @if (err.weight) { <span class="err">{{ err.weight }}</span> }
+                    @if (err.reps) { <span class="err">{{ err.reps }}</span> }
+                    @if (err.rir) { <span class="err">{{ err.rir }}</span> }
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+
+        <div class="panel notes-panel">
+          <div class="field">
+            <label for="notes">Notas de la sesión</label>
+            <textarea id="notes" rows="3" maxlength="1000" placeholder="¿Cómo te has sentido? Molestias, sensaciones..." [value]="notes()" (input)="onNotes($event)"></textarea>
+          </div>
+        </div>
+
+        @if (saveError()) {
+          <div class="alert error mb">
+            <mat-icon>error</mat-icon>
+            <div>
+              <div>{{ saveError() }}</div>
+              @if (conflictLog()) {
+                <button type="button" class="btn btn-sm btn-outline conflict-btn" (click)="openConflict()">
+                  <mat-icon>edit</mat-icon> Abrir el registro existente para editarlo
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="save-bar">
+          <div class="save-info">
+            <strong>{{ doneRows() }}/{{ totalRows() }}</strong> series hechas
+            @if (volumePreview() > 0) { <span class="vol">· {{ volumePreview() | number: '1.0-0' }} kg</span> }
+          </div>
+          <div class="save-actions">
+            @if (editingId()) {
+              <button type="button" class="btn btn-outline" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button>
+            }
+            <button type="button" class="btn btn-primary" (click)="save()" [disabled]="saving()">
+              <mat-icon>{{ saving() ? 'hourglass_empty' : 'save' }}</mat-icon>
+              {{ saving() ? 'Guardando...' : editingId() ? 'Guardar cambios' : 'Guardar entreno' }}
+            </button>
+          </div>
+        </div>
+      }
+    }
+  } @else {
+    <!-- ── Historial ── -->
+    @if (loadingHistory()) {
+      <div class="sk-list" aria-busy="true" aria-label="Cargando historial"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    } @else if (historyError()) {
+      <div class="alert error mb"><mat-icon>error</mat-icon><span>{{ historyError() }}</span></div>
+      <button type="button" class="btn btn-outline" (click)="loadHistory()">Reintentar</button>
+    } @else if (history().length === 0) {
+      <div class="panel">
+        <div class="empty">
+          <mat-icon>history</mat-icon>
+          <p>Aún no has registrado ningún entreno.</p>
+          <button type="button" class="btn btn-primary" (click)="tab.set('log')"><mat-icon>add</mat-icon> Registrar entreno</button>
+        </div>
+      </div>
+    } @else {
+      <div class="history">
+        @for (log of history(); track log.id) {
+          <div class="panel log-item" [class.open]="expandedId() === log.id">
+            <button type="button" class="log-summary" (click)="toggleExpand(log.id)" [attr.aria-expanded]="expandedId() === log.id">
+              <div class="log-date">
+                <span class="d">{{ log.performedOn | date: 'd' }}</span>
+                <span class="m">{{ log.performedOn | date: 'MMM' }}</span>
+              </div>
+              <div class="log-main">
+                <div class="log-day"><span class="day-badge sm">Día {{ log.dayNumber }}</span> {{ log.dayName }}</div>
+                <div class="log-meta">
+                  {{ log.performedOn | date: 'EEEE dd/MM/yyyy' }} · {{ log.totalSets }} series ·
+                  {{ log.totalVolumeKg | number: '1.0-0' }} kg
+                </div>
+              </div>
+              <mat-icon class="chev">{{ expandedId() === log.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+            @if (expandedId() === log.id) {
+              <div class="log-detail">
+                @for (le of log.exercises; track $index) {
+                  <div class="le">
+                    <div class="le-name">{{ le.exerciseName }}</div>
+                    <div class="le-sets">
+                      @for (s of le.sets; track s.setNumber) {
+                        <span class="set-pill">
+                          <b>{{ s.setNumber }}</b> {{ s.weightKg | number: '1.0-2' }} kg{{ s.reps != null ? ' × ' + s.reps : '' }} &#64;RIR{{ s.rir }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (log.notes) { <div class="log-notes"><mat-icon>notes</mat-icon>{{ log.notes }}</div> }
+                <div class="log-actions">
+                  <button type="button" class="btn btn-outline btn-sm" (click)="edit(log)"><mat-icon>edit</mat-icon> Editar</button>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="remove(log)" [disabled]="deletingId() === log.id">
+                    <mat-icon>delete</mat-icon> {{ deletingId() === log.id ? 'Eliminando...' : 'Eliminar' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

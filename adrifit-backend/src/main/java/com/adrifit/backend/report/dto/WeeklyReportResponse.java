@@ -20,6 +20,7 @@ public record WeeklyReportResponse(
         ReportStatus status,
         Instant reviewedAt,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        java.util.List<com.adrifit.backend.photo.dto.PhotoDtos.PhotoResponse> photos
 ) {
 }

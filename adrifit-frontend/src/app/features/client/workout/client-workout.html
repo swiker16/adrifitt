@@ -4,15 +4,27 @@
     <div class="subtitle">Tu entrenamiento asignado</div>
   </div>
   @if (clientWorkout()) {
-    <button class="btn btn-primary" (click)="exportPdf()">
-      <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
-    </button>
+    <div class="topbar-actions">
+      <a routerLink="/client/workout-log" class="btn btn-primary desktop-only">
+        <mat-icon>edit_note</mat-icon> Registrar entreno
+      </a>
+      <span class="pdf-wrap" [attr.title]="pdfExportEnabled() ? null : 'Disponible en planes con exportación PDF'">
+        <button type="button" class="btn btn-outline" (click)="exportPdf()" [disabled]="!pdfExportEnabled() || exporting()">
+          <mat-icon>{{ pdfExportEnabled() ? 'picture_as_pdf' : 'lock' }}</mat-icon>
+          {{ exporting() ? 'Generando...' : 'Exportar PDF' }}
+        </button>
+      </span>
+    </div>
   }
 </div>
 
 <div class="content">
   @if (loading()) {
-    <div class="panel"><div class="loading">Cargando tu rutina...</div></div>
+    <div class="sk-list" aria-busy="true" aria-label="Cargando tu rutina">
+      <div class="skeleton sk-hero"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
   } @else if (error() || !clientWorkout()) {
     <div class="panel">
       <div class="empty">
@@ -21,23 +33,30 @@
       </div>
     </div>
   } @else {
+    @if (!pdfExportEnabled()) {
+      <div class="pdf-note"><mat-icon>lock</mat-icon> Exportar PDF: disponible en planes con exportación PDF.</div>
+    }
+
     <div class="hero-card">
-      <div class="hero-icon"><mat-icon>fitness_center</mat-icon></div>
-      <div>
+      <div class="hero-main">
+        <div class="hero-label"><mat-icon>fitness_center</mat-icon> Rutina activa</div>
         <h1>{{ clientWorkout()!.workout.name }}</h1>
         <div class="hero-meta">
           @if (clientWorkout()!.workout.daysPerWeek) {
-            <span class="tag orange">{{ clientWorkout()!.workout.daysPerWeek }} días/semana</span>
+            <span class="hchip strong">{{ clientWorkout()!.workout.daysPerWeek }} días/semana</span>
           }
           @if (clientWorkout()!.workout.objective) {
-            <span class="tag gray">{{ clientWorkout()!.workout.objective }}</span>
+            <span class="hchip">{{ clientWorkout()!.workout.objective }}</span>
           }
-          <span class="tag gray">Asignada {{ clientWorkout()!.assignedAt | date: 'dd/MM/yyyy' }}</span>
+          <span class="hchip">Asignada {{ clientWorkout()!.assignedAt | date: 'dd/MM/yyyy' }}</span>
         </div>
         @if (clientWorkout()!.workout.description) {
           <p class="description">{{ clientWorkout()!.workout.description }}</p>
         }
       </div>
+      <a routerLink="/client/workout-log" class="btn btn-primary btn-lg hero-cta">
+        <mat-icon>edit_note</mat-icon> Registrar entreno
+      </a>
     </div>
 
     <!-- Vista por días (si los ejercicios tienen dayNumber) -->
@@ -45,30 +64,39 @@
       @for (day of groupedByDay(); track day.dayNumber) {
         <div class="panel day-panel">
           <div class="panel-head day-head">
-            <div class="day-badge">DÍA {{ day.dayNumber }}</div>
-            <h2>{{ day.dayName }}</h2>
+            <div class="day-title">
+              <div class="day-badge">Día {{ day.dayNumber }}</div>
+              <h2>{{ day.dayName }}</h2>
+            </div>
+            <a class="btn btn-sm btn-outline" routerLink="/client/workout-log" [queryParams]="{ day: day.dayNumber }">
+              <mat-icon>edit_note</mat-icon> Registrar este día
+            </a>
           </div>
-          <div class="panel-body p0">
+          <div class="table-wrap">
             <table class="ex-table">
               <thead>
                 <tr>
                   <th>Ejercicio</th>
                   <th>Aproximaciones</th>
-                  <th>Reps aprox.</th>
-                  <th>Series</th>
-                  <th>Reps</th>
+                  <th class="center">Reps aprox.</th>
+                  <th class="center">Series</th>
+                  <th class="center">Reps</th>
+                  <th class="center">RIR</th>
+                  <th class="center">Descanso</th>
                   <th>Notas</th>
                 </tr>
               </thead>
               <tbody>
-                @for (ex of day.exercises; track ex.id) {
+                @for (ex of day.exercises; track $index; let i = $index) {
                   <tr>
-                    <td class="ex-name-cell">{{ ex.exerciseName }}</td>
-                    <td>{{ ex.warmUpSets || '—' }}</td>
-                    <td class="center">{{ ex.approxReps || '—' }}</td>
-                    <td class="center">{{ ex.sets }}</td>
-                    <td class="center">{{ ex.reps ?? '—' }}</td>
-                    <td class="notes-cell">{{ ex.notes || '—' }}</td>
+                    <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span><span class="ex-name">{{ ex.exerciseName }}</span><a class="tech-btn" routerLink="/client/videos" [queryParams]="{ exercise: ex.exerciseName }" [attr.aria-label]="'Enviar vídeo de técnica de ' + ex.exerciseName" title="Enviar vídeo de técnica"><mat-icon>videocam</mat-icon></a></td>
+                    <td class="warm-cell" data-label="Aproximaciones">{{ ex.warmUpSets || '—' }}</td>
+                    <td class="center" data-label="Reps aprox.">{{ ex.approxReps || '—' }}</td>
+                    <td class="center metric" data-label="Series">{{ ex.sets }}</td>
+                    <td class="center metric" data-label="Reps">{{ ex.reps || '—' }}</td>
+                    <td class="center metric" data-label="RIR">{{ ex.rir ?? '—' }}</td>
+                    <td class="center" data-label="Descanso">{{ restText(ex.restSeconds) }}</td>
+                    <td class="notes-cell" [class.no-notes]="!ex.notes" data-label="Notas">{{ ex.notes || '—' }}</td>
                   </tr>
                 }
               </tbody>
@@ -80,29 +108,31 @@
       <!-- Vista plana (sin días definidos) -->
       <div class="panel">
         <div class="panel-head"><h2>Ejercicios</h2></div>
-        <div class="panel-body p0">
+        <div class="table-wrap">
           <table class="ex-table">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Ejercicio</th>
                 <th>Aproximaciones</th>
-                <th>Reps aprox.</th>
-                <th>Series</th>
-                <th>Reps</th>
+                <th class="center">Reps aprox.</th>
+                <th class="center">Series</th>
+                <th class="center">Reps</th>
+                <th class="center">RIR</th>
+                <th class="center">Descanso</th>
                 <th>Notas</th>
               </tr>
             </thead>
             <tbody>
-              @for (ex of clientWorkout()!.workout.exercises; track ex.id; let i = $index) {
+              @for (ex of clientWorkout()!.workout.exercises; track $index; let i = $index) {
                 <tr>
-                  <td class="center num-cell">{{ i + 1 }}</td>
-                  <td class="ex-name-cell">{{ ex.exerciseName }}</td>
-                  <td>{{ ex.warmUpSets || '—' }}</td>
-                  <td class="center">{{ ex.approxReps || '—' }}</td>
-                  <td class="center">{{ ex.sets }}</td>
-                  <td class="center">{{ ex.reps ?? '—' }}</td>
-                  <td class="notes-cell">{{ ex.notes || '—' }}</td>
+                  <td class="ex-name-cell"><span class="ex-idx">{{ i + 1 }}</span><span class="ex-name">{{ ex.exerciseName }}</span><a class="tech-btn" routerLink="/client/videos" [queryParams]="{ exercise: ex.exerciseName }" [attr.aria-label]="'Enviar vídeo de técnica de ' + ex.exerciseName" title="Enviar vídeo de técnica"><mat-icon>videocam</mat-icon></a></td>
+                  <td class="warm-cell" data-label="Aproximaciones">{{ ex.warmUpSets || '—' }}</td>
+                  <td class="center" data-label="Reps aprox.">{{ ex.approxReps || '—' }}</td>
+                  <td class="center metric" data-label="Series">{{ ex.sets }}</td>
+                  <td class="center metric" data-label="Reps">{{ ex.reps || '—' }}</td>
+                  <td class="center metric" data-label="RIR">{{ ex.rir ?? '—' }}</td>
+                  <td class="center" data-label="Descanso">{{ restText(ex.restSeconds) }}</td>
+                  <td class="notes-cell" [class.no-notes]="!ex.notes" data-label="Notas">{{ ex.notes || '—' }}</td>
                 </tr>
               }
             </tbody>

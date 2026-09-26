@@ -1,0 +1,84 @@
+<div class="plan-picker">
+  @for (p of plans(); track p.id) {
+    <button type="button" class="plan-option" [class.selected]="planId() === p.id" (click)="pickPlan(p)">
+      <div class="po-head">
+        <span class="po-name">{{ p.name }}</span>
+        @if (priceOf(p, period()); as pp) {
+          <span class="po-price">{{ pp.price | number: '1.0-2' }}€<small>{{ periodSuffix[pp.period] }}</small></span>
+        } @else {
+          <span class="po-price">{{ p.monthlyPrice | number: '1.0-2' }}€<small>/mes</small></span>
+        }
+      </div>
+      @if (p.description) { <p class="po-desc">{{ p.description }}</p> }
+      <span class="po-freq">
+        <mat-icon>event_repeat</mat-icon> Revisión cada {{ p.reviewFrequencyDays }} días
+        @if (currentPlanId() === p.id) { <span class="po-current">Plan actual</span> }
+      </span>
+      <span class="po-radio"><mat-icon>check</mat-icon></span>
+    </button>
+  }
+</div>
+@if (showErrors() && planId() === null) {
+  <small class="err">Selecciona un plan.</small>
+}
+
+<div class="pp-label">Periodo de pago</div>
+<div class="period-grid" role="radiogroup" aria-label="Periodo de pago">
+  @for (b of allPeriods; track b) {
+    @let pp = priceOf(selectedPlan(), b);
+    <button type="button" class="period-opt" role="radio"
+            [class.active]="period() === b" [attr.aria-checked]="period() === b"
+            [disabled]="!!selectedPlan() && !pp" (click)="pickPeriod(b)">
+      <span class="pe-l">{{ periodLabel[b] }}</span>
+      @if (pp) {
+        <span class="pe-v">{{ pp.price | number: '1.0-2' }}€</span>
+        <span class="pe-m">
+          @if (pp.months > 1) { {{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes }
+          @else { Mes a mes }
+          @if (pp.savingPercent > 0) { <em>-{{ pp.savingPercent | number: '1.0-0' }}%</em> }
+        </span>
+      } @else if (selectedPlan()) {
+        <span class="pe-m">No disponible</span>
+      } @else {
+        <span class="pe-m">Elige un plan</span>
+      }
+    </button>
+  }
+</div>
+
+<label class="special-toggle">
+  <span class="st-icon"><mat-icon>sell</mat-icon></span>
+  <span class="st-text">
+    <span class="st-title">Condiciones especiales</span>
+    <span class="st-sub">Precio distinto al del plan para este cliente</span>
+  </span>
+  <input type="checkbox" class="switch" [checked]="special()" (change)="toggleSpecial($event)" />
+</label>
+
+@if (special()) {
+  <div class="special-box">
+    <div class="form-grid">
+      <div class="field">
+        <label for="pp-custom">Precio especial *</label>
+        <div class="affix">
+          <input id="pp-custom" type="number" min="0" step="0.01" inputmode="decimal"
+                 [value]="customPrice() ?? ''" (input)="onPrice($event)" placeholder="85" />
+          <span>€{{ periodSuffix[period()] }}</span>
+        </div>
+        @if (showErrors() && customInvalid()) {
+          <small class="err">Introduce el precio especial.</small>
+        } @else {
+          <small class="hint">
+            @if (planPrice(); as base) { Precio del plan: {{ base.price | number: '1.0-2' }} €{{ periodSuffix[period()] }}. }
+            @if (period() !== 'MONTHLY' && customMonthly() !== null) { Equivale a {{ customMonthly() | number: '1.0-2' }} €/mes. }
+          </small>
+        }
+      </div>
+      <div class="field">
+        <label for="pp-note">Nota (opcional)</label>
+        <input id="pp-note" maxlength="255" [value]="customNote()" (input)="onNote($event)" placeholder="Ej. Precio amigo, promoción de lanzamiento…" />
+        <small class="hint">El cliente verá esta nota junto a su precio.</small>
+      </div>
+    </div>
+  </div>
+}

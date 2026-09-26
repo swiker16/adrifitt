@@ -17,6 +17,18 @@ public record TrainerDashboardResponse(
         long newClientsThisMonth,
         long clientsWithoutWorkout,
         long upcomingRenewalsCount,
+        long pendingAnalyses,
+        long unreadMessages,
+        long pendingPaymentsCount,
+        BigDecimal pendingPaymentsAmount,
+        long overduePaymentsCount,
+        long tasksDue,
+        /** Client technique videos waiting for a correction. */
+        long pendingVideos,
+        /** New client requests + answered questionnaires waiting for the trainer. */
+        long pendingLeads,
+        BigDecimal revenueThisMonth,
+        BigDecimal monthlyRecurringRevenue,
 
         // ── Distribución por plan ──
         List<PlanDistribution> clientsPerPlan,

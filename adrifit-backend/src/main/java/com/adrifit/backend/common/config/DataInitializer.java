@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@org.springframework.core.annotation.Order(1)
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
@@ -48,43 +49,59 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Default TRAINER user created -> username: 'trainer', password: 'trainer123'");
     }
 
+    /** Plan features are stored one per line. */
+    private static final String LINE = "\n";
+
+    /** Default catalogue for a fresh database (same content as migration V4). */
     private void seedPlans() {
         if (planRepository.count() > 0) {
             return;
         }
         planRepository.save(Plan.builder()
-                .name("Basic")
-                .description("Entrenamiento y nutrición con seguimiento mensual.")
-                .monthlyPrice(new BigDecimal("39.00"))
-                .reviewFrequencyDays(30)
-                .messagingEnabled(false)
-                .analyticsEnabled(false)
-                .pdfExportEnabled(false)
-                .prioritySupport(false)
-                .active(true)
-                .build());
-        planRepository.save(Plan.builder()
-                .name("Advanced")
-                .description("Seguimiento cada 15 días con mensajería y analíticas.")
-                .monthlyPrice(new BigDecimal("69.00"))
+                .name("Básica")
+                .description("Un servicio diseñado para optimizar tu físico, rendimiento y salud mediante un enfoque totalmente personalizado.")
+                .monthlyPrice(new BigDecimal("117.00"))
+                .quarterlyPrice(new BigDecimal("345.00"))
+                .semiannualPrice(new BigDecimal("667.00"))
+                .annualPrice(new BigDecimal("1295.00"))
                 .reviewFrequencyDays(15)
                 .messagingEnabled(true)
                 .analyticsEnabled(true)
-                .pdfExportEnabled(false)
+                .pdfExportEnabled(true)
                 .prioritySupport(false)
                 .active(true)
+                .features(String.join(LINE,
+                        "Planificación nutricional: diseño dietético individualizado adaptado a tus objetivos y estilo de vida",
+                        "Programa de entrenamiento: planificación estructurada con progresión de cargas (exclusivo para personas asintomáticas o sin patologías del aparato locomotor activas: óseas, tendinosas o articulares)",
+                        "Monitoreo en Google Drive: registro sistémico de medidas corporales, cargas y rendimiento",
+                        "Reajuste estratégico: feedback continuo y modificaciones técnicas según tu evolución",
+                        "Guía de suplementación: protocolo personalizado según tus necesidades particulares",
+                        "Control analítico: una (1) analítica sanguínea con interpretación profesional y recomendaciones",
+                        "Atención al cliente: soporte directo vía WhatsApp de lunes a viernes de 06:00 a 16:00 h"))
                 .build());
         planRepository.save(Plan.builder()
                 .name("Premium")
-                .description("Revisión semanal, soporte prioritario y exportación PDF.")
-                .monthlyPrice(new BigDecimal("119.00"))
+                .description("Todo lo de la tarifa Básica más optimización fisiológica, control clínico avanzado, seguimiento semanal y soporte exclusivo.")
+                .monthlyPrice(new BigDecimal("143.00"))
+                .quarterlyPrice(new BigDecimal("429.00"))
+                .semiannualPrice(new BigDecimal("843.00"))
+                .annualPrice(new BigDecimal("1573.00"))
                 .reviewFrequencyDays(7)
                 .messagingEnabled(true)
                 .analyticsEnabled(true)
                 .pdfExportEnabled(true)
                 .prioritySupport(true)
                 .active(true)
+                .features(String.join(LINE,
+                        "Todo lo incluido en la tarifa Básica",
+                        "Monitoreo endocrino-metabólico y fertilidad: control y optimización del entorno hormonal, perfiles tiroideos, ejes hormonales y marcadores de fertilidad",
+                        "Interpretación sistémica de analíticas complejas: análisis periódico y avanzado de cribados sanguíneos (perfil lipídico, hepático, renal y hormonal) con recomendaciones específicas",
+                        "Gestión de farmacocinética y profilaxis: supervisión de la interacción de medicamentos, asimilación de sustancias y control ante patologías previas",
+                        "Coordinación de diagnóstico por imagen: gestión y análisis de pruebas de imagen médica (ecografías o resonancias) para el control de lesiones o composición corporal interna",
+                        "Auditoría fisiológica semanal: reporte semanal en lugar de cada 15 días, con ajustes estratégicos de alta frecuencia",
+                        "Ecosistema de análisis predictivo: plantillas y software profesional para predecir picos de rendimiento y estancamientos",
+                        "Horario de atención extendido con soporte prioritario: lunes a viernes de 07:00 a 17:00 h y sábados de 07:00 a 14:00 h"))
                 .build());
-        log.info("Seeded default plans: Basic, Advanced, Premium");
+        log.info("Seeded default plans: Básica, Premium");
     }
 }

@@ -13,4 +13,10 @@ public interface ClientAnalysisRepository extends JpaRepository<ClientAnalysis, 
     Optional<ClientAnalysis> findByIdAndClientIdAndActiveTrue(Long id, Long clientId);
 
     long countByStatusAndActiveTrue(AnalysisStatus status);
+
+    List<ClientAnalysis> findByActiveTrueOrderByUploadedAtDesc();
+
+    List<ClientAnalysis> findByStatusAndActiveTrueOrderByUploadedAtDesc(AnalysisStatus status);
+
+    List<ClientAnalysis> findByClientId(Long clientId);
 }

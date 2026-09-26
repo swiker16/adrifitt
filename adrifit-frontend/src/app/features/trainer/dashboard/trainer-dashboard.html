@@ -1,269 +1,320 @@
-<!-- ── Topbar ── -->
-<div class="dash-topbar">
-  <div class="dash-greeting">
-    <h1>¡Bienvenido, {{ username() }}! 👋</h1>
-    <p>Resumen general de tu negocio</p>
+<!-- ── Header ── -->
+<div class="topbar">
+  <div>
+    <div class="overline">{{ today | date:'EEEE, d \'de\' MMMM':'':'es' | titlecase }}</div>
+    <div class="page-title">¡Bienvenido, {{ username() }}!</div>
+    <div class="subtitle">Resumen general de tu negocio</div>
   </div>
-  <div class="dash-topbar-right">
-    <button class="tb-icon-btn notif-btn" title="Notificaciones">
+  <div class="topbar-actions">
+    <button class="icon-btn" title="Revisiones y seguimientos pendientes" routerLink="/trainer/tasks">
       <mat-icon>notifications_none</mat-icon>
       @if ((data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) > 0) {
-        <span class="notif-badge">{{ (data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) }}</span>
+        <span class="count-badge">{{ (data()?.reviewsPending ?? 0) + (data()?.reportsPendingFeedback ?? 0) }}</span>
       }
     </button>
-    <div class="today-chip">
-      <mat-icon>calendar_today</mat-icon>
-      <span>{{ today | date:'EEEE, d \'de\' MMMM yyyy':'':'es' | titlecase }}</span>
-    </div>
+    <a class="btn btn-primary" routerLink="/trainer/clients" [queryParams]="{ new: 1 }">
+      <mat-icon>person_add</mat-icon> Nuevo cliente
+    </a>
   </div>
 </div>
 
 <div class="content">
   @if (loading()) {
-    <div class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>Cargando tu dashboard...</p>
+    <div class="hero-row">
+      <div class="skeleton sk-hero"></div>
+      <div class="skeleton sk-hero"></div>
+    </div>
+    <div class="kpi-grid">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) { <div class="skeleton sk-kpi"></div> }
+    </div>
+    <div class="dash-body">
+      <div class="dash-col"><div class="skeleton sk-panel"></div><div class="skeleton sk-panel"></div></div>
+      <div class="dash-col"><div class="skeleton sk-panel tall"></div></div>
     </div>
   } @else {
 
-  <!-- ── Acciones rápidas ── -->
-  <div class="quick-actions-bar">
-    <a routerLink="/trainer/clients" [queryParams]="{ new: 1 }" class="qa-card">
-      <span class="qa-icon orange"><mat-icon>person_add</mat-icon></span>
-      <div class="qa-text"><span class="qa-title">Nuevo cliente</span><span class="qa-sub">Añadir cliente</span></div>
-    </a>
-    <a routerLink="/trainer/workouts/new" class="qa-card">
-      <span class="qa-icon green"><mat-icon>fitness_center</mat-icon></span>
-      <div class="qa-text"><span class="qa-title">Nueva rutina</span><span class="qa-sub">Crear rutina</span></div>
-    </a>
-    <a routerLink="/trainer/diets/new" class="qa-card">
-      <span class="qa-icon violet"><mat-icon>restaurant</mat-icon></span>
-      <div class="qa-text"><span class="qa-title">Nueva dieta</span><span class="qa-sub">Crear dieta</span></div>
-    </a>
-    <a routerLink="/trainer/plans/new" class="qa-card">
-      <span class="qa-icon blue"><mat-icon>workspace_premium</mat-icon></span>
-      <div class="qa-text"><span class="qa-title">Nuevo plan</span><span class="qa-sub">Crear plan</span></div>
-    </a>
+  <!-- ── Highlight + quick actions ── -->
+  <div class="hero-row">
+    <section class="hero-card">
+      <div class="hero-top">
+        <span class="hero-overline"><mat-icon>trending_up</mat-icon> Ingresos este mes</span>
+        <a routerLink="/trainer/business" class="hero-link">Ver negocio <mat-icon>arrow_forward</mat-icon></a>
+      </div>
+      <div class="hero-value">{{ (data()?.revenueThisMonth ?? 0) | number:'1.0-0' }}<span>€</span></div>
+      <div class="hero-mrr">MRR {{ (data()?.monthlyRecurringRevenue ?? 0) | number:'1.0-0' }} €/mes</div>
+      <div class="hero-stats">
+        <a routerLink="/trainer/payments" class="hero-stat">
+          <span class="hs-label">Cobros próximos</span>
+          <span class="hs-value">{{ ingresos() | number:'1.0-0' }} €</span>
+          @if ((data()?.upcomingRenewalsCount ?? 0) > 0) {
+            <span class="hs-hint">{{ data()?.upcomingRenewalsCount }} pendiente{{ (data()?.upcomingRenewalsCount ?? 0) > 1 ? 's' : '' }}</span>
+          } @else {
+            <span class="hs-hint">Sin renovaciones</span>
+          }
+        </a>
+        <a routerLink="/trainer/payments" class="hero-stat">
+          <span class="hs-label">Cobros pendientes</span>
+          <span class="hs-value">{{ (data()?.pendingPaymentsAmount ?? 0) | number:'1.2-2' }} €</span>
+          @if ((data()?.overduePaymentsCount ?? 0) > 0) {
+            <span class="hs-hint warn">{{ data()?.overduePaymentsCount }} vencido{{ (data()?.overduePaymentsCount ?? 0) > 1 ? 's' : '' }}</span>
+          } @else {
+            <span class="hs-hint">Sin vencidos</span>
+          }
+        </a>
+      </div>
+    </section>
+
+    <div class="quick-actions">
+      <a routerLink="/trainer/clients" [queryParams]="{ new: 1 }" class="qa-tile">
+        <span class="tile orange"><mat-icon>person_add</mat-icon></span>
+        <span class="qa-text"><strong>Nuevo cliente</strong><small>Añadir cliente</small></span>
+      </a>
+      <a routerLink="/trainer/workouts/new" class="qa-tile">
+        <span class="tile green"><mat-icon>fitness_center</mat-icon></span>
+        <span class="qa-text"><strong>Nueva rutina</strong><small>Crear rutina</small></span>
+      </a>
+      <a routerLink="/trainer/diets/new" class="qa-tile">
+        <span class="tile violet"><mat-icon>restaurant</mat-icon></span>
+        <span class="qa-text"><strong>Nueva dieta</strong><small>Crear dieta</small></span>
+      </a>
+      <a routerLink="/trainer/plans/new" class="qa-tile">
+        <span class="tile blue"><mat-icon>workspace_premium</mat-icon></span>
+        <span class="qa-text"><strong>Nuevo plan</strong><small>Crear plan</small></span>
+      </a>
+    </div>
   </div>
 
   <!-- ── KPIs ── -->
   <div class="kpi-grid">
-
-    <a routerLink="/trainer/clients" class="kpi-card kpi-orange">
-      <div class="kpi-icon"><mat-icon>group</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ data()?.activeClients ?? 0 }}</div>
-        <div class="kpi-label">Clientes activos</div>
-        <div class="kpi-trend">+{{ data()?.newClientsThisMonth ?? 0 }} este mes</div>
-      </div>
+    <a routerLink="/trainer/clients" class="kpi">
+      <span class="tile orange"><mat-icon>group</mat-icon></span>
+      <div class="kpi-value">{{ data()?.activeClients ?? 0 }}</div>
+      <div class="kpi-label">Clientes activos</div>
+      <div class="kpi-hint up">+{{ data()?.newClientsThisMonth ?? 0 }} este mes</div>
     </a>
 
-    <a routerLink="/trainer/clients" class="kpi-card kpi-green">
-      <div class="kpi-icon"><mat-icon>euro_symbol</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ ingresos() | number:'1.0-0' }}€</div>
-        <div class="kpi-label">Cobros próximos</div>
-        @if ((data()?.upcomingRenewalsCount ?? 0) > 0) {
-          <div class="kpi-trend orange">{{ data()?.upcomingRenewalsCount }} pendiente{{ (data()?.upcomingRenewalsCount ?? 0) > 1 ? 's' : '' }}</div>
-        }
-      </div>
+    <a routerLink="/trainer/tasks" class="kpi">
+      <span class="tile red"><mat-icon>pending_actions</mat-icon></span>
+      <div class="kpi-value">{{ overdueReviews().length }}</div>
+      <div class="kpi-label">Revisiones pendientes</div>
+      @if (overdueReviews().length === 0) {
+        <div class="kpi-hint ok">Todo al día</div>
+      } @else {
+        <div class="kpi-hint warn">Requieren atención</div>
+      }
     </a>
 
-    <a routerLink="/trainer/clients" class="kpi-card kpi-red">
-      <div class="kpi-icon"><mat-icon>pending_actions</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ overdueReviews().length }}</div>
-        <div class="kpi-label">Revisiones pendientes</div>
-        @if (overdueReviews().length === 0) {
-          <div class="kpi-trend ok">Todo al día</div>
-        } @else {
-          <div class="kpi-trend orange">Requieren atención</div>
-        }
-      </div>
+    <a routerLink="/trainer/reports" class="kpi">
+      <span class="tile blue"><mat-icon>show_chart</mat-icon></span>
+      <div class="kpi-value">{{ data()?.reportsThisWeek ?? 0 }}</div>
+      <div class="kpi-label">Seguimientos esta semana</div>
+      <div class="kpi-hint">{{ data()?.totalReports ?? 0 }} en total</div>
     </a>
 
-    <a routerLink="/trainer/reports" class="kpi-card kpi-lime">
-      <div class="kpi-icon"><mat-icon>show_chart</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ data()?.reportsThisWeek ?? 0 }}</div>
-        <div class="kpi-label">Reportes esta semana</div>
-        <div class="kpi-trend">{{ data()?.totalReports ?? 0 }} en total</div>
-      </div>
+    <a routerLink="/trainer/workouts" class="kpi">
+      <span class="tile green"><mat-icon>fitness_center</mat-icon></span>
+      <div class="kpi-value">{{ data()?.clientsWithoutWorkout ?? 0 }}</div>
+      <div class="kpi-label">Sin rutina activa</div>
+      @if ((data()?.clientsWithoutWorkout ?? 0) === 0) {
+        <div class="kpi-hint ok">Todos asignados</div>
+      } @else {
+        <div class="kpi-hint warn">Asignar rutina</div>
+      }
     </a>
 
-    <a routerLink="/trainer/workouts" class="kpi-card kpi-teal">
-      <div class="kpi-icon"><mat-icon>fitness_center</mat-icon></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ data()?.clientsWithoutWorkout ?? 0 }}</div>
-        <div class="kpi-label">Sin rutina activa</div>
-        @if ((data()?.clientsWithoutWorkout ?? 0) === 0) {
-          <div class="kpi-trend ok">Todos asignados</div>
-        } @else {
-          <div class="kpi-trend orange">Asignar rutina</div>
-        }
-      </div>
+    <a routerLink="/trainer/messages" class="kpi">
+      <span class="tile blue"><mat-icon>chat_bubble_outline</mat-icon></span>
+      <div class="kpi-value">{{ data()?.unreadMessages ?? 0 }}</div>
+      <div class="kpi-label">Mensajes sin leer</div>
+      @if ((data()?.unreadMessages ?? 0) === 0) {
+        <div class="kpi-hint ok">Bandeja al día</div>
+      } @else {
+        <div class="kpi-hint warn">Responder</div>
+      }
     </a>
 
+    <a routerLink="/trainer/tasks" class="kpi">
+      <span class="tile orange"><mat-icon>event_available</mat-icon></span>
+      <div class="kpi-value">{{ data()?.tasksDue ?? 0 }}</div>
+      <div class="kpi-label">Tareas para hoy</div>
+      @if ((data()?.tasksDue ?? 0) === 0) {
+        <div class="kpi-hint ok">Nada pendiente</div>
+      } @else {
+        <div class="kpi-hint warn">Vencidas o para hoy</div>
+      }
+    </a>
+
+    <a routerLink="/trainer/analyses" class="kpi">
+      <span class="tile violet"><mat-icon>biotech</mat-icon></span>
+      <div class="kpi-value">{{ data()?.pendingAnalyses ?? 0 }}</div>
+      <div class="kpi-label">Analíticas por revisar</div>
+      @if ((data()?.pendingAnalyses ?? 0) === 0) {
+        <div class="kpi-hint ok">Todas revisadas</div>
+      } @else {
+        <div class="kpi-hint warn">Pendientes</div>
+      }
+    </a>
+
+    <a routerLink="/trainer/payments" class="kpi">
+      <span class="tile green"><mat-icon>payments</mat-icon></span>
+      <div class="kpi-value">{{ data()?.pendingPaymentsCount ?? 0 }}</div>
+      <div class="kpi-label">Cobros pendientes</div>
+      @if ((data()?.overduePaymentsCount ?? 0) > 0) {
+        <div class="kpi-hint warn">{{ data()?.overduePaymentsCount }} vencido{{ (data()?.overduePaymentsCount ?? 0) > 1 ? 's' : '' }}</div>
+      } @else {
+        <div class="kpi-hint ok">Sin vencidos</div>
+      }
+    </a>
   </div>
 
-  <!-- ── Layout principal 2 columnas ── -->
+  <!-- ── Main layout ── -->
   <div class="dash-body">
-
-    <!-- COLUMNA IZQUIERDA -->
-    <div class="dash-left">
+    <div class="dash-col">
 
       <!-- Revisiones pendientes -->
-      <div class="panel action-panel">
+      <section class="panel">
         <div class="panel-head">
-          <div class="ph-left">
-            <span class="ph-emoji">⏰</span>
-            <h2>Revisiones pendientes</h2>
-          </div>
-          <span class="badge-pill red">{{ overdueReviews().length }} pendiente{{ overdueReviews().length !== 1 ? 's' : '' }}</span>
+          <div class="ph-title"><span class="tile sm red"><mat-icon>schedule</mat-icon></span><h2>Revisiones pendientes</h2></div>
+          <span class="badge" [class.red]="overdueReviews().length > 0" [class.green]="overdueReviews().length === 0">
+            {{ overdueReviews().length }} pendiente{{ overdueReviews().length !== 1 ? 's' : '' }}
+          </span>
         </div>
-        <div class="panel-body p0">
+        <div class="list">
           @if (overdueReviews().length === 0) {
-            <div class="empty-sm ok"><mat-icon>check_circle</mat-icon><span>Todos al día 🎉</span></div>
+            <div class="empty-sm"><mat-icon>check_circle</mat-icon><span>Todos al día</span></div>
           } @else {
             @for (r of overdueReviews(); track r.clientId) {
-              <div class="action-row" (click)="goToClient(r.clientId)">
-                <span class="ar-avatar orange">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
-                <div class="ar-info">
-                  <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
-                  <div class="ar-sub">{{ r.planName }} · Revisión prevista {{ r.nextReviewDate | date:'d MMM' }}</div>
+              <div class="row" (click)="goToClient(r.clientId)">
+                <span class="avatar">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
+                <div class="row-info">
+                  <div class="row-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
+                  <div class="row-sub">{{ r.planName }} · Revisión prevista {{ r.nextReviewDate | date:'d MMM' }}</div>
                 </div>
-                <span class="pill pill-red" title="Días desde el último reporte">{{ r.daysSinceLastReview }}d sin reporte</span>
-                <button class="btn btn-primary btn-xs" (click)="$event.stopPropagation(); goToClient(r.clientId)">Revisar</button>
+                <span class="badge red" title="Días desde la última revisión">{{ r.daysSinceLastReview }}d sin revisión</span>
+                <button class="btn btn-primary btn-sm" (click)="$event.stopPropagation(); goToClient(r.clientId)">Revisar</button>
               </div>
             }
           }
         </div>
-      </div>
+      </section>
 
-      <!-- Sin rutina + Reportes sin feedback (lado a lado) -->
-      <div class="panels-row">
-        <div class="panel panel-half">
+      <div class="two-up">
+        <!-- Sin rutina -->
+        <section class="panel">
           <div class="panel-head">
-            <div class="ph-left"><span class="ph-emoji">🏋️</span><h2>Sin rutina activa</h2></div>
-            <span class="badge-pill violet">{{ data()?.clientsWithoutWorkout ?? 0 }}</span>
+            <div class="ph-title"><span class="tile sm violet"><mat-icon>fitness_center</mat-icon></span><h2>Sin rutina activa</h2></div>
+            <span class="badge gray">{{ data()?.clientsWithoutWorkout ?? 0 }}</span>
           </div>
-          <div class="panel-body p0">
+          <div class="list">
             @if ((data()?.clientsWithoutWorkouts ?? []).length === 0) {
-              <div class="empty-sm ok"><mat-icon>check_circle</mat-icon><span>Todos tienen rutina asignada 💪</span></div>
+              <div class="empty-sm"><mat-icon>check_circle</mat-icon><span>Todos tienen rutina asignada</span></div>
             } @else {
               @for (c of data()!.clientsWithoutWorkouts; track c.clientId) {
-                <div class="action-row" (click)="goToClient(c.clientId)">
-                  <span class="ar-avatar violet">{{ initials(c.clientFirstName, c.clientLastName) }}</span>
-                  <div class="ar-info">
-                    <div class="ar-name">{{ c.clientFirstName }} {{ c.clientLastName }}</div>
-                    <div class="ar-sub">{{ c.planName }}</div>
+                <div class="row" (click)="goToClient(c.clientId)">
+                  <span class="avatar">{{ initials(c.clientFirstName, c.clientLastName) }}</span>
+                  <div class="row-info">
+                    <div class="row-name">{{ c.clientFirstName }} {{ c.clientLastName }}</div>
+                    <div class="row-sub">{{ c.planName }}</div>
                   </div>
-                  <button class="btn btn-primary btn-xs" (click)="$event.stopPropagation(); goToClient(c.clientId)">Asignar</button>
+                  <button class="btn btn-outline btn-sm" (click)="$event.stopPropagation(); goToClient(c.clientId)">Asignar</button>
                 </div>
               }
             }
           </div>
-        </div>
-        <div class="panel panel-half">
+        </section>
+
+        <!-- Seguimientos sin feedback -->
+        <section class="panel">
           <div class="panel-head">
-            <div class="ph-left"><span class="ph-emoji">📄</span><h2>Reportes sin feedback</h2></div>
-            <span class="badge-pill yellow">{{ data()?.reportsPendingFeedback ?? 0 }}</span>
+            <div class="ph-title"><span class="tile sm blue"><mat-icon>description</mat-icon></span><h2>Seguimientos sin feedback</h2></div>
+            <span class="badge gray">{{ data()?.reportsPendingFeedback ?? 0 }}</span>
           </div>
-          <div class="panel-body p0">
+          <div class="list">
             @if ((data()?.reportsWithoutFeedback ?? []).length === 0) {
-              <div class="empty-sm ok"><mat-icon>check_circle</mat-icon><span>¡Genial! Todos tienen feedback 👏</span></div>
+              <div class="empty-sm"><mat-icon>check_circle</mat-icon><span>Todos tienen feedback</span></div>
             } @else {
               @for (r of data()!.reportsWithoutFeedback; track r.reportId) {
-                <div class="action-row" (click)="goToClient(r.clientId)">
-                  <span class="ar-avatar blue">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
-                  <div class="ar-info">
-                    <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
-                    <div class="ar-sub">{{ r.reportDate | date:'dd MMM' }} · {{ r.weight }} kg</div>
+                <div class="row" (click)="goToClient(r.clientId)">
+                  <span class="avatar">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
+                  <div class="row-info">
+                    <div class="row-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
+                    <div class="row-sub">{{ r.reportDate | date:'dd MMM' }} · {{ r.weight }} kg</div>
                   </div>
-                  <button class="btn btn-secondary btn-xs" (click)="$event.stopPropagation(); goToClient(r.clientId)">Responder</button>
+                  <button class="btn btn-outline btn-sm" (click)="$event.stopPropagation(); goToClient(r.clientId)">Responder</button>
                 </div>
               }
             }
           </div>
-        </div>
+        </section>
       </div>
 
       <!-- Próximos cobros -->
-      <div class="panel action-panel">
+      <section class="panel">
         <div class="panel-head">
-          <div class="ph-left"><span class="ph-emoji">💰</span><h2>Próximos cobros <span class="ph-sub">(30 días)</span></h2></div>
-          <span class="badge-pill green">{{ data()?.upcomingRenewalsCount ?? 0 }} pendiente{{ (data()?.upcomingRenewalsCount ?? 0) !== 1 ? 's' : '' }}</span>
+          <div class="ph-title"><span class="tile sm green"><mat-icon>euro_symbol</mat-icon></span><h2>Próximos cobros <small>30 días</small></h2></div>
+          <span class="badge green">{{ data()?.upcomingRenewalsCount ?? 0 }} pendiente{{ (data()?.upcomingRenewalsCount ?? 0) !== 1 ? 's' : '' }}</span>
         </div>
-        <div class="panel-body p0">
+        <div class="list">
           @if ((data()?.upcomingRenewals ?? []).length === 0) {
-            <div class="empty-sm ok"><mat-icon>payments</mat-icon><span>Sin cobros próximos</span></div>
+            <div class="empty-sm"><mat-icon>payments</mat-icon><span>Sin cobros próximos</span></div>
           } @else {
             @for (r of data()!.upcomingRenewals; track r.clientId) {
-              <div class="action-row" (click)="goToClient(r.clientId)">
-                <span class="ar-avatar green">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
-                <div class="ar-info">
-                  <div class="ar-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
-                  <div class="ar-sub">{{ r.planName }} · {{ r.renewalDate | date:'d MMM yyyy' }}</div>
+              <div class="row" (click)="goToClient(r.clientId)">
+                <span class="avatar">{{ initials(r.clientFirstName, r.clientLastName) }}</span>
+                <div class="row-info">
+                  <div class="row-name">{{ r.clientFirstName }} {{ r.clientLastName }}</div>
+                  <div class="row-sub">{{ r.planName }} · {{ r.renewalDate | date:'d MMM yyyy' }}</div>
                 </div>
-                <span class="ar-amount">{{ r.amount | number:'1.0-0' }}€</span>
-                @if (r.daysUntilRenewal <= 3) {
-                  <span class="pill pill-red">{{ r.daysUntilRenewal }}d</span>
-                } @else {
-                  <span class="pill pill-gray">{{ r.daysUntilRenewal }}d</span>
-                }
+                <span class="amount">{{ r.amount | number:'1.0-0' }} €</span>
+                <span class="badge" [class.red]="r.daysUntilRenewal <= 3" [class.gray]="r.daysUntilRenewal > 3">{{ r.daysUntilRenewal }}d</span>
               </div>
             }
           }
         </div>
-      </div>
+      </section>
 
       <!-- Actividad reciente -->
-      <div class="panel activity-panel">
+      <section class="panel">
         <div class="panel-head">
-          <div class="ph-left"><span class="ph-emoji">⚡</span><h2>Actividad reciente</h2></div>
+          <div class="ph-title"><span class="tile sm orange"><mat-icon>bolt</mat-icon></span><h2>Actividad reciente</h2></div>
+          @if ((data()?.recentActivity ?? []).length > 0) {
+            <a routerLink="/trainer/reports" class="link">Ver todo</a>
+          }
         </div>
-        <div class="panel-body p0">
+        <div class="list">
           @if ((data()?.recentActivity ?? []).length === 0) {
             <div class="empty-sm"><mat-icon>timeline</mat-icon><span>Sin actividad reciente</span></div>
           } @else {
-            <div class="timeline">
-              @for (a of data()!.recentActivity; track a.occurredAt) {
-                <div class="tl-item" (click)="goToClient(a.clientId)">
-                  <div class="tl-dot" [class]="activityColor(a.type)"><mat-icon>{{ activityIcon(a.type) }}</mat-icon></div>
-                  <div class="tl-content">
-                    <div class="tl-name">{{ a.description }}</div>
-                    <div class="tl-desc">{{ a.clientFirstName }} {{ a.clientLastName }}</div>
-                  </div>
-                  <div class="tl-time">{{ timeAgo(a.occurredAt) }}</div>
+            @for (a of data()!.recentActivity; track $index) {
+              <div class="row" (click)="goToClient(a.clientId)">
+                <span class="tile sm" [class]="activityColor(a.type)"><mat-icon>{{ activityIcon(a.type) }}</mat-icon></span>
+                <div class="row-info">
+                  <div class="row-name">{{ a.description }}</div>
+                  <div class="row-sub">{{ a.clientFirstName }} {{ a.clientLastName }}</div>
                 </div>
-              }
-            </div>
-            <div class="activity-footer"><a routerLink="/trainer/reports" class="activity-link">Ver toda la actividad →</a></div>
+                <span class="time">{{ timeAgo(a.occurredAt) }}</span>
+              </div>
+            }
           }
         </div>
-      </div>
-
+      </section>
     </div>
 
-    <!-- COLUMNA DERECHA -->
-    <div class="dash-right">
-
-      <!-- Calendario -->
-      <div class="panel cal-panel">
+    <!-- Calendario -->
+    <div class="dash-col">
+      <section class="panel cal-panel">
         <div class="panel-head">
-          <div class="ph-left">
-            <span class="ph-emoji">📅</span>
-            <h2>Calendario — cobros y revisiones</h2>
-          </div>
+          <div class="ph-title"><span class="tile sm orange"><mat-icon>calendar_month</mat-icon></span><h2>Cobros y revisiones</h2></div>
           <div class="cal-nav">
-            <button class="cal-nav-btn" (click)="prevMonth()"><mat-icon>chevron_left</mat-icon></button>
-            <button class="cal-today-btn" (click)="resetMonth()">Hoy</button>
+            <button class="cal-btn" (click)="prevMonth()" title="Mes anterior"><mat-icon>chevron_left</mat-icon></button>
+            <button class="cal-today" (click)="resetMonth()">Hoy</button>
+            <button class="cal-btn" (click)="nextMonth()" title="Mes siguiente"><mat-icon>chevron_right</mat-icon></button>
           </div>
         </div>
-        <div class="cal-month-header">{{ calendarTitle() }}</div>
-        <div class="panel-body cal-body">
+        <div class="cal-body">
+          <div class="cal-title">{{ calendarTitle() }}</div>
           <div class="cal-grid">
-            @for (dow of ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM']; track dow) {
+            @for (dow of ['L','M','X','J','V','S','D']; track $index) {
               <div class="cal-dow">{{ dow }}</div>
             }
             @for (day of calendarDays(); track day.date.toISOString()) {
@@ -271,31 +322,29 @@
                    [class.other-month]="!day.isCurrentMonth"
                    [class.today]="day.isToday"
                    [class.has-events]="day.payments.length > 0 || day.reviews.length > 0">
-                <span class="cal-day-num">{{ day.dayNum }}</span>
+                <span class="cal-num">{{ day.dayNum }}</span>
                 @if (day.payments.length > 0) {
-                  <div class="cal-event payments-event" [title]="paymentTitle(day)">
-                    💰 Cobro · {{ day.payments[0].clientFirstName }}
-                    @if (day.payments.length > 1) { <span class="cal-more">+{{ day.payments.length - 1 }}</span> }
+                  <div class="cal-ev pay" [title]="paymentTitle(day)">
+                    <i></i><span>{{ day.payments[0].clientFirstName }}</span>
+                    @if (day.payments.length > 1) { <b>+{{ day.payments.length - 1 }}</b> }
                   </div>
                 }
                 @if (day.reviews.length > 0) {
-                  <div class="cal-event reviews-event" [title]="reviewTitle(day)">
-                    🔔 Revisión · {{ day.reviews[0].clientFirstName }}
-                    @if (day.reviews.length > 1) { <span class="cal-more">+{{ day.reviews.length - 1 }}</span> }
+                  <div class="cal-ev rev" [title]="reviewTitle(day)">
+                    <i></i><span>{{ day.reviews[0].clientFirstName }}</span>
+                    @if (day.reviews.length > 1) { <b>+{{ day.reviews.length - 1 }}</b> }
                   </div>
                 }
               </div>
             }
           </div>
           <div class="cal-legend">
-            <span class="cal-legend-item payments">● Cobro</span>
-            <span class="cal-legend-item reviews">● Revisión</span>
+            <span><i class="pay"></i> Cobro</span>
+            <span><i class="rev"></i> Revisión</span>
           </div>
         </div>
-      </div>
-
+      </section>
     </div>
-
   </div>
 
   }

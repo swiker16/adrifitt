@@ -37,8 +37,25 @@ public class Plan {
     @Column(length = 1000)
     private String description;
 
+    /** Price charged every month (MONTHLY billing). */
     @Column(name = "monthly_price", nullable = false, precision = 8, scale = 2)
     private BigDecimal monthlyPrice;
+
+    /** Price charged every 3 months; null = not offered. */
+    @Column(name = "quarterly_price", precision = 8, scale = 2)
+    private BigDecimal quarterlyPrice;
+
+    /** Price charged every 6 months; null = not offered. */
+    @Column(name = "semiannual_price", precision = 8, scale = 2)
+    private BigDecimal semiannualPrice;
+
+    /** Price charged every 12 months; null = not offered. */
+    @Column(name = "annual_price", precision = 8, scale = 2)
+    private BigDecimal annualPrice;
+
+    /** What the plan includes, one item per line (shown on the landing and in the app). */
+    @Column(columnDefinition = "TEXT")
+    private String features;
 
     @Column(name = "review_frequency_days", nullable = false)
     private Integer reviewFrequencyDays;
@@ -62,4 +79,21 @@ public class Plan {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    /** Price for one billing period, or null if the plan does not offer that period. */
+    public BigDecimal priceFor(BillingPeriod period) {
+        return switch (period) {
+            case MONTHLY -> monthlyPrice;
+            case QUARTERLY -> quarterlyPrice;
+            case SEMIANNUAL -> semiannualPrice;
+            case ANNUAL -> annualPrice;
+        };
+    }
+
+    public java.util.List<String> featureList() {
+        if (features == null || features.isBlank()) {
+            return java.util.List.of();
+        }
+        return features.lines().map(String::trim).filter(l -> !l.isEmpty()).toList();
+    }
 }

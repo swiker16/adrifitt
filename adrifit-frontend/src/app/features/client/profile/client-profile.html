@@ -1,0 +1,99 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Perfil</div>
+    <div class="subtitle">Tus datos y la seguridad de tu cuenta</div>
+  </div>
+</div>
+
+<div class="content">
+  @if (mustChange()) {
+    <div class="alert warn temp-alert" role="alert">
+      <mat-icon>key</mat-icon>
+      <div>
+        <strong>Estás usando una contraseña temporal. Cámbiala para continuar.</strong>
+        <div>Hasta que la cambies no podrás acceder al resto de tu área privada.</div>
+      </div>
+    </div>
+  }
+
+  <div class="grid">
+    <!-- Personal data -->
+    <section class="panel">
+      <div class="panel-head"><h2>Datos personales</h2></div>
+      @if (loading()) {
+        <div class="sk-profile" aria-busy="true" aria-label="Cargando"><div class="skeleton sk-avatar"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div></div>
+      } @else {
+        <div class="profile-top">
+          <span class="avatar">{{ initials() || '?' }}</span>
+          <div>
+            <div class="p-name">{{ fullName() || '—' }}</div>
+            <div class="p-sub">{{ client()?.username || me()?.username }}</div>
+          </div>
+        </div>
+        @if (error()) {
+          <div class="alert error data-err"><mat-icon>error</mat-icon><span>{{ error() }}</span></div>
+        }
+        <dl class="data">
+          <div><dt><mat-icon>badge</mat-icon> Nombre</dt><dd>{{ fullName() || '—' }}</dd></div>
+          <div><dt><mat-icon>alternate_email</mat-icon> Email</dt><dd>{{ client()?.email || me()?.email || '—' }}</dd></div>
+          <div><dt><mat-icon>person</mat-icon> Usuario</dt><dd>{{ client()?.username || me()?.username || '—' }}</dd></div>
+          <div><dt><mat-icon>phone</mat-icon> Teléfono</dt><dd>{{ client()?.phone || '—' }}</dd></div>
+          <div><dt><mat-icon>cake</mat-icon> Fecha de nacimiento</dt><dd>{{ client()?.birthDate ? (client()!.birthDate | date: 'dd/MM/yyyy') : '—' }}</dd></div>
+          <div><dt><mat-icon>flag</mat-icon> Objetivo</dt><dd>{{ client()?.objective || '—' }}</dd></div>
+        </dl>
+        <p class="ro-hint"><mat-icon>info</mat-icon> Si algún dato no es correcto, pide a tu entrenador que lo actualice.</p>
+      }
+    </section>
+
+    <!-- Change password -->
+    <section class="panel" [class.highlight]="mustChange()">
+      <div class="panel-head"><h2>Cambiar contraseña</h2></div>
+      <form class="pw-form" [formGroup]="form" (ngSubmit)="submit()">
+        <!-- Hidden username helps password managers -->
+        <input type="text" name="username" autocomplete="username" [value]="me()?.username ?? ''" hidden readonly />
+        <div class="field">
+          <label for="pw-current">{{ mustChange() ? 'Contraseña temporal' : 'Contraseña actual' }}</label>
+          <input id="pw-current" [type]="showPw() ? 'text' : 'password'" formControlName="currentPassword" autocomplete="current-password" />
+          @if (form.controls.currentPassword.touched && form.controls.currentPassword.invalid) {
+            <span class="err">Introduce tu contraseña actual.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="pw-new">Nueva contraseña</label>
+          <input id="pw-new" [type]="showPw() ? 'text' : 'password'" formControlName="newPassword" autocomplete="new-password" />
+          @if (form.controls.newPassword.touched && form.controls.newPassword.invalid) {
+            <span class="err">Mínimo 8 caracteres.</span>
+          } @else {
+            <span class="hint">Al menos 8 caracteres.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="pw-repeat">Repetir nueva contraseña</label>
+          <input id="pw-repeat" [type]="showPw() ? 'text' : 'password'" formControlName="repeatPassword" autocomplete="new-password" />
+          @if (form.controls.repeatPassword.touched && form.hasError('mismatch')) {
+            <span class="err">Las contraseñas no coinciden.</span>
+          } @else if (form.controls.repeatPassword.touched && form.controls.repeatPassword.invalid) {
+            <span class="err">Repite la nueva contraseña.</span>
+          }
+        </div>
+        <label class="show-pw">
+          <input type="checkbox" [checked]="showPw()" (change)="showPw.set(!showPw())" /> Mostrar contraseñas
+        </label>
+
+        @if (pwError()) {
+          <div class="alert error"><mat-icon>error</mat-icon><span>{{ pwError() }}</span></div>
+        }
+
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          <mat-icon>{{ saving() ? 'hourglass_empty' : 'lock_reset' }}</mat-icon>
+          {{ saving() ? 'Guardando...' : 'Cambiar contraseña' }}
+        </button>
+      </form>
+    </section>
+  </div>
+
+  @if (!mustChange()) {
+    <h2 class="section-title">Acceso y notificaciones</h2>
+    <app-device-settings class="device-settings" />
+  }
+</div>

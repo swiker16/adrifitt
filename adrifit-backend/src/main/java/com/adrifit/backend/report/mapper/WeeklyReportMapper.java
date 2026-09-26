@@ -8,6 +8,11 @@ import org.springframework.stereotype.Component;
 public class WeeklyReportMapper {
 
     public WeeklyReportResponse toResponse(WeeklyReport report) {
+        return toResponse(report, java.util.List.of());
+    }
+
+    public WeeklyReportResponse toResponse(WeeklyReport report,
+                                           java.util.List<com.adrifit.backend.photo.dto.PhotoDtos.PhotoResponse> photos) {
         return new WeeklyReportResponse(
                 report.getId(),
                 report.getClient().getId(),
@@ -24,7 +29,8 @@ public class WeeklyReportMapper {
                 report.getStatus(),
                 report.getReviewedAt(),
                 report.getCreatedAt(),
-                report.getUpdatedAt()
+                report.getUpdatedAt(),
+                photos
         );
     }
 }

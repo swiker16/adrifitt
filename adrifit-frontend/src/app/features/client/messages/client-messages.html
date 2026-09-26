@@ -5,33 +5,84 @@
   </div>
 </div>
 
-<div class="content">
-  <div class="note">
-    <mat-icon>info</mat-icon>
-    Vista con datos de ejemplo. La mensajería en tiempo real llegará en una fase posterior.
-  </div>
-
-  <div class="chat">
-    <div class="chat-head">
-      <span class="avatar">CA</span>
-      <div>
-        <div class="name">Coach Adri</div>
-        <div class="status">En línea</div>
+<div class="content chat-content">
+  @if (loading()) {
+    <div class="chat" aria-busy="true" aria-label="Cargando conversación">
+      <div class="chat-body sk-body">
+        <div class="skeleton sk-b"></div><div class="skeleton sk-b mine"></div><div class="skeleton sk-b wide"></div><div class="skeleton sk-b mine"></div>
       </div>
     </div>
-    <div class="chat-body">
-      @for (m of messages; track m.text) {
-        <div class="bubble-row" [class.mine]="m.mine">
-          <div class="bubble">
-            {{ m.text }}
-            <span class="time">{{ m.time }}</span>
-          </div>
+  } @else if (error()) {
+    <div class="alert error">
+      <mat-icon>error</mat-icon>
+      <div class="grow">{{ error() }}</div>
+      <button class="btn btn-sm btn-outline" (click)="load(true)">Reintentar</button>
+    </div>
+  } @else if (!enabled()) {
+    <div class="locked">
+      <div class="locked-icon"><mat-icon>lock</mat-icon></div>
+      <h2>Chat no disponible en tu plan</h2>
+      <p>
+        Tu plan <strong>{{ conversation()?.planName || 'actual' }}</strong> no incluye chat con el entrenador.
+        Mejora tu plan para hablar directamente con tu coach y resolver dudas al momento.
+      </p>
+      <a routerLink="/client/subscription" class="btn btn-primary"><mat-icon>upgrade</mat-icon> Mejorar mi plan</a>
+    </div>
+  } @else {
+    <div class="chat">
+      <div class="chat-head">
+        <span class="avatar"><mat-icon>sports</mat-icon><i class="online"></i></span>
+        <div>
+          <div class="name">Tu entrenador</div>
+          <div class="status">Plan {{ conversation()?.planName }} · se actualiza cada 10 s</div>
         </div>
-      }
+      </div>
+
+      <div class="chat-body" #chatBody>
+        @if (groups().length === 0) {
+          <div class="chat-empty">
+            <mat-icon>forum</mat-icon>
+            <p>Aún no hay mensajes. ¡Escribe a tu entrenador para empezar!</p>
+          </div>
+        }
+        @for (g of groups(); track g.key) {
+          <div class="day-sep">
+            <span>
+              @if (isToday(g.date)) { Hoy } @else if (isYesterday(g.date)) { Ayer } @else { {{ g.date | date: "EEEE d 'de' MMMM" }} }
+            </span>
+          </div>
+          @for (m of g.messages; track m.id) {
+            <div class="bubble-row" [class.mine]="m.senderRole === 'CLIENT'">
+              <div class="bubble">
+                <span class="text">{{ m.content }}</span>
+                <span class="time">
+                  {{ m.createdAt | date: 'HH:mm' }}
+                  @if (m.senderRole === 'CLIENT') {
+                    <mat-icon class="tick" [title]="m.readAt ? 'Leído' : 'Enviado'">{{ m.readAt ? 'done_all' : 'done' }}</mat-icon>
+                  }
+                </span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <form class="chat-input" (ngSubmit)="send()">
+        <textarea
+          rows="1"
+          name="draft"
+          placeholder="Escribe un mensaje..."
+          aria-label="Mensaje"
+          maxlength="2000"
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keydown)="onKeydown($event)"
+          enterkeyhint="send"
+        ></textarea>
+        <button type="submit" class="send" [disabled]="sending() || !draft().trim()" aria-label="Enviar">
+          <mat-icon>{{ sending() ? 'hourglass_empty' : 'send' }}</mat-icon>
+        </button>
+      </form>
     </div>
-    <div class="chat-input">
-      <input type="text" placeholder="Escribe un mensaje..." disabled />
-      <button class="send" disabled><mat-icon>send</mat-icon></button>
-    </div>
-  </div>
+  }
 </div>

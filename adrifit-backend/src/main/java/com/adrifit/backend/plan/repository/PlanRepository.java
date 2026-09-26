@@ -15,4 +15,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     @Query("SELECT COUNT(s) FROM com.adrifit.backend.subscription.domain.Subscription s WHERE s.plan.id = :planId AND s.active = true")
     long countActiveSubscriptionsByPlanId(Long planId);
+
+    @Query("SELECT COUNT(s) FROM com.adrifit.backend.subscription.domain.Subscription s WHERE s.plan.id = :planId")
+    long countSubscriptionsByPlanId(Long planId);
 }

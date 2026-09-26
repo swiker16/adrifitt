@@ -1,11 +1,35 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
+import { passwordChangeGuard } from './core/guards/password-change-guard';
 
 export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/landing/landing').then((m) => m.Landing),
+  },
+  {
+    // Public download page: the link to share with clients.
+    path: 'app',
+    title: 'Descarga AdriFitt',
+    loadComponent: () => import('./features/install/install-page').then((m) => m.InstallPage),
+  },
+  { path: 'descargar', pathMatch: 'full', redirectTo: 'app' },
+  // New client intake (public): request → questionnaire → account activation.
+  {
+    path: 'empezar',
+    title: 'Empieza con AdriFitt',
+    loadComponent: () => import('./features/public/apply-page').then((m) => m.ApplyPage),
+  },
+  {
+    path: 'cuestionario/:token',
+    title: 'Cuestionario · AdriFitt',
+    loadComponent: () => import('./features/public/questionnaire-page').then((m) => m.QuestionnairePage),
+  },
+  {
+    path: 'activar/:token',
+    title: 'Activa tu cuenta · AdriFitt',
+    loadComponent: () => import('./features/public/activate-page').then((m) => m.ActivatePage),
   },
   {
     path: 'login',
@@ -24,6 +48,11 @@ export const routes: Routes = [
           import('./features/trainer/dashboard/trainer-dashboard').then((m) => m.TrainerDashboard),
       },
       {
+        path: 'business',
+        loadComponent: () =>
+          import('./features/trainer/business/trainer-business').then((m) => m.TrainerBusiness),
+      },
+      {
         path: 'clients',
         loadComponent: () =>
           import('./features/trainer/clients/clients-list').then((m) => m.ClientsList),
@@ -34,9 +63,54 @@ export const routes: Routes = [
           import('./features/trainer/clients/client-detail').then((m) => m.ClientDetail),
       },
       {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/trainer/messages/trainer-messages').then((m) => m.TrainerMessages),
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./features/trainer/reports/trainer-reports').then((m) => m.TrainerReports),
+      },
+      {
+        path: 'tasks',
+        loadComponent: () =>
+          import('./features/trainer/tasks/trainer-tasks').then((m) => m.TrainerTasks),
+      },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/trainer/payments/trainer-payments').then((m) => m.TrainerPayments),
+      },
+      {
+        path: 'emails',
+        loadComponent: () =>
+          import('./features/trainer/emails/trainer-emails').then((m) => m.TrainerEmails),
+      },
+      {
+        path: 'analyses',
+        loadComponent: () =>
+          import('./features/trainer/analyses/trainer-analyses').then((m) => m.TrainerAnalyses),
+      },
+      {
+        path: 'leads',
+        loadComponent: () =>
+          import('./features/trainer/leads/trainer-leads').then((m) => m.TrainerLeads),
+      },
+      {
+        path: 'videos',
+        loadComponent: () =>
+          import('./features/trainer/videos/trainer-videos').then((m) => m.TrainerVideos),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/trainer/settings/trainer-settings').then((m) => m.TrainerSettings),
+      },
+      {
+        path: 'testimonials',
+        loadComponent: () =>
+          import('./features/trainer/testimonials/trainer-testimonials').then((m) => m.TrainerTestimonials),
       },
       {
         path: 'plans',
@@ -100,6 +174,7 @@ export const routes: Routes = [
   {
     path: 'client',
     canActivate: [authGuard, roleGuard(['CLIENT'])],
+    canActivateChild: [passwordChangeGuard],
     loadComponent: () =>
       import('./layouts/client-layout/client-layout').then((m) => m.ClientLayout),
     children: [
@@ -110,19 +185,14 @@ export const routes: Routes = [
           import('./features/client/dashboard/client-dashboard').then((m) => m.ClientDashboard),
       },
       {
-        path: 'report',
+        path: 'workout',
         loadComponent: () =>
-          import('./features/client/report/client-report').then((m) => m.ClientReport),
+          import('./features/client/workout/client-workout').then((m) => m.ClientWorkoutView),
       },
       {
-        path: 'messages',
+        path: 'workout-log',
         loadComponent: () =>
-          import('./features/client/messages/client-messages').then((m) => m.ClientMessages),
-      },
-      {
-        path: 'analyses',
-        loadComponent: () =>
-          import('./features/client/analyses/client-analyses').then((m) => m.ClientAnalyses),
+          import('./features/client/workout-log/client-workout-log').then((m) => m.ClientWorkoutLog),
       },
       {
         path: 'diet',
@@ -130,9 +200,49 @@ export const routes: Routes = [
           import('./features/client/diet/client-diet').then((m) => m.ClientDietView),
       },
       {
-        path: 'workout',
+        path: 'report',
         loadComponent: () =>
-          import('./features/client/workout/client-workout').then((m) => m.ClientWorkoutView),
+          import('./features/client/report/client-report').then((m) => m.ClientReport),
+      },
+      {
+        path: 'progress',
+        loadComponent: () =>
+          import('./features/client/progress/client-progress').then((m) => m.ClientProgress),
+      },
+      {
+        path: 'photos',
+        loadComponent: () =>
+          import('./features/client/photos/client-photos').then((m) => m.ClientPhotos),
+      },
+      {
+        path: 'videos',
+        loadComponent: () =>
+          import('./features/client/videos/client-videos').then((m) => m.ClientVideos),
+      },
+      {
+        path: 'analyses',
+        loadComponent: () =>
+          import('./features/client/analyses/client-analyses').then((m) => m.ClientAnalyses),
+      },
+      {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/client/messages/client-messages').then((m) => m.ClientMessages),
+      },
+      {
+        path: 'subscription',
+        loadComponent: () =>
+          import('./features/client/subscription/client-subscription').then((m) => m.ClientSubscription),
+      },
+      {
+        path: 'testimonial',
+        loadComponent: () =>
+          import('./features/client/testimonial/client-testimonial').then((m) => m.ClientTestimonial),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/client/profile/client-profile').then((m) => m.ClientProfile),
       },
     ],
   },

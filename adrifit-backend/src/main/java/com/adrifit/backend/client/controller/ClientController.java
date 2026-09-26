@@ -4,12 +4,12 @@ import com.adrifit.backend.client.dto.ClientCreatedResponse;
 import com.adrifit.backend.client.dto.ClientResponse;
 import com.adrifit.backend.client.dto.CreateClientRequest;
 import com.adrifit.backend.client.dto.UpdateClientRequest;
+import com.adrifit.backend.client.service.ClientOnboardingService;
 import com.adrifit.backend.client.service.ClientService;
-import com.adrifit.backend.subscription.dto.AssignPlanRequest;
-import com.adrifit.backend.subscription.service.SubscriptionService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,23 +30,28 @@ import org.springframework.web.multipart.MultipartFile;
 public class ClientController {
 
     private final ClientService clientService;
-    private final SubscriptionService subscriptionService;
+    private final ClientOnboardingService onboardingService;
 
-    public ClientController(ClientService clientService, SubscriptionService subscriptionService) {
+    public ClientController(ClientService clientService, ClientOnboardingService onboardingService) {
         this.clientService = clientService;
-        this.subscriptionService = subscriptionService;
+        this.onboardingService = onboardingService;
     }
 
     @PostMapping
     public ResponseEntity<ClientCreatedResponse> create(@Valid @RequestBody CreateClientRequest request) {
-        ClientCreatedResponse created = clientService.create(request);
-        subscriptionService.assignPlan(created.client().id(), new AssignPlanRequest(request.planId()));
+        ClientCreatedResponse created = onboardingService.create(request);
         return ResponseEntity.created(URI.create("/api/clients/" + created.client().id())).body(created);
     }
 
     @GetMapping
     public ResponseEntity<List<ClientResponse>> findAll() {
         return ResponseEntity.ok(clientService.findAll());
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<ClientResponse> findMe() {
+        return ResponseEntity.ok(clientService.findMe());
     }
 
     @GetMapping("/{id}")
@@ -64,6 +69,11 @@ public class ClientController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         clientService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@PathVariable Long id) {
+        return ResponseEntity.ok(Map.of("temporaryPassword", onboardingService.resetPassword(id)));
     }
 
     @PostMapping(value = "/{id}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

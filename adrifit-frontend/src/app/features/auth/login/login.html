@@ -1,69 +1,119 @@
 <div class="auth">
-  <!-- Left brand panel -->
+  <!-- Brand panel (desktop) -->
   <aside class="brand-panel">
     <a routerLink="/" class="brand">
-      <span class="logo-badge"><mat-icon>fitness_center</mat-icon></span>
-      Adri<span class="dot">Fit</span>
+      <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
+      <span>Adri<span class="dot">Fitt</span></span>
     </a>
+
     <div class="brand-copy">
-      <h1>Bienvenido de nuevo a tu mejor versión.</h1>
-      <p>Accede a tu área privada para ver tu plan, enviar tu reporte semanal y seguir tu evolución.</p>
+      <span class="over">Tu área privada</span>
+      <h1>Bienvenido de nuevo a tu <span class="accent">mejor versión.</span></h1>
+      <ul class="points">
+        <li>
+          <span class="point-icon"><mat-icon>fitness_center</mat-icon></span>
+          <div><strong>Registra cada entreno</strong><span>Series, kilos y RIR desde el móvil.</span></div>
+        </li>
+        <li>
+          <span class="point-icon"><mat-icon>event_repeat</mat-icon></span>
+          <div><strong>Revisiones con feedback</strong><span>Tu coach ajusta el plan cada semana.</span></div>
+        </li>
+        <li>
+          <span class="point-icon"><mat-icon>trending_up</mat-icon></span>
+          <div><strong>Mide tu progreso</strong><span>Peso, medidas y fotos siempre contigo.</span></div>
+        </li>
+      </ul>
     </div>
-    <ul class="brand-points">
-      <li><mat-icon>check_circle</mat-icon> Entrenamiento y nutrición a medida</li>
-      <li><mat-icon>check_circle</mat-icon> Seguimiento semanal con feedback</li>
-      <li><mat-icon>check_circle</mat-icon> Tu progreso, siempre contigo</li>
-    </ul>
+
+    @if (quote(); as q) {
+      <figure class="quote">
+        <div class="stars" [attr.aria-label]="q.rating + ' de 5 estrellas'">
+          @for (s of [1, 2, 3, 4, 5]; track s) {
+            <mat-icon [class.off]="s > q.rating">star</mat-icon>
+          }
+        </div>
+        <blockquote>“{{ q.content }}”</blockquote>
+        <figcaption>{{ q.authorName }}@if (q.planName) { <span> · plan {{ q.planName }}</span> }</figcaption>
+      </figure>
+    } @else {
+      <p class="foot">© 2026 AdriFitt · Entrenamiento personal</p>
+    }
   </aside>
 
-  <!-- Right form panel -->
+  <!-- Form -->
   <main class="form-panel">
+    <app-theme-toggle variant="icon" class="theme-corner" />
+    <div class="mobile-head">
+      <a routerLink="/" class="brand">
+        <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
+        <span>Adri<span class="dot">Fitt</span></span>
+      </a>
+    </div>
+
     <div class="form-card">
       <a routerLink="/" class="back"><mat-icon>arrow_back</mat-icon> Volver al inicio</a>
       <h2>Iniciar sesión</h2>
       <p class="subtitle">Introduce tus credenciales para acceder.</p>
 
       @if (error()) {
-        <div class="alert"><mat-icon>error</mat-icon> {{ error() }}</div>
+        <div class="alert error" role="alert"><mat-icon>error</mat-icon> {{ error() }}</div>
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <label class="field">
-          <span>Usuario</span>
+        <div class="field">
+          <label for="login-username">Usuario</label>
           <div class="input-wrap">
-            <mat-icon>person</mat-icon>
-            <input type="text" formControlName="username" placeholder="trainer" autocomplete="username" />
+            <mat-icon aria-hidden="true">person</mat-icon>
+            <input id="login-username" type="text" formControlName="username" placeholder="Tu usuario" autocomplete="username webauthn" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" />
           </div>
           @if (form.controls.username.touched && form.controls.username.invalid) {
             <small class="err">El usuario es obligatorio.</small>
           }
-        </label>
+        </div>
 
-        <label class="field">
-          <span>Contraseña</span>
-          <div class="input-wrap">
-            <mat-icon>lock</mat-icon>
+        <div class="field">
+          <label for="login-password">Contraseña</label>
+          <div class="input-wrap with-toggle">
+            <mat-icon aria-hidden="true">lock</mat-icon>
             <input
+              id="login-password"
               [type]="showPassword() ? 'text' : 'password'"
               formControlName="password"
               placeholder="••••••••"
               autocomplete="current-password"
+              enterkeyhint="go"
             />
-            <button type="button" class="toggle" (click)="togglePassword()">
+            <button type="button" class="toggle" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-pressed]="showPassword()">
               <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
           </div>
           @if (form.controls.password.touched && form.controls.password.invalid) {
             <small class="err">La contraseña es obligatoria.</small>
           }
-        </label>
+        </div>
 
-        <button type="submit" class="btn btn-primary btn-block" [disabled]="loading()">
-          @if (loading()) { Accediendo... } @else { Acceder }
+        <button type="submit" class="btn btn-primary btn-lg btn-block" [disabled]="loading()">
+          @if (loading()) { <span class="spinner" aria-hidden="true"></span> Accediendo... } @else { Acceder <mat-icon>arrow_forward</mat-icon> }
         </button>
       </form>
 
-      <p class="hint">Demo: <strong>trainer</strong> / <strong>trainer123</strong></p>
+      @if (passkeySupported) {
+        <div class="or"><span>o</span></div>
+        <button type="button" class="btn btn-outline btn-lg btn-block passkey-btn" (click)="signInWithPasskey()" [disabled]="passkeyLoading()">
+          <mat-icon>fingerprint</mat-icon>
+          {{ passkeyLoading() ? 'Esperando a tu dispositivo…' : 'Entrar con ' + biometric }}
+        </button>
+      }
+
+      <div class="get-app">
+        <app-install-button variant="outline" [block]="true" label="Descargar la app en el móvil" />
+      </div>
+
+      <div class="demo">
+        <mat-icon>info</mat-icon>
+        <p>Demo: <strong>trainer</strong> / <strong>trainer123</strong> · <strong>cliente</strong> / <strong>cliente123</strong></p>
+      </div>
+      <p class="hint">¿Aún no eres cliente? <a routerLink="/empezar" class="apply-link">Solicita tu plaza</a> y Adri revisará tu caso.</p>
     </div>
   </main>
 </div>

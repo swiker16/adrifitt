@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { PlanService } from '../../../core/services/plan.service';
-import { Plan } from '../../../shared/models/plan.model';
+import { BILLING_PERIOD_LABEL, Plan, PlanPeriodPrice, splitFeature } from '../../../shared/models/plan.model';
 
 @Component({
   selector: 'app-plan-list',
@@ -14,6 +14,7 @@ import { Plan } from '../../../shared/models/plan.model';
 export class PlanList {
   private readonly planService = inject(PlanService);
 
+  readonly periodLabel = BILLING_PERIOD_LABEL;
   readonly plans = signal<Plan[]>([]);
   readonly loading = signal(true);
   readonly error = signal(false);
@@ -56,12 +57,12 @@ export class PlanList {
     });
   }
 
-  features(plan: Plan): string[] {
-    const list: string[] = [];
-    if (plan.messagingEnabled) list.push('Mensajería');
-    if (plan.analyticsEnabled) list.push('Analíticas');
-    if (plan.pdfExportEnabled) list.push('PDF');
-    if (plan.prioritySupport) list.push('Soporte prioritario');
-    return list;
+  /** Prices of the non-monthly periods the plan offers. */
+  longPrices(plan: Plan): PlanPeriodPrice[] {
+    return (plan.prices ?? []).filter((p) => p.period !== 'MONTHLY');
+  }
+
+  title(feature: string): string {
+    return splitFeature(feature).title;
   }
 }

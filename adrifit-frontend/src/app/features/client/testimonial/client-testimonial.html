@@ -1,0 +1,130 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Mi reseña</div>
+    <div class="subtitle">Cuenta tu experiencia: aparecerá en la página principal de AdriFitt</div>
+  </div>
+</div>
+
+<div class="content">
+  @if (loading()) {
+    <div class="card" aria-busy="true" aria-label="Cargando"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-block"></div></div>
+  } @else if (loadError()) {
+    <div class="alert error">
+      <mat-icon>error</mat-icon>
+      <div class="grow">{{ loadError() }}</div>
+      <button class="btn btn-sm btn-outline" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (mine(); as t) {
+    <!-- Read-only published review -->
+    <div class="card published">
+      <div class="pub-head">
+        <span class="badge green">Publicada el {{ t.createdAt | date: 'dd/MM/yyyy' }}</span>
+        @if (!t.visible) {
+          <span class="badge gray">Oculta por el entrenador</span>
+        }
+      </div>
+      <div class="stars-ro" [attr.aria-label]="t.rating + ' de 5 estrellas'">
+        @for (s of stars; track s) {
+          <mat-icon [class.on]="s <= t.rating">{{ s <= t.rating ? 'star' : 'star_border' }}</mat-icon>
+        }
+      </div>
+      <mat-icon class="quote-mark">format_quote</mat-icon>
+      <blockquote>{{ t.content }}</blockquote>
+      <div class="author">
+        <strong>{{ t.authorName }}</strong>
+        @if (t.planName) { <span>· Plan {{ t.planName }}</span> }
+      </div>
+      <p class="ro-note">
+        <mat-icon>lock</mat-icon>
+        Las reseñas no se pueden editar una vez publicadas.
+        @if (!t.visible) { Tu entrenador la ha ocultado, por lo que ahora no aparece en la web. }
+      </p>
+    </div>
+  } @else {
+    <!-- Form -->
+    <form class="card" (ngSubmit)="askPublish()">
+      <div class="alert warn">
+        <mat-icon>warning</mat-icon>
+        <div><strong>Solo puedes publicarla una vez y no se puede editar.</strong> Revísala bien antes de enviarla.</div>
+      </div>
+
+      <div class="block">
+        <span class="label" id="rating-label">Tu valoración</span>
+        <div class="stars" role="radiogroup" aria-labelledby="rating-label" (mouseleave)="hover.set(0)">
+          @for (s of stars; track s) {
+            <button
+              type="button"
+              class="star"
+              role="radio"
+              [attr.aria-checked]="rating() === s"
+              [attr.aria-label]="s + (s === 1 ? ' estrella' : ' estrellas')"
+              [attr.tabindex]="(rating() === s || (rating() === 0 && s === 1)) ? 0 : -1"
+              [class.on]="s <= shownRating()"
+              (click)="setRating(s)"
+              (mouseenter)="hover.set(s)"
+              (keydown)="onStarKey($event)"
+            >
+              <mat-icon>{{ s <= shownRating() ? 'star' : 'star_border' }}</mat-icon>
+            </button>
+          }
+          @if (shownRating() > 0) { <span class="rating-text">{{ ratingLabels[shownRating()] }}</span> }
+        </div>
+        @if (touched() && rating() === 0) { <span class="err">Elige de 1 a 5 estrellas.</span> }
+      </div>
+
+      <div class="field block">
+        <label for="review-text">Tu experiencia</label>
+        <textarea id="review-text" name="content" rows="6" [maxlength]="MAX"
+                  placeholder="¿Qué tal ha sido entrenar con tu coach? ¿Qué resultados has conseguido?"
+                  [ngModel]="content()" (ngModelChange)="content.set($event)"></textarea>
+        <div class="counter-row">
+          @if (touched() && length() < MIN) {
+            <span class="err">Escribe al menos {{ MIN }} caracteres.</span>
+          } @else {
+            <span class="hint">Entre {{ MIN }} y {{ MAX }} caracteres.</span>
+          }
+          <span class="counter" [class.bad]="length() > 0 && length() < MIN">{{ length() }}/{{ MAX }}</span>
+        </div>
+      </div>
+
+      @if (saveError()) {
+        <div class="alert error"><mat-icon>error</mat-icon><span>{{ saveError() }}</span></div>
+      }
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          <mat-icon>rate_review</mat-icon> Publicar reseña
+        </button>
+      </div>
+    </form>
+  }
+</div>
+
+@if (confirming()) {
+  <div class="modal-backdrop" (click)="saving() ? null : confirming.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2>¿Publicar tu reseña?</h2>
+        <button class="modal-close" (click)="confirming.set(false)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="stars-ro">
+          @for (s of stars; track s) {
+            <mat-icon [class.on]="s <= rating()">{{ s <= rating() ? 'star' : 'star_border' }}</mat-icon>
+          }
+        </div>
+        <blockquote class="preview">“{{ content().trim() }}”</blockquote>
+        <div class="alert warn">
+          <mat-icon>warning</mat-icon>
+          <div>Aparecerá en la página principal con tu nombre. <strong>No podrás editarla ni publicar otra.</strong></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="confirming.set(false)" [disabled]="saving()">Revisar</button>
+        <button class="btn btn-primary" (click)="publish()" [disabled]="saving()">
+          {{ saving() ? 'Publicando...' : 'Sí, publicar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

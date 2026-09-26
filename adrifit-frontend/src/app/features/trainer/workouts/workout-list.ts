@@ -23,8 +23,9 @@ export class WorkoutList {
     this.load();
   }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
+    this.error.set(false);
     this.workoutService.findAll().subscribe({
       next: (w) => { this.workouts.set(w); this.loading.set(false); },
       error: () => { this.error.set(true); this.loading.set(false); },

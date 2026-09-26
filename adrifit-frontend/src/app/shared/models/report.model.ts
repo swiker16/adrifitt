@@ -17,7 +17,12 @@ export interface WeeklyReport {
   reviewedAt?: string;
   createdAt: string;
   updatedAt?: string;
+  /** 4-6 photos sent with the check-in. */
+  photos: import('./photo.model').ProgressPhoto[];
 }
+
+export const REPORT_MIN_PHOTOS = 4;
+export const REPORT_MAX_PHOTOS = 6;
 
 export interface CreateWeeklyReportRequest {
   weight: number;

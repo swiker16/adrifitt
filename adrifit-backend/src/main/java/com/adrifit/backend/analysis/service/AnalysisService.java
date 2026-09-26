@@ -159,6 +159,31 @@ public class AnalysisService {
         return mapper.toResponse(repository.save(a), trainerContentBaseUrl(a.getId()));
     }
 
+    /** Trainer: every analysis of every client (optionally only the ones pending review). */
+    public List<AnalysisResponse> findAllForTrainer(AnalysisStatus status) {
+        List<ClientAnalysis> list = status != null
+                ? repository.findByStatusAndActiveTrueOrderByUploadedAtDesc(status)
+                : repository.findByActiveTrueOrderByUploadedAtDesc();
+        java.util.Map<Long, String> names = new java.util.HashMap<>();
+        return list.stream().map(a -> mapper.toResponse(a, trainerContentBaseUrl(a.getId()),
+                names.computeIfAbsent(a.getClientId(), id -> {
+                    try {
+                        com.adrifit.backend.client.domain.Client c = clientService.getEntityById(id);
+                        return c.getFirstName() + " " + c.getLastName();
+                    } catch (ResourceNotFoundException ex) {
+                        return null;
+                    }
+                }))).toList();
+    }
+
+    @org.springframework.context.event.EventListener
+    @Transactional
+    public void onClientDeleted(com.adrifit.backend.common.event.ClientDeletedEvent event) {
+        List<ClientAnalysis> list = repository.findByClientId(event.clientId());
+        repository.deleteAll(list);
+        list.forEach(a -> storage.delete(a.getStorageKey()));
+    }
+
     public long countPendingAnalyses() {
         return repository.countByStatusAndActiveTrue(AnalysisStatus.UPLOADED);
     }

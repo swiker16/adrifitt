@@ -3,6 +3,7 @@ export type AnalysisStatus = 'UPLOADED' | 'REVIEWED';
 export interface ClientAnalysis {
   id: number;
   clientId: number;
+  clientName?: string | null;
   title: string;
   analysisDate: string;
   clientComment?: string;

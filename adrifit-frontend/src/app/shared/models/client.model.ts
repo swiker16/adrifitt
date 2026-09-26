@@ -22,7 +22,11 @@ export interface CreateClientRequest {
   objective: string;
   email: string;
   planId: number;
-  trainerId: number;
+  trainerId?: number;
+  billingPeriod?: import('./plan.model').BillingPeriod;
+  /** Special conditions: price per billing period instead of the plan price. */
+  customPrice?: number | null;
+  customPriceNote?: string | null;
   notes?: string;
 }
 

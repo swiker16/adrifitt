@@ -24,4 +24,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findByStatusAndRenewalDateBetweenOrderByRenewalDateAsc(SubscriptionStatus status, LocalDate from, LocalDate to);
 
     List<Subscription> findByStatusAndRenewalDateLessThanEqualOrderByRenewalDateAsc(SubscriptionStatus status, LocalDate date);
+
+    List<Subscription> findByActiveTrue();
+
+    long countByStatusAndEndDateBetween(SubscriptionStatus status, LocalDate from, LocalDate to);
 }

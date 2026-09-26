@@ -156,6 +156,8 @@ export class TrainerDashboard {
       WORKOUT_ASSIGNED: 'fitness_center',
       DIET_ASSIGNED: 'restaurant',
       PLAN_CHANGED: 'swap_horiz',
+      WORKOUT_LOGGED: 'sports_gymnastics',
+      PAYMENT_RECEIVED: 'payments',
     };
     return icons[type] ?? 'circle';
   }
@@ -167,6 +169,8 @@ export class TrainerDashboard {
       WORKOUT_ASSIGNED: 'green',
       DIET_ASSIGNED: 'violet',
       PLAN_CHANGED: 'red',
+      WORKOUT_LOGGED: 'green',
+      PAYMENT_RECEIVED: 'green',
     };
     return colors[type] ?? 'gray';
   }

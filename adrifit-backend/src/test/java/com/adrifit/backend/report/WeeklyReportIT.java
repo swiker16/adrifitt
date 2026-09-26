@@ -37,10 +37,10 @@ class WeeklyReportIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void clientCreatesReport_isPersistedWithCorrectData() {
+    void trainerRegistersReportForClient_isPersistedWithCorrectData() {
         ResponseEntity<Map> response = rest.exchange(
                 "/api/clients/" + clientId + "/reports", HttpMethod.POST,
-                entity(sampleReport(), client), Map.class);
+                entity(sampleReport(), trainer), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
@@ -66,7 +66,7 @@ class WeeklyReportIT extends AbstractIntegrationTest {
     @Test
     void trainerListsClientReports() {
         rest.exchange("/api/clients/" + clientId + "/reports", HttpMethod.POST,
-                entity(sampleReport(), client), Map.class);
+                entity(sampleReport(), trainer), Map.class);
 
         ResponseEntity<List> response = rest.exchange(
                 "/api/clients/" + clientId + "/reports", HttpMethod.GET, auth(trainer), List.class);
@@ -158,7 +158,7 @@ class WeeklyReportIT extends AbstractIntegrationTest {
 
         ResponseEntity<String> response = rest.exchange(
                 "/api/clients/" + clientId + "/reports", HttpMethod.POST,
-                entity(invalid, client), String.class);
+                entity(invalid, trainer), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
@@ -175,10 +175,51 @@ class WeeklyReportIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void feedback_emailsClient_locksReport_andCompletesPendingReview() {
+        Long reportId = createReportAndGetId();
+        post("/api/tasks", Map.of("title", "Revisión", "type", "REVIEW", "clientId", clientId), trainer);
+
+        rest.exchange("/api/reports/" + reportId + "/feedback", HttpMethod.PATCH,
+                entity(Map.of("coachFeedback", "Perfecto"), trainer), Map.class);
+
+        assertThat(count("SELECT COUNT(*) FROM email_messages WHERE client_id = ? AND type = 'REPORT_FEEDBACK'", clientId))
+                .isEqualTo(1);
+        assertThat(count("SELECT COUNT(*) FROM trainer_tasks WHERE client_id = ? AND status = 'DONE'", clientId))
+                .isEqualTo(1);
+
+        ResponseEntity<String> update = rest.exchange("/api/reports/" + reportId, HttpMethod.PUT,
+                entity(sampleReport(), client), String.class);
+        assertThat(update.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void clientCheckIn_needs4to6Photos_weightAndOptionalComment() {
+        assertThat(submitReport(client, 72.4, "Buena semana", 3).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(submitReport(client, 72.4, "Buena semana", 7).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(submitReport(client, 5, "Peso imposible", 4).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+        ResponseEntity<Map<String, Object>> ok = submitReport(client, 72.4, "Buena semana", 5);
+        assertThat(ok.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat((List<?>) ok.getBody().get("photos")).hasSize(5);
+        assertThat(ok.getBody().get("comments")).isEqualTo("Buena semana");
+        assertThat(submitReport(client, 72.0, null, 4).getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        Long reportId = id(ok);
+        assertThat(count("SELECT COUNT(*) FROM progress_photos WHERE report_id = ?", reportId)).isEqualTo(5);
+        // The trainer sees the photos with the report, and they also show up in the client's gallery.
+        List<?> photos = (List<?>) get("/api/reports/" + reportId, trainer).getBody().get("photos");
+        assertThat(photos).hasSize(5);
+        assertThat(getList("/api/photos/me", client).getBody()).hasSize(9);
+        // Clients can no longer skip the photos through the JSON endpoint.
+        assertThat(rest.exchange("/api/clients/" + clientId + "/reports", HttpMethod.POST,
+                entity(sampleReport(), client), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
     private Long createReportAndGetId() {
         ResponseEntity<Map> response = rest.exchange(
                 "/api/clients/" + clientId + "/reports", HttpMethod.POST,
-                entity(sampleReport(), client), Map.class);
+                entity(sampleReport(), trainer), Map.class);
         return ((Number) response.getBody().get("id")).longValue();
     }
 }

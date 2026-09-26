@@ -91,6 +91,9 @@ public class DietService {
         if (clientDietRepository.existsByDiet_IdAndActiveTrue(id)) {
             throw new IllegalStateException("No se puede eliminar una dieta activamente asignada a un cliente.");
         }
+        if (clientDietRepository.existsByDiet_Id(id)) {
+            throw new IllegalStateException("Esta dieta tiene historial de asignaciones. Desactívala en lugar de eliminarla.");
+        }
         dietRepository.delete(diet);
     }
 
@@ -199,6 +202,7 @@ public class DietService {
     }
 
     public List<ClientDietResponse> getHistoryForClient(Long clientId) {
+        assertCanAccessClient(clientId);
         return clientDietRepository.findAllByClient_IdOrderByAssignedAtDesc(clientId)
                 .stream().map(dietMapper::toClientDietResponse).toList();
     }
@@ -284,7 +288,13 @@ public class DietService {
                 .orElseThrow(() -> new ResourceNotFoundException("Diet not found: " + id));
     }
 
-    private void assertCanAccessClient(Long clientId) {
+    @org.springframework.context.event.EventListener
+    @Transactional
+    public void onClientDeleted(com.adrifit.backend.common.event.ClientDeletedEvent event) {
+        clientDietRepository.deleteAll(clientDietRepository.findAllByClient_IdOrderByAssignedAtDesc(event.clientId()));
+    }
+
+    public void assertCanAccessClient(Long clientId) {
         if (SecurityUtils.isTrainer()) return;
         if (!getCurrentClientId().equals(clientId)) {
             throw new AccessDeniedException("You can only access your own diet");

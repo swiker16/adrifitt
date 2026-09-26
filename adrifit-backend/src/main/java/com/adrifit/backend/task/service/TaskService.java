@@ -1,0 +1,263 @@
+package com.adrifit.backend.task.service;
+
+import com.adrifit.backend.client.domain.Client;
+import com.adrifit.backend.client.repository.ClientRepository;
+import com.adrifit.backend.client.service.ClientService;
+import com.adrifit.backend.common.event.ClientDeletedEvent;
+import com.adrifit.backend.common.exception.ResourceNotFoundException;
+import com.adrifit.backend.email.domain.EmailType;
+import com.adrifit.backend.email.service.EmailService;
+import com.adrifit.backend.email.service.EmailTemplates;
+import com.adrifit.backend.report.domain.ReportStatus;
+import com.adrifit.backend.report.domain.WeeklyReport;
+import com.adrifit.backend.report.event.ReportReviewedEvent;
+import com.adrifit.backend.report.repository.WeeklyReportRepository;
+import com.adrifit.backend.subscription.domain.Subscription;
+import com.adrifit.backend.subscription.domain.SubscriptionStatus;
+import com.adrifit.backend.subscription.repository.SubscriptionRepository;
+import com.adrifit.backend.task.domain.TaskPriority;
+import com.adrifit.backend.task.domain.TaskStatus;
+import com.adrifit.backend.task.domain.TaskType;
+import com.adrifit.backend.task.domain.TrainerTask;
+import com.adrifit.backend.task.dto.TaskDtos.ReviewScheduleItem;
+import com.adrifit.backend.task.dto.TaskDtos.ReviewState;
+import com.adrifit.backend.task.dto.TaskDtos.SaveTaskRequest;
+import com.adrifit.backend.task.dto.TaskDtos.TaskResponse;
+import com.adrifit.backend.task.repository.TrainerTaskRepository;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * "Revisiones y tareas": the trainer's to-do list plus the periodic review schedule of every
+ * active client (frequency = plan.reviewFrequencyDays, counted from the last reviewed report).
+ */
+@Service
+@Transactional(readOnly = true)
+public class TaskService {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskService.class);
+    private static final int DUE_SOON_DAYS = 3;
+
+    private final TrainerTaskRepository repository;
+    private final ClientRepository clientRepository;
+    private final ClientService clientService;
+    private final SubscriptionRepository subscriptionRepository;
+    private final WeeklyReportRepository reportRepository;
+    private final EmailService emailService;
+    private final EmailTemplates emailTemplates;
+    private final org.springframework.context.ApplicationEventPublisher events;
+
+    public TaskService(TrainerTaskRepository repository,
+                       ClientRepository clientRepository,
+                       ClientService clientService,
+                       SubscriptionRepository subscriptionRepository,
+                       WeeklyReportRepository reportRepository,
+                       EmailService emailService,
+                       EmailTemplates emailTemplates,
+                       org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
+        this.repository = repository;
+        this.clientRepository = clientRepository;
+        this.clientService = clientService;
+        this.subscriptionRepository = subscriptionRepository;
+        this.reportRepository = reportRepository;
+        this.emailService = emailService;
+        this.emailTemplates = emailTemplates;
+    }
+
+    // ── Tasks CRUD ──────────────────────────────────────────────────────────
+
+    public List<TaskResponse> findAll(TaskStatus status, Long clientId) {
+        List<TrainerTask> tasks;
+        if (clientId != null) {
+            tasks = repository.findByClientIdOrderByStatusAscDueDateAscIdAsc(clientId);
+            if (status != null) {
+                tasks = tasks.stream().filter(t -> t.getStatus() == status).toList();
+            }
+        } else if (status != null) {
+            tasks = repository.findByStatusOrderByDueDateAscIdAsc(status);
+        } else {
+            tasks = repository.findAllByOrderByStatusAscDueDateAscIdAsc();
+        }
+        Map<Long, Client> clients = clientsById(tasks.stream().map(TrainerTask::getClientId).toList());
+        return tasks.stream()
+                .sorted(Comparator.comparing(TrainerTask::getStatus)
+                        .thenComparing(TrainerTask::getDueDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(t -> toResponse(t, clients.get(t.getClientId())))
+                .toList();
+    }
+
+    @Transactional
+    public TaskResponse create(SaveTaskRequest request) {
+        TrainerTask task = TrainerTask.builder().status(TaskStatus.PENDING).autoGenerated(false).build();
+        apply(task, request);
+        return toResponse(repository.save(task));
+    }
+
+    @Transactional
+    public TaskResponse update(Long id, SaveTaskRequest request) {
+        TrainerTask task = getOrThrow(id);
+        apply(task, request);
+        return toResponse(repository.save(task));
+    }
+
+    @Transactional
+    public TaskResponse complete(Long id) {
+        TrainerTask task = getOrThrow(id);
+        task.setStatus(TaskStatus.DONE);
+        task.setCompletedAt(Instant.now());
+        return toResponse(repository.save(task));
+    }
+
+    @Transactional
+    public TaskResponse reopen(Long id) {
+        TrainerTask task = getOrThrow(id);
+        task.setStatus(TaskStatus.PENDING);
+        task.setCompletedAt(null);
+        return toResponse(repository.save(task));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        repository.delete(getOrThrow(id));
+    }
+
+    public long countDueToday() {
+        return repository.countByStatusAndDueDateLessThanEqual(TaskStatus.PENDING, LocalDate.now());
+    }
+
+    // ── Reviews ─────────────────────────────────────────────────────────────
+
+    public List<ReviewScheduleItem> reviewSchedule() {
+        LocalDate today = LocalDate.now();
+        List<Subscription> active = subscriptionRepository.findByStatus(SubscriptionStatus.ACTIVE);
+        Map<Long, Client> clients = clientsById(active.stream().map(Subscription::getClientId).toList());
+        return active.stream()
+                .filter(s -> clients.containsKey(s.getClientId()))
+                .map(s -> scheduleOf(s, clients.get(s.getClientId()), today))
+                .sorted(Comparator.comparing(ReviewScheduleItem::nextReviewDate))
+                .toList();
+    }
+
+    /**
+     * Daily job: for every review due today/tomorrow (or overdue) creates a REVIEW task for the
+     * trainer (once) and reminds the client to send its check-in.
+     *
+     * @return number of review tasks created
+     */
+    @Transactional
+    public int generateReviewTasks(LocalDate today) {
+        int created = 0;
+        for (ReviewScheduleItem item : reviewSchedule()) {
+            if (item.nextReviewDate().isAfter(today.plusDays(1))) {
+                continue;
+            }
+            if (repository.existsByClientIdAndTypeAndStatus(item.clientId(), TaskType.REVIEW, TaskStatus.PENDING)) {
+                continue;
+            }
+            repository.save(TrainerTask.builder()
+                    .title("Revisión de " + item.clientName())
+                    .description("Revisión periódica (" + item.planName() + ", cada " + item.frequencyDays() + " días).")
+                    .clientId(item.clientId())
+                    .type(TaskType.REVIEW)
+                    .priority(item.state() == ReviewState.OVERDUE ? TaskPriority.HIGH : TaskPriority.MEDIUM)
+                    .status(TaskStatus.PENDING)
+                    .dueDate(item.nextReviewDate())
+                    .autoGenerated(true)
+                    .build());
+            clientRepository.findById(item.clientId()).ifPresent(client ->
+                    emailService.sendToClient(client.getId(), EmailType.REVIEW_REMINDER, "Toca revisión",
+                            emailTemplates.reviewReminder(client.getFirstName(), item.nextReviewDate())));
+            events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.ReviewDue(
+                    item.clientId(), item.nextReviewDate()));
+            created++;
+        }
+        if (created > 0) {
+            log.info("Generated {} review tasks", created);
+        }
+        return created;
+    }
+
+    /** Giving feedback on a report completes the pending review of that client. */
+    @EventListener
+    @Transactional
+    public void onReportReviewed(ReportReviewedEvent event) {
+        for (TrainerTask task : repository.findByClientIdAndTypeAndStatus(event.clientId(), TaskType.REVIEW, TaskStatus.PENDING)) {
+            task.setStatus(TaskStatus.DONE);
+            task.setCompletedAt(Instant.now());
+            repository.save(task);
+        }
+    }
+
+    @EventListener
+    @Transactional
+    public void onClientDeleted(ClientDeletedEvent event) {
+        repository.deleteAll(repository.findByClientId(event.clientId()));
+    }
+
+    // ── internals ───────────────────────────────────────────────────────────
+
+    private ReviewScheduleItem scheduleOf(Subscription s, Client client, LocalDate today) {
+        int frequency = s.getPlan().getReviewFrequencyDays();
+        LocalDate lastReview = reportRepository.findTopByClient_IdAndReviewedAtIsNotNullOrderByReviewedAtDesc(client.getId())
+                .map(r -> LocalDate.ofInstant(r.getReviewedAt(), ZoneId.systemDefault()))
+                .filter(d -> !d.isBefore(s.getStartDate()))
+                .orElse(null);
+        LocalDate next = (lastReview != null ? lastReview : s.getStartDate()).plusDays(frequency);
+        long daysUntil = ChronoUnit.DAYS.between(today, next);
+        ReviewState state = daysUntil < 0 ? ReviewState.OVERDUE
+                : daysUntil <= DUE_SOON_DAYS ? ReviewState.DUE_SOON : ReviewState.UPCOMING;
+        Optional<WeeklyReport> pending = reportRepository.findTopByClient_IdAndStatusOrderByCreatedAtDesc(client.getId(), ReportStatus.PENDING);
+        return new ReviewScheduleItem(client.getId(), client.getFirstName() + " " + client.getLastName(),
+                s.getPlan().getName(), frequency, lastReview, next, daysUntil, state,
+                pending.map(WeeklyReport::getId).orElse(null),
+                pending.map(WeeklyReport::getCreatedAt).orElse(null));
+    }
+
+    private void apply(TrainerTask task, SaveTaskRequest request) {
+        if (request.clientId() != null) {
+            clientService.getEntityById(request.clientId());
+        }
+        task.setTitle(request.title().trim());
+        task.setDescription(request.description());
+        task.setClientId(request.clientId());
+        task.setType(request.type() != null ? request.type() : TaskType.TASK);
+        task.setPriority(request.priority() != null ? request.priority() : TaskPriority.MEDIUM);
+        task.setDueDate(request.dueDate());
+    }
+
+    private Map<Long, Client> clientsById(List<Long> ids) {
+        return clientRepository.findAllById(ids.stream().filter(java.util.Objects::nonNull).distinct().toList())
+                .stream().collect(Collectors.toMap(Client::getId, Function.identity()));
+    }
+
+    private TrainerTask getOrThrow(Long id) {
+        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found: " + id));
+    }
+
+    private TaskResponse toResponse(TrainerTask t) {
+        Client client = t.getClientId() != null ? clientRepository.findById(t.getClientId()).orElse(null) : null;
+        return toResponse(t, client);
+    }
+
+    private TaskResponse toResponse(TrainerTask t, Client client) {
+        boolean overdue = t.getStatus() == TaskStatus.PENDING && t.getDueDate() != null && t.getDueDate().isBefore(LocalDate.now());
+        return new TaskResponse(t.getId(), t.getTitle(), t.getDescription(), t.getClientId(),
+                client != null ? client.getFirstName() + " " + client.getLastName() : null,
+                t.getType(), t.getPriority(), t.getStatus(), t.getDueDate(), overdue, t.isAutoGenerated(),
+                t.getCompletedAt(), t.getCreatedAt());
+    }
+}

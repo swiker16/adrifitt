@@ -33,6 +33,10 @@ public class PlanService {
                 .name(request.name())
                 .description(request.description())
                 .monthlyPrice(request.monthlyPrice())
+                .quarterlyPrice(request.quarterlyPrice())
+                .semiannualPrice(request.semiannualPrice())
+                .annualPrice(request.annualPrice())
+                .features(normalizeFeatures(request.features()))
                 .reviewFrequencyDays(request.reviewFrequencyDays())
                 .messagingEnabled(request.messagingEnabled())
                 .analyticsEnabled(request.analyticsEnabled())
@@ -60,6 +64,10 @@ public class PlanService {
         plan.setName(request.name());
         plan.setDescription(request.description());
         plan.setMonthlyPrice(request.monthlyPrice());
+        plan.setQuarterlyPrice(request.quarterlyPrice());
+        plan.setSemiannualPrice(request.semiannualPrice());
+        plan.setAnnualPrice(request.annualPrice());
+        plan.setFeatures(normalizeFeatures(request.features()));
         plan.setReviewFrequencyDays(request.reviewFrequencyDays());
         plan.setMessagingEnabled(request.messagingEnabled());
         plan.setAnalyticsEnabled(request.analyticsEnabled());
@@ -82,11 +90,25 @@ public class PlanService {
         if (planRepository.countActiveSubscriptionsByPlanId(id) > 0) {
             throw new BusinessException("No se puede eliminar un plan con suscripciones activas");
         }
+        if (planRepository.countSubscriptionsByPlanId(id) > 0) {
+            // Past subscriptions (and their payments) reference the plan: keep it for the history.
+            throw new BusinessException("Este plan tiene historial de suscripciones. Desactívalo en lugar de eliminarlo.");
+        }
         planRepository.delete(plan);
     }
 
     public Plan getEntityById(Long id) {
         return getPlanOrThrow(id);
+    }
+
+    private static String normalizeFeatures(String features) {
+        if (features == null) {
+            return null;
+        }
+        String cleaned = features.lines().map(String::trim).filter(l -> !l.isEmpty())
+                .map(l -> l.replaceFirst("^[·•\\-*]\\s*", ""))
+                .reduce((a, b) -> a + "\n" + b).orElse("");
+        return cleaned.isEmpty() ? null : cleaned;
     }
 
     private Plan getPlanOrThrow(Long id) {

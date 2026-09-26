@@ -109,6 +109,13 @@ public class AnalysisController {
         return ResponseEntity.ok(service.review(id, req));
     }
 
+    @GetMapping("/api/analyses")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<List<AnalysisResponse>> listAll(
+            @RequestParam(value = "status", required = false) com.adrifit.backend.analysis.domain.AnalysisStatus status) {
+        return ResponseEntity.ok(service.findAllForTrainer(status));
+    }
+
     @GetMapping("/api/analyses/pending-count")
     @PreAuthorize("hasRole('TRAINER')")
     public ResponseEntity<Long> pendingCount() {

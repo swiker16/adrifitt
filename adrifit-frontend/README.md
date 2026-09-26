@@ -1,59 +1,123 @@
-# AdrifitFrontend
+# AdriFitt Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.28.
+Aplicación web (PWA instalable en móvil, tablet y escritorio) de la plataforma de entrenamiento personal.
+Angular 20 · componentes standalone · signals · Angular Material (iconos) · SCSS.
 
-## Development server
+## Requisitos
 
-To start a local development server, run:
+- Node 20+ y npm
+- Backend en marcha en `http://localhost:8080` (ver `../adrifit-backend/README.md`)
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Desarrollo
 
 ```bash
-ng generate component component-name
+npm install
+npm start          # ng serve → http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+`ng serve` redirige `/api` al backend mediante `proxy.conf.json`, así que no hay problemas de CORS.
+La URL de la API se define en `src/environments/environment*.ts` (`/api` por defecto: mismo dominio
+detrás de un proxy inverso en producción).
+
+## Build de producción
 
 ```bash
-ng generate --help
+npm run build      # dist/adrifit-frontend/browser
 ```
 
-## Building
+La build de producción incluye el **service worker** (`ngsw-config.json`): la app se puede instalar
+(“Añadir a pantalla de inicio”), arranca sin conexión y cachea la landing y los planes.
 
-To build the project run:
+Para probar la PWA completa en local (service worker, notificaciones push, instalación):
 
 ```bash
-ng build
+npm run start:pwa   # build + http://localhost:4300 con proxy de /api a :8080 (API_PORT para cambiarlo)
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+`ng serve` no activa el service worker, así que las notificaciones solo funcionan con la build.
 
-## Running unit tests
+### Clientes nuevos: solicitud → cuestionario → activación
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+- **`/empezar`**: formulario «Quiero empezar» (los botones «Empezar ahora» y «Empezar con …» de la web llevan
+  aquí, con el plan preseleccionado). El login enlaza «Solicita tu plaza».
+- **Solicitudes** (menú del entrenador, con aviso): pendientes, esperando cuestionario, aceptadas y rechazadas.
+  Detalle con contacto (email, teléfono, WhatsApp), objetivo, línea de tiempo, cuestionario, nota privada y
+  acciones: enviar/reenviar cuestionario, rechazar, aceptar con plan y precio, reenviar activación, borrar.
+- **`/cuestionario/:token`**: cuestionario en 5 pasos con validación por paso y borrador guardado en el dispositivo.
+- **`/activar/:token`**: el cliente aceptado elige su contraseña y entra en la app.
+- Ficha del cliente → pestaña **Cuestionario** con sus respuestas.
 
-```bash
-ng test
+### Descargar la app (instalar la PWA)
+
+- **Enlace para compartir:** `https://<tu-dominio>/app` (también `/descargar`). Página con el logo, ventajas, botón
+  de instalar, pasos para iPhone/Android y un **QR** si se abre en un ordenador. Ideal para WhatsApp o la bio de Instagram.
+- **Android / Chrome / Edge:** un toque abre el diálogo nativo de instalación (`beforeinstallprompt`, capturado en
+  `index.html` antes de arrancar). El manifest incluye capturas para el diálogo enriquecido de Android.
+- **iPhone / iPad:** Apple no permite instalar desde la web con un botón; se muestran los pasos (Compartir →
+  «Añadir a pantalla de inicio»). En iPhone es necesario instalarla para recibir notificaciones.
+- Dónde aparece: login («Descargar la app en el móvil»), landing (menú, portada y pie), aviso tras entrar en el
+  móvil, menú lateral («Instalar la app»), *Perfil*/*Ajustes* (con el enlace para copiar o compartir) y el email de
+  bienvenida. Al crear un cliente, «Copiar mensaje para WhatsApp» incluye enlace, usuario y contraseña.
+- Una vez instalada (modo *standalone*) todo lo relacionado con instalar se oculta.
+
+### Modo claro / oscuro
+
+Selector **Claro · Auto · Oscuro** en el menú lateral (también en el menú del móvil), en *Perfil* /
+*Ajustes* y un botón en la web pública y el login. *Auto* sigue la preferencia del dispositivo en vivo.
+La elección se guarda en el navegador y se aplica antes de cargar la app (sin destello blanco).
+
+Cómo funciona: `ThemeService` pone `<html data-theme="light|dark">` y `styles.scss` redefine los tokens
+en `html[data-theme='dark']`. Para estilos nuevos usa siempre tokens (`--surface`, `--text`, `--border`,
+`--success-fg`…); sobre superficies que son oscuras en ambos temas usa `--on-dark-1…4`, y para chips
+seleccionados oscuros `--inverse`.
+
+### Marca
+
+Logo en `public/brand/` (cabecera, login, landing, emails) y en `public/icons/` (iconos de la PWA,
+*maskable* y Apple); `favicon.ico` con varios tamaños. Los PDF usan `adrifit-backend/src/main/resources/branding/logo.png`.
+
+### Vídeos de técnica
+
+- Cliente: menú **Técnica** (o el icono de cámara junto a cada ejercicio de *Mi rutina*). En el móvil
+  permite **grabar** con la cámara trasera o elegir de la galería; muestra la vista previa y el progreso de subida.
+- Entrenador: **Vídeos de técnica** con la bandeja *Por corregir*, filtro por cliente, corrección escrita y
+  «Enviar vídeo a un cliente» para mandar ejemplos.
+- El reproductor pide el enlace firmado solo al pulsar play (la lista no descarga vídeos) y ofrece descargarlo
+  si el navegador no soporta el formato (p. ej. HEVC de iPhone en algunos PC).
+
+### Notificaciones y passkeys
+
+- Al entrar, la app ofrece **crear una passkey** (Face ID / Touch ID, huella en Android, Windows Hello)
+  y después **activar las notificaciones**. «Ahora no» lo vuelve a preguntar en 7 días; «No volver a
+  preguntar» lo oculta en ese dispositivo. Todo se gestiona luego en *Perfil* (cliente) o *Ajustes* (entrenador).
+- En el login: botón «Entrar con Face ID / huella» y passkeys en el autocompletado del campo usuario.
+- **iPhone/iPad**: las notificaciones web requieren iOS 16.4+ y abrir AdriFitt desde la pantalla de inicio;
+  la app lo explica si se abre desde Safari.
+- Passkeys y push necesitan **https** en producción (en `localhost` funcionan sin él).
+
+## Estructura
+
+```
+src/app
+├── core           auth (JWT), guards, interceptor, servicios HTTP por módulo, push, passkeys
+├── shared         modelos (contratos de la API), componentes (gráficos SVG, imagen autenticada), utilidades
+├── layouts        layout de entrenador y de cliente (menú lateral, badges, barra inferior móvil)
+└── features
+    ├── landing    web pública: planes y reseñas de clientes
+    ├── auth       login
+    ├── trainer    dashboard, negocio, clientes, mensajes, revisiones y tareas, seguimientos,
+    │              vídeos de técnica, analíticas, rutinas, dietas, planes, cobros, emails, reseñas, ajustes
+    └── client     panel, rutina, registrar entreno, técnica (vídeos), dieta, seguimiento, progreso,
+                   fotos, analíticas, mensajes, suscripción y pagos, reseña, perfil
 ```
 
-## Running end-to-end tests
+## Usuarios de prueba (backend con perfil `local`)
 
-For end-to-end (e2e) testing, run:
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `trainer` | `trainer123` | Entrenador |
+| `cliente` | `cliente123` | Cliente Premium (chat, PDF, revisión semanal) |
+| `carlos` | `carlos123` | Cliente Basic (sin chat) con un pago vencido |
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Pagos en **modo test**: tarjeta `4242 4242 4242 4242` (aprobada), `4000 0000 0000 0002` (rechazada),
+Bizum con cualquier móvil salvo `600 000 000` (rechazado). Los emails se guardan en *Emails* (no se envían).

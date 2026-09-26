@@ -1,1 +1,47 @@
 @use '../shell';
+
+/* ── Floating glass bottom navigation (phones / installed PWA) ── */
+.bottom-nav { display: none; }
+
+@media (max-width: 860px) {
+  .main { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    left: 12px; right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 120;
+    height: 66px;
+    padding: 6px;
+    border-radius: 22px;
+    background: rgba(12, 15, 20, 0.88);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 40px -12px rgba(7, 9, 13, 0.55);
+  }
+  .bottom-nav a {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    color: rgba(255, 255, 255, 0.5); font-size: 0.66rem; font-weight: 600;
+    border-radius: 16px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .bottom-nav a mat-icon { font-size: 22px; width: 22px; height: 22px; }
+  .bottom-nav a.active { color: #fff; background: rgba(255, 255, 255, 0.07); }
+  .bottom-nav a.active mat-icon { color: var(--brand-400); }
+  .bottom-nav a.primary mat-icon {
+    width: 40px; height: 30px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--brand-gradient); color: #fff; font-size: 22px;
+    box-shadow: 0 8px 18px -6px rgba(255, 107, 26, 0.8);
+  }
+  .bottom-nav a.primary.active { background: transparent; }
+  .bottom-nav a.primary.active mat-icon { color: #fff; }
+  .bn-dot {
+    position: absolute; top: 8px; right: calc(50% - 16px);
+    width: 8px; height: 8px; border-radius: 50%; background: var(--brand);
+    box-shadow: 0 0 0 2px var(--ink-900);
+  }
+}

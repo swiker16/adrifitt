@@ -7,6 +7,7 @@ import java.time.LocalDate;
 public record AnalysisResponse(
         Long id,
         Long clientId,
+        String clientName,
         String title,
         LocalDate analysisDate,
         String clientComment,

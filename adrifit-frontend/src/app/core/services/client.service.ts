@@ -13,6 +13,15 @@ export class ClientService {
     return this.http.get<Client[]>(this.baseUrl);
   }
 
+  /** Client role: own profile. */
+  findMe(): Observable<Client> {
+    return this.http.get<Client>(`${this.baseUrl}/me`);
+  }
+
+  resetPassword(id: number): Observable<{ temporaryPassword: string }> {
+    return this.http.post<{ temporaryPassword: string }>(`${this.baseUrl}/${id}/reset-password`, {});
+  }
+
   findById(id: number): Observable<Client> {
     return this.http.get<Client>(`${this.baseUrl}/${id}`);
   }
