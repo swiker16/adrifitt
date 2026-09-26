@@ -67,7 +67,15 @@ Una base de datos existente se actualiza sola al arrancar (`baseline-on-migrate`
 
 ## Ejecutar
 
-Requiere JDK 21 (`JAVA_HOME`). No hace falta instalar Maven.
+Requiere JDK 21. No hace falta instalar Maven. La forma más sencilla (localiza el JDK aunque no
+tengas `JAVA_HOME`):
+
+```powershell
+.\run.ps1          # con PostgreSQL
+.\run.ps1 -Local   # sin PostgreSQL: H2 + datos de demo
+```
+
+O con el wrapper directamente (necesita `JAVA_HOME`):
 
 ```powershell
 $env:JAVA_HOME="C:\Program Files\Java\jdk-21.0.11"
