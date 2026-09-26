@@ -38,7 +38,7 @@
         <h1>Entrena con un plan hecho para ti. <span class="accent">Progresa de verdad.</span></h1>
         <p class="lead">
           Rutinas, dieta y revisiones con tu entrenador personal en una sola app. Registra cada entreno,
-          sigue tu evolución y recibe feedback semana a semana.
+          sigue tu evolución y recibe feedback en cada revisión.
         </p>
         <div class="hero-actions">
           <a routerLink="/login" class="btn btn-primary btn-lg">Empezar ahora <mat-icon>arrow_forward</mat-icon></a>
@@ -203,11 +203,10 @@
       <div class="section-head">
         <span class="eyebrow">Planes</span>
         <h2>Elige el plan que encaja contigo</h2>
-        <p>Sin permanencia. Cambia o cancela cuando quieras.</p>
+        <p>Paga mes a mes o ahorra eligiendo trimestre, semestre o año.</p>
       </div>
       @if (plansLoading()) {
         <div class="plans">
-          <div class="skeleton plan-skeleton"></div>
           <div class="skeleton plan-skeleton"></div>
           <div class="skeleton plan-skeleton"></div>
         </div>
@@ -218,17 +217,53 @@
           <a href="mailto:hola@adrifit.com" class="btn btn-primary">Contactar</a>
         </div>
       } @else {
+        @if (periods().length > 1) {
+          <div class="period-toggle-wrap">
+            <div class="segmented period-toggle" role="tablist" aria-label="Periodo de pago">
+              @for (b of periods(); track b) {
+                <button type="button" role="tab" [class.active]="period() === b" [attr.aria-selected]="period() === b" (click)="period.set(b)">
+                  {{ periodLabel[b] }}
+                  @if (bestSaving()[b]; as best) { <span class="seg-save">-{{ best | number: '1.0-0' }}%</span> }
+                </button>
+              }
+            </div>
+          </div>
+        }
         <div class="plans">
           @for (p of apiPlans(); track p.id) {
-            <article class="plan-card" [class.featured]="isFeatured(p)">
-              @if (isFeatured(p)) { <span class="plan-flag"><mat-icon>local_fire_department</mat-icon> Más popular</span> }
+            <article class="plan-card" [class.featured]="isFeatured(p)" [class.expanded]="isExpanded(p)">
+              @if (isFeatured(p)) { <span class="plan-flag"><mat-icon>local_fire_department</mat-icon> Más completo</span> }
               <h3>{{ p.name }}</h3>
-              <div class="price">{{ p.monthlyPrice | number: '1.0-0' }}€<span>/mes</span></div>
+              @if (p.description) { <p class="plan-desc">{{ p.description }}</p> }
+              @if (priceFor(p); as pp) {
+                <div class="price">{{ pp.price | number: '1.0-2' }}€<span>{{ periodSuffix[pp.period] }}</span></div>
+                <div class="price-meta">
+                  @if (pp.months > 1) {
+                    <span>equivale a <strong>{{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes</strong></span>
+                    @if (pp.savingPercent > 0) { <span class="save-badge">Ahorra {{ pp.savingPercent | number: '1.0-0' }} %</span> }
+                  } @else {
+                    <span>Pago mensual, sin permanencia</span>
+                  }
+                </div>
+              } @else {
+                <div class="price">{{ monthlyOption(p).price | number: '1.0-2' }}€<span>/mes</span></div>
+                <div class="price-meta"><span>Sin pago {{ periodLabel[period()].toLowerCase() }} en este plan</span></div>
+              }
+              <div class="review-line"><mat-icon>event_repeat</mat-icon> {{ reviewLabel(p) }}</div>
               <ul>
-                @for (f of planFeatures(p); track f) {
-                  <li><mat-icon>check</mat-icon> {{ f }}</li>
+                @for (f of featureItems(p); track $index) {
+                  <li [class.extra]="$index >= featurePreview">
+                    <mat-icon>check</mat-icon>
+                    <span><strong>{{ f.title }}</strong>@if (f.detail) { <span class="f-detail">{{ f.detail }}</span> }</span>
+                  </li>
                 }
               </ul>
+              @if (featureItems(p).length > featurePreview) {
+                <button type="button" class="more-btn" (click)="toggleExpanded(p)" [attr.aria-expanded]="isExpanded(p)">
+                  {{ isExpanded(p) ? 'Ver menos' : 'Ver todo (' + featureItems(p).length + ')' }}
+                  <mat-icon>{{ isExpanded(p) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+              }
               <a routerLink="/login" class="btn btn-lg btn-block" [class.btn-primary]="isFeatured(p)" [class.btn-outline]="!isFeatured(p)">
                 Empezar con {{ p.name }}
               </a>

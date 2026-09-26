@@ -1,10 +1,10 @@
 <div class="topbar">
   <div>
     <div class="page-title">Mi progreso</div>
-    <div class="subtitle">Tu evolución de medidas, fuerza y fotos</div>
+    <div class="subtitle">Tu evolución de peso, fuerza y fotos</div>
   </div>
   <div class="topbar-actions">
-    <a routerLink="/client/report" class="btn btn-outline"><mat-icon>monitor_weight</mat-icon> Nuevo reporte</a>
+    <a routerLink="/client/report" class="btn btn-outline"><mat-icon>add_a_photo</mat-icon> Enviar seguimiento</a>
     <a routerLink="/client/workout-log" class="btn btn-primary"><mat-icon>fitness_center</mat-icon> Registrar entreno</a>
   </div>
 </div>
@@ -36,34 +36,28 @@
           <div class="stat-sub">Sin registros</div>
         }
       </div>
-      <div class="stat">
-        <div class="stat-icon blue"><mat-icon>straighten</mat-icon></div>
-        <div class="stat-label">Cintura</div>
-        @if (waistDelta(); as d) {
+      @if (waistDelta(); as d) {
+        <div class="stat">
+          <div class="stat-icon blue"><mat-icon>straighten</mat-icon></div>
+          <div class="stat-label">Cintura</div>
           <div class="stat-value">{{ d.to | number: '1.0-1' }} <small>cm</small></div>
           <div class="stat-sub">
             Desde {{ d.from | number: '1.0-1' }} cm
             <span class="delta" [class]="trendClass(d)">{{ d.diff > 0 ? '+' : '' }}{{ d.diff | number: '1.0-1' }} cm</span>
           </div>
-        } @else {
-          <div class="stat-value muted">—</div>
-          <div class="stat-sub">Sin registros</div>
-        }
-      </div>
-      <div class="stat">
-        <div class="stat-icon violet"><mat-icon>percent</mat-icon></div>
-        <div class="stat-label">% Grasa</div>
-        @if (fatDelta(); as d) {
+        </div>
+      }
+      @if (fatDelta(); as d) {
+        <div class="stat">
+          <div class="stat-icon violet"><mat-icon>percent</mat-icon></div>
+          <div class="stat-label">% Grasa</div>
           <div class="stat-value">{{ d.to | number: '1.0-1' }} <small>%</small></div>
           <div class="stat-sub">
             Desde {{ d.from | number: '1.0-1' }} %
             <span class="delta" [class]="trendClass(d)">{{ d.diff > 0 ? '+' : '' }}{{ d.diff | number: '1.0-1' }} pts</span>
           </div>
-        } @else {
-          <div class="stat-value muted">—</div>
-          <div class="stat-sub">Sin registros</div>
-        }
-      </div>
+        </div>
+      }
       <div class="stat">
         <div class="stat-icon green"><mat-icon>fitness_center</mat-icon></div>
         <div class="stat-label">Entrenos registrados</div>
@@ -83,8 +77,8 @@
       <div class="panel mb">
         <div class="empty">
           <mat-icon>show_chart</mat-icon>
-          <p>Aún no hay reportes semanales. Envía tu primer reporte para empezar a ver tu evolución.</p>
-          <a routerLink="/client/report" class="btn btn-primary">Enviar reporte</a>
+          <p>Aún no has enviado ningún seguimiento. Envía el primero (fotos + peso) para empezar a ver tu evolución.</p>
+          <a routerLink="/client/report" class="btn btn-primary"><mat-icon>add_a_photo</mat-icon> Enviar seguimiento</a>
         </div>
       </div>
     } @else {
@@ -93,41 +87,83 @@
         <div class="chart-body"><app-line-chart [points]="weightPoints()" unit="kg" color="#FF6B1A" /></div>
       </div>
 
-      <div class="charts-2 mb">
-        <div class="panel">
-          <div class="panel-head"><h2>Cintura</h2><span class="unit">cm</span></div>
-          <div class="chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#2F6FEB" emptyText="Registra tu cintura en al menos dos reportes." /></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>% Grasa corporal</h2><span class="unit">%</span></div>
-          <div class="chart-body"><app-line-chart [points]="fatPoints()" unit="%" color="#7C5CFA" emptyText="Registra tu % de grasa en al menos dos reportes." /></div>
-        </div>
-      </div>
-
-      <div class="panel mb">
-        <div class="panel-head wrap">
-          <h2>Energía y adherencia</h2>
-          <div class="segmented">
-            <button type="button" [class.active]="secondary() === 'energy'" (click)="secondary.set('energy')">Energía</button>
-            <button type="button" [class.active]="secondary() === 'diet'" (click)="secondary.set('diet')">Dieta</button>
-            <button type="button" [class.active]="secondary() === 'training'" (click)="secondary.set('training')">Entreno</button>
+      @if (reportsWithPhotos().length > 0) {
+        <div class="panel mb">
+          <div class="panel-head wrap">
+            <h2><mat-icon class="h-icon">photo_library</mat-icon> Fotos de mis seguimientos</h2>
+            <a routerLink="/client/report" class="link">Ver seguimientos</a>
+          </div>
+          <div class="strip">
+            @for (r of reportsWithPhotos(); track r.id) {
+              <div class="strip-item">
+                <div class="strip-meta">
+                  <strong>{{ r.createdAt | date: 'd MMM' }}</strong>
+                  <span>{{ r.weight | number: '1.0-1' }} kg</span>
+                </div>
+                <div class="strip-thumbs">
+                  @for (p of r.photos; track p.id; let i = $index) {
+                    <button type="button" class="strip-thumb" (click)="openPhotos(r, i)" [attr.aria-label]="'Ver foto ' + (i + 1)">
+                      <app-secure-img [src]="p.contentUrl" alt="" imgClass="strip-img" />
+                    </button>
+                  }
+                </div>
+              </div>
+            }
           </div>
         </div>
-        <div class="chart-body">
-          @if (secondaryAvg() !== null) {
-            <div class="avg">
-              Media: <strong>{{ secondaryAvg() | number: '1.0-1' }}{{ secondary() === 'energy' ? '/10' : '%' }}</strong>
-              <span class="muted">(últimos {{ secondaryPoints().length }} reportes)</span>
+      }
+
+      @if (hasWaist() || hasFat()) {
+        <div class="mb" [class.charts-2]="hasWaist() && hasFat()">
+          @if (hasWaist()) {
+            <div class="panel">
+              <div class="panel-head"><h2>Cintura</h2><span class="unit">cm</span></div>
+              <div class="chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#2F6FEB" emptyText="Hacen falta al menos dos registros de cintura." /></div>
             </div>
           }
-          <app-bar-chart
-            [points]="secondaryPoints()"
-            [unit]="secondary() === 'energy' ? '/10' : '%'"
-            [color]="secondary() === 'energy' ? '#D97706' : secondary() === 'diet' ? '#16A34A' : '#FF6B1A'"
-            emptyText="Sin datos en tus reportes."
-          />
+          @if (hasFat()) {
+            <div class="panel">
+              <div class="panel-head"><h2>% Grasa corporal</h2><span class="unit">%</span></div>
+              <div class="chart-body"><app-line-chart [points]="fatPoints()" unit="%" color="#7C5CFA" emptyText="Hacen falta al menos dos registros de % de grasa." /></div>
+            </div>
+          }
         </div>
-      </div>
+      }
+
+      @if (secondaryAvailable().length > 0) {
+        <div class="panel mb">
+          <div class="panel-head wrap">
+            <h2>Energía y adherencia</h2>
+            @if (secondaryAvailable().length > 1) {
+              <div class="segmented">
+                @if (secondaryAvailable().includes('energy')) {
+                  <button type="button" [class.active]="secondaryMetric() === 'energy'" (click)="secondary.set('energy')">Energía</button>
+                }
+                @if (secondaryAvailable().includes('diet')) {
+                  <button type="button" [class.active]="secondaryMetric() === 'diet'" (click)="secondary.set('diet')">Dieta</button>
+                }
+                @if (secondaryAvailable().includes('training')) {
+                  <button type="button" [class.active]="secondaryMetric() === 'training'" (click)="secondary.set('training')">Entreno</button>
+                }
+              </div>
+            }
+          </div>
+          <div class="chart-body">
+            @if (secondaryAvg() !== null) {
+              <div class="avg">
+                Media: <strong>{{ secondaryAvg() | number: '1.0-1' }}{{ secondaryMetric() === 'energy' ? '/10' : '%' }}</strong>
+                <span class="muted">(seguimientos antiguos)</span>
+              </div>
+            }
+            <app-bar-chart
+              [points]="secondaryPoints()"
+              [unit]="secondaryMetric() === 'energy' ? '/10' : '%'"
+              [color]="secondaryMetric() === 'energy' ? '#D97706' : secondaryMetric() === 'diet' ? '#16A34A' : '#FF6B1A'"
+              emptyText="Sin datos."
+            />
+          </div>
+        </div>
+      }
     }
 
     <!-- ── Strength ── -->
@@ -235,3 +271,5 @@
     </div>
   }
 </div>
+
+<app-photo-lightbox [photos]="lbPhotos()" [title]="lbTitle()" [(index)]="lbIndex" />

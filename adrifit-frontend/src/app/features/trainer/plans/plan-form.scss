@@ -4,7 +4,7 @@
 .editor.narrow { max-width: 820px; }
 
 .affix { position: relative; }
-.affix input { padding-right: 64px; }
+.affix input { padding-right: 104px; }
 .affix span {
   position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
   font-size: 0.84rem; font-weight: 600; color: var(--text-subtle); pointer-events: none;
@@ -38,4 +38,36 @@
   &:focus-visible { box-shadow: var(--ring); }
 }
 
-@media (max-width: 620px) { .toggles { grid-template-columns: 1fr; } }
+.settings-grid { margin-bottom: 16px; }
+
+/* ─── Prices ─────────────────────────────────────────────────────────── */
+.price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+.price-hint {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-height: 22px;
+  font-size: 0.8rem; color: var(--text-muted);
+  strong { color: var(--text); font-weight: 700; }
+  .muted { color: var(--text-subtle); }
+}
+.save-pill {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px;
+  background: var(--success-bg); color: var(--success); font-weight: 700; font-size: 0.74rem;
+  &.warn { background: var(--warning-bg); color: var(--warning); }
+}
+
+/* ─── Features list ──────────────────────────────────────────────────── */
+.feature-list { display: flex; flex-direction: column; gap: 10px; }
+.field.feature-row {
+  flex-direction: row; align-items: center; gap: 10px;
+  input { flex: 1; min-width: 0; width: auto; }
+}
+.f-num {
+  width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; border-radius: 9px;
+  background: var(--ink-100); color: var(--ink-600); font-size: 0.78rem; font-weight: 700;
+}
+.f-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+@media (max-width: 620px) {
+  .toggles, .price-grid { grid-template-columns: 1fr; }
+  .field.feature-row { flex-wrap: wrap; input { flex-basis: calc(100% - 38px); } }
+  .f-actions { width: 100%; justify-content: flex-end; }
+}

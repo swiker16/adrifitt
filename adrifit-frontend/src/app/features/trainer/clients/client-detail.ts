@@ -17,7 +17,7 @@ import { WorkoutLogService } from '../../../core/services/workout-log.service';
 import { PhotoService } from '../../../core/services/photo.service';
 import { Client } from '../../../shared/models/client.model';
 import { WeeklyReport } from '../../../shared/models/report.model';
-import { Plan } from '../../../shared/models/plan.model';
+import { BILLING_PERIOD_LABEL, BILLING_PERIOD_MONTHS, BILLING_PERIOD_SUFFIX, BillingPeriod, Plan } from '../../../shared/models/plan.model';
 import { SUBSCRIPTION_STATUS_LABEL, Subscription, SubscriptionStatus } from '../../../shared/models/subscription.model';
 import { ClientWorkout, Workout } from '../../../shared/models/workout.model';
 import { ClientDiet, DietSummary } from '../../../shared/models/diet.model';
@@ -28,6 +28,7 @@ import { POSE_LABEL, ProgressPhoto } from '../../../shared/models/photo.model';
 import { ChartPoint, LineChart } from '../../../shared/components/line-chart';
 import { SecureImg } from '../../../shared/components/secure-img';
 import { openBlob, saveBlob } from '../../../shared/utils/download';
+import { PlanPricingPicker } from './plan-pricing-picker';
 
 type DetailTab =
   | 'resumen' | 'suscripciones' | 'pagos' | 'rutinas' | 'entrenos' | 'dietas' | 'reportes'
@@ -40,7 +41,7 @@ interface PhotoGroup {
 
 @Component({
   selector: 'app-client-detail',
-  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule, MatIconModule, LineChart, SecureImg],
+  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule, MatIconModule, LineChart, SecureImg, PlanPricingPicker],
   templateUrl: './client-detail.html',
   styleUrl: './client-detail.scss',
 })
@@ -61,6 +62,8 @@ export class ClientDetail {
   readonly paymentStatusLabel = PAYMENT_STATUS_LABEL;
   readonly paymentMethodLabel = PAYMENT_METHOD_LABEL;
   readonly poseLabel = POSE_LABEL;
+  readonly periodLabel = BILLING_PERIOD_LABEL;
+  readonly periodSuffix = BILLING_PERIOD_SUFFIX;
 
   // Bound from the :id route param via withComponentInputBinding().
   readonly id = input.required<string>();
@@ -77,6 +80,22 @@ export class ClientDetail {
   readonly savingPlan = signal(false);
   readonly planMessage = signal<string | null>(null);
   readonly updatingStatus = signal(false);
+
+  // Change plan modal (plan + billing period + optional special price)
+  readonly assignPeriod = signal<BillingPeriod>('MONTHLY');
+  readonly assignSpecial = signal(false);
+  readonly assignCustomPrice = signal<number | null>(null);
+  readonly assignNote = signal('');
+  readonly assignSubmitted = signal(false);
+
+  // Special price modal (updatePricing)
+  readonly pricingOpen = signal(false);
+  readonly pricingPrice = signal<number | null>(null);
+  readonly pricingNote = signal('');
+  readonly savingPricing = signal(false);
+
+  // Check-in photos lightbox
+  readonly lightbox = signal<{ photos: ProgressPhoto[]; index: number; date: string } | null>(null);
 
   readonly workouts = signal<Workout[]>([]);
   readonly clientWorkout = signal<ClientWorkout | null>(null);
@@ -158,6 +177,19 @@ export class ClientDetail {
     return groups;
   });
 
+  /** Old check-ins may carry these metrics; show them only when some report has them. */
+  readonly hasMetric = computed(() => {
+    const r = this.reports();
+    const any = (f: (x: WeeklyReport) => unknown) => r.some((x) => x && f(x) !== null && f(x) !== undefined);
+    return {
+      waist: any((x) => x.waist),
+      bodyFat: any((x) => x.bodyFat),
+      energy: any((x) => x.energyLevel),
+      diet: any((x) => x.dietAdherence),
+      training: any((x) => x.trainingAdherence),
+    };
+  });
+
   readonly latestReport = computed(() => this.reports()[0] ?? null);
   readonly firstReport = computed(() => this.reports().length > 0 ? this.reports()[this.reports().length - 1] : null);
 
@@ -189,6 +221,7 @@ export class ClientDetail {
       dietAdherence: r.dietAdherence ?? null,
       trainingAdherence: r.trainingAdherence ?? null,
       hasFeedback: !!r.coachFeedback,
+      photoCount: r.photos?.length ?? 0,
     }));
   });
 
@@ -353,17 +386,43 @@ export class ClientDetail {
     });
   }
 
+  openAssignPlan(): void {
+    const sub = this.subscription();
+    this.selectedPlanId.set(sub?.planId ?? null);
+    this.assignPeriod.set(sub?.billingPeriod ?? 'MONTHLY');
+    this.assignSpecial.set(false);
+    this.assignCustomPrice.set(null);
+    this.assignNote.set('');
+    this.assignSubmitted.set(false);
+    this.showAssignPlan.set(true);
+  }
+
+  closeAssignPlan(): void {
+    if (this.savingPlan()) return;
+    this.showAssignPlan.set(false);
+  }
+
   assignPlan(): void {
+    this.assignSubmitted.set(true);
     const planId = Number(this.selectedPlanId());
     if (!planId) return;
+    const special = this.assignSpecial();
+    const custom = this.assignCustomPrice();
+    if (special && (custom === null || !Number.isFinite(custom) || custom < 0)) return;
     this.savingPlan.set(true);
     this.planMessage.set(null);
     const clientId = Number(this.id());
-    this.subscriptionService.assignPlan(clientId, { planId }).subscribe({
+    this.subscriptionService.assignPlan(clientId, {
+      planId,
+      billingPeriod: this.assignPeriod(),
+      customPrice: special ? custom : null,
+      customPriceNote: special ? this.assignNote().trim() || null : null,
+    }).subscribe({
       next: (s) => {
         this.subscription.set(s);
         this.savingPlan.set(false);
         this.planMessage.set('Plan asignado correctamente.');
+        this.notify.success('Plan asignado correctamente.');
         this.showAssignPlan.set(false);
         this.loadSubscription(clientId);
         this.loadPayments();
@@ -511,6 +570,80 @@ export class ClientDetail {
       () => this.notify.success('Contraseña copiada al portapapeles.'),
       () => this.notify.error('No se pudo copiar. Cópiala manualmente.'),
     );
+  }
+
+  // ── Special price ─────────────────────────────────────────────────────
+
+  /** Plan price for the subscription's billing period (before special conditions). */
+  planPriceOf(sub: Subscription): number | null {
+    const pp = (sub.plan?.prices ?? []).find((x) => x.period === sub.billingPeriod);
+    if (pp) return pp.price;
+    return sub.billingPeriod === 'MONTHLY' ? sub.plan?.monthlyPrice ?? null : null;
+  }
+
+  pricingMonthly(): number | null {
+    const sub = this.subscription();
+    const p = this.pricingPrice();
+    if (!sub || p === null) return null;
+    return p / BILLING_PERIOD_MONTHS[sub.billingPeriod];
+  }
+
+  openPricing(): void {
+    const sub = this.subscription();
+    if (!sub) return;
+    this.pricingPrice.set(sub.customPrice);
+    this.pricingNote.set(sub.customPriceNote ?? '');
+    this.pricingOpen.set(true);
+  }
+
+  closePricing(): void {
+    if (this.savingPricing()) return;
+    this.pricingOpen.set(false);
+  }
+
+  onPricingInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement).value;
+    this.pricingPrice.set(raw === '' ? null : Number(raw));
+  }
+
+  /** remove = true drops the special conditions (back to the plan price). */
+  savePricing(remove = false): void {
+    const sub = this.subscription();
+    if (!sub || this.savingPricing()) return;
+    const price = remove ? null : this.pricingPrice();
+    if (!remove && (price === null || !Number.isFinite(price) || price < 0)) return;
+    this.savingPricing.set(true);
+    this.subscriptionService.updatePricing(Number(this.id()), {
+      customPrice: price,
+      customPriceNote: remove ? null : this.pricingNote().trim() || null,
+    }).subscribe({
+      next: (s) => {
+        this.subscription.set(s);
+        this.savingPricing.set(false);
+        this.pricingOpen.set(false);
+        this.notify.success(remove ? 'Precio especial eliminado.' : 'Precio especial guardado.');
+        this.loadSubscription(Number(this.id()));
+        this.loadPayments();
+      },
+      error: (err) => {
+        this.savingPricing.set(false);
+        this.notify.error(err, 'No se pudo actualizar el precio.');
+      },
+    });
+  }
+
+  // ── Check-in photos lightbox ──────────────────────────────────────────
+
+  openLightbox(r: WeeklyReport, index: number): void {
+    if (!r.photos?.length) return;
+    this.lightbox.set({ photos: r.photos, index, date: r.createdAt });
+  }
+
+  moveLightbox(delta: number): void {
+    const lb = this.lightbox();
+    if (!lb) return;
+    const n = lb.photos.length;
+    this.lightbox.set({ ...lb, index: (lb.index + delta + n) % n });
   }
 
   // ── Subscription status ───────────────────────────────────────────────

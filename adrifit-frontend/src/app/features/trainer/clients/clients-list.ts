@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ClientService } from '../../../core/services/client.service';
@@ -8,13 +8,14 @@ import { PlanService } from '../../../core/services/plan.service';
 import { NotifyService } from '../../../core/services/notify.service';
 import { apiErrorMessage } from '../../../shared/utils/download';
 import { Client, CreateClientRequest } from '../../../shared/models/client.model';
-import { Plan } from '../../../shared/models/plan.model';
+import { BillingPeriod, Plan } from '../../../shared/models/plan.model';
+import { PlanPricingPicker } from './plan-pricing-picker';
 
 type CopyKind = 'username' | 'password' | 'both';
 
 @Component({
   selector: 'app-clients-list',
-  imports: [RouterLink, DatePipe, DecimalPipe, ReactiveFormsModule, MatIconModule],
+  imports: [RouterLink, DatePipe, ReactiveFormsModule, MatIconModule, PlanPricingPicker],
   templateUrl: './clients-list.html',
   styleUrl: './clients-list.scss',
 })
@@ -35,6 +36,13 @@ export class ClientsList {
   readonly formError = signal<string | null>(null);
   readonly createdInfo = signal<{ name: string; email: string; username: string; password: string } | null>(null);
   readonly copied = signal<CopyKind | null>(null);
+
+  // Billing period + special conditions of the new client's subscription.
+  readonly period = signal<BillingPeriod>('MONTHLY');
+  readonly special = signal(false);
+  readonly customPrice = signal<number | null>(null);
+  readonly customNote = signal('');
+  readonly submitted = signal(false);
 
   readonly search = signal('');
   readonly sort = signal<'recent' | 'name'>('recent');
@@ -94,7 +102,22 @@ export class ClientsList {
   toggleForm(): void {
     this.showForm.update((v) => !v);
     this.formError.set(null);
-    if (!this.showForm()) this.form.reset();
+    if (!this.showForm()) this.resetForm();
+  }
+
+  private resetForm(): void {
+    this.form.reset();
+    this.period.set('MONTHLY');
+    this.special.set(false);
+    this.customPrice.set(null);
+    this.customNote.set('');
+    this.submitted.set(false);
+  }
+
+  private specialInvalid(): boolean {
+    if (!this.special()) return false;
+    const c = this.customPrice();
+    return c === null || !Number.isFinite(c) || c < 0;
   }
 
   initials(c: Client): string {
@@ -102,7 +125,8 @@ export class ClientsList {
   }
 
   save(): void {
-    if (this.form.invalid) {
+    this.submitted.set(true);
+    if (this.form.invalid || this.specialInvalid()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -121,6 +145,9 @@ export class ClientsList {
       objective: raw.objective.trim(),
       email:     raw.email.trim(),
       planId:    raw.planId!,
+      billingPeriod: this.period(),
+      customPrice: this.special() ? this.customPrice() : null,
+      customPriceNote: this.special() ? this.customNote().trim() || null : null,
       notes:     raw.notes?.trim() || undefined,
     };
 
@@ -134,7 +161,7 @@ export class ClientsList {
           password: res.temporaryPassword,
         });
         this.saving.set(false);
-        this.form.reset();
+        this.resetForm();
         this.showForm.set(false);
       },
       error: (err) => {

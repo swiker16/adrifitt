@@ -1,126 +1,283 @@
 <div class="topbar">
   <div>
     <div class="page-title">Enviar seguimiento</div>
-    <div class="subtitle">Registra tus datos para que tu coach ajuste tu plan</div>
+    <div class="subtitle">Tus fotos, tu peso y un comentario. Menos de 2 minutos.</div>
   </div>
 </div>
 
 <div class="content">
-  @if (submitted()) {
-    <div class="success">
-      <span class="tile green"><mat-icon>check_circle</mat-icon></span>
-      <div class="grow">
-        <h3>¡Seguimiento registrado!</h3>
-        <p>Tu coach lo revisará y recibirás feedback en breve. <a class="inline-link" routerLink="/client/photos">¿Añadir fotos de progreso?</a></p>
-      </div>
-      <button class="btn btn-outline" (click)="reset()">Enviar otro</button>
-    </div>
-  } @else {
-    <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
-      <a routerLink="/client/photos" class="photo-hint">
-        <span class="tile violet"><mat-icon>photo_camera</mat-icon></span>
-        <span class="grow">
-          <strong>Añade fotos de progreso</strong>
-          <span>Frente, perfil y espalda para que tu entrenador vea tu evolución.</span>
-        </span>
-        <mat-icon class="chev">chevron_right</mat-icon>
-      </a>
-
-      <h3 class="group-title">Medidas</h3>
-      <div class="measures">
-        <div class="field">
-          <label for="r-weight">Peso (kg) *</label>
-          <input id="r-weight" type="number" inputmode="decimal" step="0.1" formControlName="weight" placeholder="79.8" />
-          @if (form.controls.weight.touched && form.controls.weight.invalid) {
-            <small class="err">Introduce un peso válido (20–400).</small>
+  @if (submitted(); as s) {
+    <!-- ── Success ── -->
+    <section class="card success" aria-live="polite">
+      <span class="tile green lg"><mat-icon>check_circle</mat-icon></span>
+      <h2>¡Seguimiento enviado!</h2>
+      <p>Tu entrenador ya tiene tus {{ s.photos.length }} fotos y tu peso de <strong>{{ s.weight | number: '1.0-1' }} kg</strong>. Recibirás su feedback aquí mismo.</p>
+      @if (s.photos.length) {
+        <div class="success-thumbs">
+          @for (p of s.photos; track p.id; let i = $index) {
+            <button type="button" class="mini-thumb" (click)="openPhotos(s, i)" [attr.aria-label]="'Ver foto ' + (i + 1)">
+              <app-secure-img [src]="p.contentUrl" alt="" imgClass="cover-img" />
+            </button>
           }
         </div>
-        <div class="field">
-          <label for="r-waist">Cintura (cm)</label>
-          <input id="r-waist" type="number" inputmode="decimal" step="0.1" formControlName="waist" placeholder="84" />
-        </div>
-        <div class="field">
-          <label for="r-fat">% Grasa corporal</label>
-          <input id="r-fat" type="number" inputmode="decimal" step="0.1" formControlName="bodyFat" placeholder="18" />
-        </div>
+      }
+      <div class="success-actions">
+        <a routerLink="/client/dashboard" class="btn btn-primary"><mat-icon>home</mat-icon> Volver al inicio</a>
+        <button type="button" class="btn btn-light" (click)="newCheckIn()">Nuevo seguimiento</button>
       </div>
+    </section>
+  } @else {
+    <!-- ── Form ── -->
+    <form class="card checkin" (submit)="$event.preventDefault(); submit()" novalidate>
+      <!-- Step 1: photos -->
+      <section class="step">
+        <div class="step-head">
+          <span class="step-num" [class.done]="photosOk()">@if (photosOk()) { <mat-icon>check</mat-icon> } @else { 1 }</span>
+          <div class="grow">
+            <h2>Fotos</h2>
+            <p class="step-sub">Frontal, perfil y espalda con la misma luz que la última vez.</p>
+          </div>
+          <span class="counter" [class.ok]="photosOk()" [class.over]="picked().length > maxPhotos">
+            {{ minPhotos }}–{{ maxPhotos }} fotos ({{ picked().length }} {{ picked().length === 1 ? 'seleccionada' : 'seleccionadas' }})
+          </span>
+        </div>
 
-      <h3 class="group-title">¿Cómo ha ido la semana?</h3>
-      <div class="sliders">
-        <div class="slider">
-          <div class="slider-top">
-            <label for="r-energy">Nivel de energía</label>
-            <span class="range-value">{{ form.controls.energyLevel.value }}<small>/10</small></span>
-          </div>
-          <input id="r-energy" type="range" min="1" max="10" formControlName="energyLevel" />
-        </div>
-        <div class="slider">
-          <div class="slider-top">
-            <label for="r-diet">Adherencia dieta</label>
-            <span class="range-value">{{ form.controls.dietAdherence.value }}<small>%</small></span>
-          </div>
-          <input id="r-diet" type="range" min="0" max="100" step="5" formControlName="dietAdherence" />
-        </div>
-        <div class="slider">
-          <div class="slider-top">
-            <label for="r-training">Adherencia entreno</label>
-            <span class="range-value">{{ form.controls.trainingAdherence.value }}<small>%</small></span>
-          </div>
-          <input id="r-training" type="range" min="0" max="100" step="5" formControlName="trainingAdherence" />
-        </div>
-      </div>
+        <input
+          id="rp-files"
+          class="sr-only"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          (change)="onFiles($event)"
+          [disabled]="saving()"
+        />
 
-      <div class="field comments">
-        <label for="r-comments">Comentarios</label>
-        <textarea id="r-comments" rows="4" formControlName="comments" placeholder="¿Cómo te has sentido esta semana?"></textarea>
-      </div>
+        @if (picked().length === 0) {
+          <label for="rp-files" class="drop">
+            <span class="tile orange lg"><mat-icon>add_a_photo</mat-icon></span>
+            <strong>Añadir fotos</strong>
+            <span class="drop-hint">Hazlas ahora o elígelas de la galería · JPG, PNG o WEBP · máx. 10 MB cada una</span>
+          </label>
+        } @else {
+          <div class="thumbs">
+            @for (p of picked(); track p.key; let i = $index) {
+              <div class="thumb">
+                <img [src]="p.url" [alt]="'Foto ' + (i + 1)" />
+                <span class="thumb-num">{{ i + 1 }}</span>
+                <button type="button" class="thumb-del" [attr.aria-label]="'Quitar foto ' + (i + 1)" (click)="removePhoto(p.key)" [disabled]="saving()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+            @if (picked().length < maxPhotos) {
+              <label for="rp-files" class="thumb add-tile">
+                <mat-icon>add_photo_alternate</mat-icon>
+                <span>Añadir más</span>
+              </label>
+            }
+          </div>
+        }
+        @if (fileError()) { <div class="err step-err"><mat-icon>error_outline</mat-icon>{{ fileError() }}</div> }
+        @if (photoCountError()) { <div class="err step-err"><mat-icon>error_outline</mat-icon>{{ photoCountError() }}</div> }
+      </section>
+
+      <!-- Step 2: weight -->
+      <section class="step">
+        <div class="step-head">
+          <span class="step-num" [class.done]="weight() !== null && !weightError()">@if (weight() !== null && !weightError()) { <mat-icon>check</mat-icon> } @else { 2 }</span>
+          <div class="grow">
+            <h2><label for="rp-weight">Peso de hoy</label></h2>
+            <p class="step-sub">En ayunas, después de ir al baño.</p>
+          </div>
+        </div>
+        <div class="weight-box" [class.invalid]="!!weightError()">
+          <input
+            id="rp-weight"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            enterkeyhint="next"
+            placeholder="79,5"
+            [value]="weightText()"
+            (input)="onWeight($event)"
+            (blur)="weightTouched.set(true)"
+            [disabled]="saving()"
+            [attr.aria-invalid]="!!weightError()"
+            aria-describedby="rp-weight-hint"
+          />
+          <span class="unit">kg</span>
+        </div>
+        <div id="rp-weight-hint">
+          @if (weightError()) {
+            <div class="err step-err"><mat-icon>error_outline</mat-icon>{{ weightError() }}</div>
+          } @else if (lastWeight() !== null) {
+            <div class="hint">
+              Último seguimiento: {{ lastWeight() | number: '1.0-1' }} kg
+              @if (weight() !== null && weight()! >= 20 && weight()! <= 400) {
+                <span class="delta" [class.down]="weight()! - lastWeight()! < 0" [class.up]="weight()! - lastWeight()! > 0">
+                  {{ weight()! - lastWeight()! > 0 ? '+' : '' }}{{ weight()! - lastWeight()! | number: '1.0-1' }} kg
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Step 3: comment -->
+      <section class="step">
+        <div class="step-head">
+          <span class="step-num" [class.done]="!!comments().trim()">@if (comments().trim()) { <mat-icon>check</mat-icon> } @else { 3 }</span>
+          <div class="grow">
+            <h2><label for="rp-comments">Comentario</label></h2>
+            <p class="step-sub">Lo que tu entrenador debería saber.</p>
+          </div>
+        </div>
+        <div class="field">
+          <textarea
+            id="rp-comments"
+            rows="4"
+            [attr.maxlength]="maxComment"
+            placeholder="¿Qué tal la semana? Hambre, descanso, entrenos, dudas... cuéntaselo a tu coach."
+            [value]="comments()"
+            (input)="onComments($event)"
+            [disabled]="saving()"
+          ></textarea>
+          <span class="hint count">{{ comments().length }}/{{ maxComment }}</span>
+        </div>
+      </section>
 
       @if (submitError()) {
-        <div class="alert error mt"><mat-icon>error</mat-icon><span>{{ submitError() }}</span></div>
+        <div class="alert error" role="alert"><mat-icon>error</mat-icon><span>{{ submitError() }}</span></div>
       }
-      <div class="form-actions">
+
+      <!-- Sticky submit bar -->
+      <div class="submit-bar">
+        <div class="sb-info">
+          <div class="sb-steps" aria-hidden="true">
+            @for (i of [1, 2, 3]; track i) { <span [class.on]="i <= stepsDone()"></span> }
+          </div>
+          <span class="sb-text">
+            {{ picked().length }}/{{ maxPhotos }} fotos · {{ weight() !== null ? (weight() | number: '1.0-1') + ' kg' : 'sin peso' }}
+          </span>
+        </div>
         <button type="submit" class="btn btn-primary btn-lg" [disabled]="saving()">
-          <mat-icon>{{ saving() ? 'hourglass_empty' : 'send' }}</mat-icon>
-          {{ saving() ? 'Enviando...' : 'Enviar seguimiento' }}
+          @if (saving()) {
+            <span class="spinner" aria-hidden="true"></span> Subiendo {{ picked().length }} fotos…
+          } @else {
+            <mat-icon>send</mat-icon> Enviar seguimiento
+          }
         </button>
       </div>
     </form>
   }
 
-  @if (historyLoaded()) {
-    <div class="panel history">
-      <div class="panel-head"><h2>Mis seguimientos anteriores</h2></div>
-      @if (historyError()) {
-        <div class="pad"><div class="alert error"><mat-icon>error</mat-icon><span>{{ historyError() }}</span></div></div>
-      } @else if (history().length === 0) {
-        <div class="empty"><mat-icon>inbox</mat-icon><p>Aún no has enviado ningún seguimiento.</p></div>
-      } @else {
-        @for (r of history(); track r.id) {
-          <div class="report-row">
-            <div class="report-meta">
-              <span class="report-date">{{ r.createdAt | date:'dd/MM/yyyy' }}</span>
-              <span class="badge" [class.orange]="r.status === 'PENDING'" [class.green]="r.status === 'REVIEWED'">
-                {{ r.status === 'PENDING' ? 'Pendiente' : 'Revisado' }}
-              </span>
+  <!-- ── History ── -->
+  <section class="card history">
+    <div class="history-head">
+      <h2>Mis seguimientos</h2>
+      @if (history().length) { <span class="muted">{{ history().length }}</span> }
+    </div>
+
+    @if (historyLoading()) {
+      @for (i of [1, 2]; track i) {
+        <div class="h-item">
+          <div class="skeleton sk-line w40"></div>
+          <div class="sk-thumbs">@for (j of [1, 2, 3, 4]; track j) { <div class="skeleton"></div> }</div>
+        </div>
+      }
+    } @else if (historyError()) {
+      <div class="pad">
+        <div class="alert error"><mat-icon>error</mat-icon><span class="grow">{{ historyError() }}</span>
+          <button type="button" class="btn btn-sm btn-outline" (click)="loadHistory()">Reintentar</button>
+        </div>
+      </div>
+    } @else if (history().length === 0) {
+      <div class="empty">
+        <mat-icon>inbox</mat-icon>
+        <p>Aún no has enviado ningún seguimiento. El primero es el de arriba.</p>
+      </div>
+    } @else {
+      @for (r of history(); track r.id) {
+        <article class="h-item">
+          <div class="h-top">
+            <div class="h-date">
+              <strong>{{ r.createdAt | date: "d 'de' MMMM yyyy" }}</strong>
+              <span>{{ r.createdAt | date: 'HH:mm' }}</span>
             </div>
-            <div class="report-data">
-              <span><strong>{{ r.weight }}</strong> kg</span>
-              @if (r.waist) { <span>Cin. <strong>{{ r.waist }}</strong> cm</span> }
-              @if (r.bodyFat) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
-              @if (r.energyLevel) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
-            </div>
-            @if (r.coachFeedback) {
-              <div class="feedback-box">
-                <mat-icon>sports</mat-icon>
-                <div class="grow">
-                  <p>{{ r.coachFeedback }}</p>
-                  <span class="feedback-date">Revisado {{ r.reviewedAt | date:'dd/MM/yyyy' }}</span>
+            <span class="badge" [class.orange]="r.status === 'PENDING'" [class.green]="r.status === 'REVIEWED'">
+              {{ r.status === 'PENDING' ? 'Pendiente' : 'Revisado' }}
+            </span>
+          </div>
+
+          @if (editId() === r.id) {
+            <div class="edit-box">
+              <div class="edit-grid">
+                <div class="field">
+                  <label [for]="'ew-' + r.id">Peso (kg)</label>
+                  <input [id]="'ew-' + r.id" type="text" inputmode="decimal" autocomplete="off" [value]="editWeight()" (input)="onEditWeight($event)" />
+                </div>
+                <div class="field">
+                  <label [for]="'ec-' + r.id">Comentario</label>
+                  <textarea [id]="'ec-' + r.id" rows="3" [attr.maxlength]="maxComment" [value]="editComments()" (input)="onEditComments($event)"></textarea>
                 </div>
               </div>
-            }
-          </div>
-        }
+              @if (editError()) { <div class="err step-err"><mat-icon>error_outline</mat-icon>{{ editError() }}</div> }
+              <div class="edit-actions">
+                <button type="button" class="btn btn-light btn-sm" (click)="cancelEdit()" [disabled]="savingEdit()">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="saveEdit(r)" [disabled]="savingEdit()">
+                  @if (savingEdit()) { <span class="spinner" aria-hidden="true"></span> Guardando… } @else { <mat-icon>check</mat-icon> Guardar }
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="h-weight">
+              <span class="kg">{{ r.weight | number: '1.0-1' }}<small> kg</small></span>
+              @if (deltas().get(r.id); as d) {
+                <span class="delta" [class.down]="d < 0" [class.up]="d > 0">{{ d > 0 ? '+' : '' }}{{ d | number: '1.0-1' }} kg</span>
+              } @else if (deltas().has(r.id)) {
+                <span class="delta">= 0 kg</span>
+              }
+              @if (r.status === 'PENDING') {
+                <button type="button" class="btn btn-light btn-sm edit-btn" (click)="startEdit(r)"><mat-icon>edit</mat-icon> Editar</button>
+              }
+            </div>
+            @if (r.comments) { <p class="h-comment">{{ r.comments }}</p> }
+          }
+
+          @if (hasLegacy(r)) {
+            <div class="legacy">
+              @if (r.waist != null) { <span>Cintura <strong>{{ r.waist }}</strong> cm</span> }
+              @if (r.bodyFat != null) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
+              @if (r.energyLevel != null) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
+              @if (r.dietAdherence != null) { <span>Dieta <strong>{{ r.dietAdherence }}</strong>%</span> }
+              @if (r.trainingAdherence != null) { <span>Entreno <strong>{{ r.trainingAdherence }}</strong>%</span> }
+            </div>
+          }
+
+          @if (r.photos.length) {
+            <div class="h-thumbs">
+              @for (p of r.photos; track p.id; let i = $index) {
+                <button type="button" class="mini-thumb" (click)="openPhotos(r, i)" [attr.aria-label]="'Ver foto ' + (i + 1)">
+                  <app-secure-img [src]="p.contentUrl" alt="" imgClass="cover-img" />
+                </button>
+              }
+            </div>
+          }
+
+          @if (r.coachFeedback) {
+            <div class="feedback-box">
+              <span class="tile orange sm"><mat-icon>sports</mat-icon></span>
+              <div class="grow">
+                <span class="fb-title">Feedback de tu entrenador</span>
+                <p>{{ r.coachFeedback }}</p>
+                @if (r.reviewedAt) { <span class="feedback-date">Revisado el {{ r.reviewedAt | date: 'dd/MM/yyyy' }}</span> }
+              </div>
+            </div>
+          }
+        </article>
       }
-    </div>
-  }
+    }
+  </section>
 </div>
+
+<app-photo-lightbox [photos]="lbPhotos()" [title]="lbTitle()" [(index)]="lbIndex" />

@@ -1,7 +1,7 @@
 <div class="topbar">
   <div>
     <div class="page-title">Seguimientos</div>
-    <div class="subtitle">Revisa los seguimientos (check-ins) de tus clientes y dales feedback. Al responder se completa su revisión.</div>
+    <div class="subtitle">Fotos, peso y comentario de cada check-in. Al responder se marca como revisado.</div>
   </div>
   @if (pendingCount() > 0) {
     <div class="topbar-actions"><span class="badge orange">{{ pendingCount() }} pendientes</span></div>
@@ -11,108 +11,135 @@
 <div class="content">
   <div class="filter-bar">
     <div class="segmented">
-      <button [class.active]="filter() === 'all'" (click)="filter.set('all')">Todos</button>
-      <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
+      <button type="button" [class.active]="filter() === 'all'" (click)="filter.set('all')">Todos</button>
+      <button type="button" [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
         Pendientes @if (pendingCount() > 0) { <span class="count-pill">{{ pendingCount() }}</span> }
       </button>
-      <button [class.active]="filter() === 'reviewed'" (click)="filter.set('reviewed')">Revisados</button>
+      <button type="button" [class.active]="filter() === 'reviewed'" (click)="filter.set('reviewed')">Revisados</button>
     </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-body">
-      @if (loading()) {
-        <div class="sk-rows">
-          @for (i of [1,2,3,4,5]; track i) {
-            <div class="sk-row"><div class="skeleton sk-av"></div><div class="skeleton sk-l1"></div><div class="skeleton sk-l2"></div></div>
-          }
-        </div>
-      } @else if (error()) {
-        <div class="empty"><mat-icon>cloud_off</mat-icon><p>No se pudieron cargar los seguimientos.</p></div>
-      } @else if (filtered().length === 0) {
-        <div class="empty"><mat-icon>inbox</mat-icon><p>No hay seguimientos en esta categoría.</p></div>
-      } @else {
-        <div class="table-wrap">
-        <table class="table reports-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Fecha</th>
-              <th>Peso</th>
-              <th>Diet.</th>
-              <th>Entreno</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (r of filtered(); track r.id) {
-              <tr class="main-row" [class.expanded-row]="expandedId() === r.id" (click)="toggleExpand(r.id)">
-                <td class="c-user">
-                  <div class="cell-user">
-                    <span class="avatar">{{ initials(r) }}</span>
-                    <a class="name client-link" [routerLink]="['/trainer/clients', r.clientId]" (click)="$event.stopPropagation()">{{ clientName(r) }}</a>
-                  </div>
-                </td>
-                <td class="c-date" data-label="Fecha">{{ r.createdAt | date:'dd/MM/yy' }}</td>
-                <td class="c-weight" data-label="Peso"><strong>{{ r.weight }} kg</strong></td>
-                <td class="c-adh" data-label="Dieta">
-                  @if (r.dietAdherence != null) {
-                    <div class="adherence-cell">
-                      <div class="progress"><span [style.width.%]="r.dietAdherence"></span></div>
-                      <strong>{{ r.dietAdherence }}%</strong>
-                    </div>
-                  } @else { <span class="na">—</span> }
-                </td>
-                <td class="c-adh" data-label="Entreno">
-                  @if (r.trainingAdherence != null) {
-                    <div class="adherence-cell">
-                      <div class="progress"><span [style.width.%]="r.trainingAdherence"></span></div>
-                      <strong>{{ r.trainingAdherence }}%</strong>
-                    </div>
-                  } @else { <span class="na">—</span> }
-                </td>
-                <td class="c-status">
-                  @if (r.status === 'PENDING') {
-                    <span class="badge orange">Pendiente</span>
-                  } @else {
-                    <span class="badge green">Revisado</span>
-                  }
-                </td>
-                <td class="c-toggle">
-                  <button class="icon-btn" (click)="$event.stopPropagation(); toggleExpand(r.id)" [title]="expandedId() === r.id ? 'Cerrar' : 'Ver y responder'">
-                    <mat-icon>{{ expandedId() === r.id ? 'expand_less' : 'expand_more' }}</mat-icon>
-                  </button>
-                </td>
-              </tr>
-              @if (expandedId() === r.id) {
-                <tr class="detail-row">
-                  <td colspan="7">
-                    <div class="detail-panel">
-                      <div class="detail-grid">
-                        @if (r.waist) { <div class="d-item"><span>Cintura</span><strong>{{ r.waist }} cm</strong></div> }
-                        @if (r.bodyFat) { <div class="d-item"><span>Grasa</span><strong>{{ r.bodyFat }}%</strong></div> }
-                        @if (r.energyLevel) { <div class="d-item"><span>Energía</span><strong>{{ r.energyLevel }}/10</strong></div> }
-                        @if (r.comments) { <div class="d-item full"><span>Comentario</span><strong>{{ r.comments }}</strong></div> }
-                      </div>
-                      <div class="feedback-section">
-                        <label class="feedback-label">Feedback del entrenador</label>
-                        <textarea rows="3" [(ngModel)]="feedbackText" [ngModelOptions]="{standalone: true}" placeholder="Escribe tu feedback aquí..."></textarea>
-                        @if (feedbackError()) { <small class="err">{{ feedbackError() }}</small> }
-                        <button class="btn btn-primary btn-sm" [disabled]="savingFeedback()" (click)="saveFeedback(r.id)">
-                          <mat-icon>{{ savingFeedback() ? 'hourglass_empty' : 'send' }}</mat-icon>
-                          {{ savingFeedback() ? 'Guardando...' : (r.status === 'REVIEWED' ? 'Actualizar feedback' : 'Enviar feedback y marcar revisado') }}
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
+  @if (loading()) {
+    <div class="list" aria-busy="true" aria-label="Cargando seguimientos">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="card report">
+          <div class="r-head"><div class="skeleton sk-av"></div><div class="skeleton sk-l1"></div></div>
+          <div class="sk-photos">@for (j of [1, 2, 3, 4]; track j) { <div class="skeleton"></div> }</div>
         </div>
       }
     </div>
-  </div>
+  } @else if (error()) {
+    <div class="card">
+      <div class="empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>No se pudieron cargar los seguimientos.</p>
+        <button type="button" class="btn btn-primary btn-sm" (click)="load()"><mat-icon>refresh</mat-icon> Reintentar</button>
+      </div>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="card">
+      <div class="empty">
+        <mat-icon>{{ filter() === 'pending' ? 'task_alt' : 'inbox' }}</mat-icon>
+        <p>{{ filter() === 'pending' ? '¡Todo revisado! No hay seguimientos pendientes.' : 'No hay seguimientos en esta categoría.' }}</p>
+      </div>
+    </div>
+  } @else {
+    <div class="list">
+      @for (r of filtered(); track r.id) {
+        <article class="card report" [class.pending]="r.status === 'PENDING'">
+          <header class="r-head">
+            <span class="avatar">{{ initials(r) }}</span>
+            <div class="grow">
+              <a class="client-link" [routerLink]="['/trainer/clients', r.clientId]">{{ clientName(r) }}</a>
+              <div class="r-date">{{ r.createdAt | date: "d MMM yyyy · HH:mm" }}</div>
+            </div>
+            @if (r.status === 'PENDING') {
+              <span class="badge orange">Pendiente</span>
+            } @else {
+              <span class="badge green">Revisado</span>
+            }
+          </header>
+
+          <div class="r-body">
+            <div class="r-info">
+              <div class="r-weight">
+                <span class="kg">{{ r.weight | number: '1.0-1' }}<small> kg</small></span>
+                @if (deltas().has(r.id)) {
+                  @let d = deltas().get(r.id)!;
+                  <span class="delta" [class.down]="d < 0" [class.up]="d > 0" title="Respecto a su seguimiento anterior">
+                    {{ d > 0 ? '+' : d === 0 ? '±' : '' }}{{ d | number: '1.0-1' }} kg
+                  </span>
+                } @else {
+                  <span class="delta">Primer registro</span>
+                }
+              </div>
+
+              @if (r.comments) {
+                <p class="r-comment">{{ r.comments }}</p>
+              } @else {
+                <p class="r-comment empty-comment">Sin comentario.</p>
+              }
+
+              @if (hasLegacy(r)) {
+                <div class="legacy">
+                  @if (r.waist != null) { <span>Cintura <strong>{{ r.waist }}</strong> cm</span> }
+                  @if (r.bodyFat != null) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
+                  @if (r.energyLevel != null) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
+                  @if (r.dietAdherence != null) { <span>Dieta <strong>{{ r.dietAdherence }}</strong>%</span> }
+                  @if (r.trainingAdherence != null) { <span>Entreno <strong>{{ r.trainingAdherence }}</strong>%</span> }
+                </div>
+              }
+            </div>
+
+            @if (r.photos.length) {
+              <div class="r-photos" [attr.data-count]="r.photos.length">
+                @for (p of r.photos; track p.id; let i = $index) {
+                  <button type="button" class="ph" (click)="openPhotos(r, i)" [attr.aria-label]="'Ver foto ' + (i + 1) + ' de ' + r.photos.length">
+                    <app-secure-img [src]="p.contentUrl" alt="" imgClass="ph-img" />
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="no-photos"><mat-icon>hide_image</mat-icon> Sin fotos</div>
+            }
+          </div>
+
+          <footer class="r-feedback">
+            @if (showForm(r)) {
+              <label class="fb-label" [for]="'fb-' + r.id">{{ r.status === 'REVIEWED' ? 'Editar feedback' : 'Tu feedback' }}</label>
+              <textarea
+                [id]="'fb-' + r.id"
+                rows="3"
+                placeholder="Qué ves en las fotos, cómo va el peso y qué ajustas para la próxima semana…"
+                [value]="draftOf(r)"
+                (input)="onDraft(r.id, $event)"
+                [disabled]="savingId() === r.id"
+              ></textarea>
+              @if (feedbackErrors()[r.id]) { <small class="err">{{ feedbackErrors()[r.id] }}</small> }
+              <div class="fb-actions">
+                @if (r.status === 'REVIEWED') {
+                  <button type="button" class="btn btn-light btn-sm" (click)="cancelEdit(r)" [disabled]="savingId() === r.id">Cancelar</button>
+                }
+                <button type="button" class="btn btn-primary btn-sm" [disabled]="savingId() !== null" (click)="saveFeedback(r)">
+                  <mat-icon>{{ savingId() === r.id ? 'hourglass_empty' : 'send' }}</mat-icon>
+                  {{ savingId() === r.id ? 'Guardando...' : (r.status === 'REVIEWED' ? 'Actualizar feedback' : 'Enviar feedback y marcar revisado') }}
+                </button>
+              </div>
+            } @else {
+              <div class="fb-done">
+                <span class="tile"><mat-icon>sports</mat-icon></span>
+                <div class="grow">
+                  <span class="fb-label">Tu feedback @if (r.reviewedAt) { <span class="fb-date">· {{ r.reviewedAt | date: 'dd/MM/yyyy' }}</span> }</span>
+                  <p>{{ r.coachFeedback }}</p>
+                </div>
+                <button type="button" class="icon-btn" title="Editar feedback" aria-label="Editar feedback" (click)="editFeedback(r)"><mat-icon>edit</mat-icon></button>
+              </div>
+            }
+          </footer>
+        </article>
+      }
+    </div>
+  }
 </div>
+
+<app-photo-lightbox [photos]="lbPhotos()" [title]="lbTitle()" [(index)]="lbIndex" />

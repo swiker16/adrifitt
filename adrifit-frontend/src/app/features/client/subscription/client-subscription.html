@@ -41,7 +41,22 @@
                   {{ s.cancelAtPeriodEnd ? 'Cancelada' : statusLabel[s.status] }}
                 </span>
               </div>
-              <div class="cc-price">{{ s.plan.monthlyPrice | number: '1.2-2' }} €<span>/mes</span></div>
+              <div class="cc-price">
+                {{ s.effectivePrice | number: '1.0-2' }} €<span>{{ periodSuffix[s.billingPeriod] }}</span>
+                @if (s.customPrice !== null && planPriceOf(s) !== null) {
+                  <s class="cc-old">{{ planPriceOf(s) | number: '1.0-2' }} €</s>
+                }
+              </div>
+              <div class="cc-sub">
+                <span>Pago {{ periodLabel[s.billingPeriod].toLowerCase() }}</span>
+                @if (s.billingPeriod !== 'MONTHLY') { <span>· equivale a {{ s.monthlyEquivalent | number: '1.0-2' }} €/mes</span> }
+              </div>
+              @if (s.customPrice !== null) {
+                <div class="cc-special">
+                  <span class="special-badge"><mat-icon>verified</mat-icon> Condiciones especiales</span>
+                  @if (s.customPriceNote && s.customPriceNote.trim().toLowerCase() !== 'condiciones especiales') { <span class="cc-note">{{ s.customPriceNote }}</span> }
+                </div>
+              }
             </div>
             @if (!s.cancelAtPeriodEnd && s.status === 'ACTIVE') {
               <div class="cc-next">
@@ -54,13 +69,13 @@
             }
           </div>
 
-          <ul class="cc-features">
-            @for (f of planFeatures(s.plan); track f.label) {
-              <li [class.off]="!f.on">
-                <mat-icon>{{ f.on ? 'check_circle' : 'remove_circle_outline' }}</mat-icon> {{ f.label }}
-              </li>
-            }
-          </ul>
+          @if (featureItems(s.plan).length) {
+            <ul class="cc-features">
+              @for (f of featureItems(s.plan); track $index) {
+                <li><mat-icon>check_circle</mat-icon><span><strong>{{ f.title }}</strong>@if (f.detail) { <small>{{ f.detail }}</small> }</span></li>
+              }
+            </ul>
+          }
 
           @if (s.cancelAtPeriodEnd) {
             <div class="alert warn cc-alert">
@@ -128,11 +143,18 @@
 
   <!-- ═══ Plans ═══ -->
   <section class="section">
-    <h2 class="section-title">
-      {{ subState() === 'none' ? 'Elige tu plan' : 'Cambiar de plan' }}
-    </h2>
+    <div class="plans-head">
+      <h2 class="section-title">{{ subState() === 'none' ? 'Elige tu plan' : 'Cambiar de plan' }}</h2>
+      @if (!plansLoading() && periods().length > 1) {
+        <div class="segmented period-seg" role="tablist" aria-label="Periodo de pago">
+          @for (b of periods(); track b) {
+            <button type="button" role="tab" [class.active]="period() === b" [attr.aria-selected]="period() === b" (click)="period.set(b)">{{ periodLabel[b] }}</button>
+          }
+        </div>
+      }
+    </div>
     @if (plansLoading()) {
-      <div class="plans" aria-busy="true" aria-label="Cargando planes"><div class="skeleton sk-plan"></div><div class="skeleton sk-plan"></div><div class="skeleton sk-plan"></div></div>
+      <div class="plans" aria-busy="true" aria-label="Cargando planes"><div class="skeleton sk-plan"></div><div class="skeleton sk-plan"></div></div>
     } @else if (plans().length === 0) {
       <div class="empty"><mat-icon>workspace_premium</mat-icon><p>No hay planes disponibles ahora mismo.</p></div>
     } @else {
@@ -140,17 +162,38 @@
         @for (p of plans(); track p.id) {
           <article class="plan-card" [class.current]="isCurrent(p)">
             @if (isCurrent(p)) { <span class="plan-flag">Tu plan</span> }
+            @else if (isCurrentPlan(p)) { <span class="plan-flag soft">Tu plan · {{ periodLabel[sub()!.billingPeriod].toLowerCase() }}</span> }
             <h3>{{ p.name }}</h3>
-            <div class="plan-price">{{ p.monthlyPrice | number: '1.0-2' }} €<span>/mes</span></div>
+            @if (priceFor(p); as pp) {
+              <div class="plan-price">{{ pp.price | number: '1.0-2' }} €<span>{{ periodSuffix[pp.period] }}</span></div>
+              <div class="plan-eq">
+                @if (pp.months > 1) {
+                  <span>equivale a <strong>{{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes</strong></span>
+                  @if (pp.savingPercent > 0) { <span class="save-pill">Ahorra {{ pp.savingPercent | number: '1.0-0' }} %</span> }
+                } @else {
+                  <span>Pago mes a mes</span>
+                }
+              </div>
+            } @else {
+              <div class="plan-price">{{ p.monthlyPrice | number: '1.0-2' }} €<span>/mes</span></div>
+              <div class="plan-eq"><span>Sin pago {{ periodLabel[period()].toLowerCase() }} en este plan</span></div>
+            }
             @if (p.description) { <p class="plan-desc">{{ p.description }}</p> }
-            <ul>
-              @for (f of planFeatures(p); track f.label) {
-                <li [class.off]="!f.on"><mat-icon>{{ f.on ? 'check' : 'close' }}</mat-icon> {{ f.label }}</li>
-              }
-            </ul>
+            @if (featureItems(p).length) {
+              <ul>
+                @for (f of featureItems(p); track $index) {
+                  <li [title]="f.detail"><mat-icon>check</mat-icon> {{ f.title }}</li>
+                }
+              </ul>
+            } @else {
+              <div class="grow"></div>
+            }
             <button class="btn btn-block" [class.btn-primary]="!isCurrent(p)" [class.btn-outline]="isCurrent(p)"
                     [disabled]="isCurrent(p) || sub()?.status === 'PAUSED'" (click)="askChange(p)">
-              @if (isCurrent(p)) { Plan actual } @else if (subState() === 'none') { Suscribirme } @else { Cambiar a {{ p.name }} }
+              @if (isCurrent(p)) { Plan actual }
+              @else if (subState() === 'none') { Suscribirme }
+              @else if (isCurrentPlan(p)) { Cambiar periodo de pago }
+              @else { Cambiar a {{ p.name }} }
             </button>
           </article>
         }
@@ -214,8 +257,9 @@
               <div class="pay-row">
                 <span class="pr-icon"><mat-icon>workspace_premium</mat-icon></span>
                 <div class="pr-info">
-                  <div class="pr-concept">{{ h.planName }}</div>
+                  <div class="pr-concept">{{ h.planName }} · {{ periodLabel[h.billingPeriod] }}</div>
                   <div class="pr-meta">
+                    <span>{{ h.effectivePrice | number: '1.0-2' }} €{{ periodSuffix[h.billingPeriod] }}@if (h.customPrice !== null) { · precio especial }</span>
                     <span>Desde {{ h.startDate | date: 'dd/MM/yyyy' }}</span>
                     @if (h.endDate) { <span>hasta {{ h.endDate | date: 'dd/MM/yyyy' }}</span> }
                     @else if (h.active) { <span>renueva {{ h.renewalDate | date: 'dd/MM/yyyy' }}</span> }
@@ -246,21 +290,47 @@
         <button class="modal-close" (click)="changeTarget.set(null)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
       </div>
       <div class="modal-body">
-        <div class="modal-plan">
-          <strong>{{ plan.name }}</strong>
-          <span>{{ plan.monthlyPrice | number: '1.2-2' }} €/mes</span>
-        </div>
-        <ul class="explain">
-          <li><mat-icon>today</mat-icon> El nuevo plan empieza <strong>hoy</strong>.</li>
-          <li><mat-icon>receipt</mat-icon> Se crea un nuevo cobro de {{ plan.monthlyPrice | number: '1.2-2' }} € que podrás pagar desde esta página.</li>
-          @if (subState() !== 'none') {
-            <li><mat-icon>block</mat-icon> Los cobros pendientes de tu plan actual se anulan.</li>
+        <div class="field-label">Periodo de pago</div>
+        <div class="period-options" role="radiogroup" aria-label="Periodo de pago">
+          @for (pp of plan.prices; track pp.period) {
+            <button type="button" class="period-opt" role="radio" [class.active]="changePeriod() === pp.period"
+                    [attr.aria-checked]="changePeriod() === pp.period" (click)="changePeriod.set(pp.period)">
+              <span class="po-l">{{ periodLabel[pp.period] }}</span>
+              <span class="po-v">{{ pp.price | number: '1.0-2' }} €<small>{{ periodSuffix[pp.period] }}</small></span>
+              <span class="po-m">
+                @if (pp.months > 1) { {{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes } @else { Sin permanencia }
+                @if (pp.savingPercent > 0) { <em>-{{ pp.savingPercent | number: '1.0-0' }}%</em> }
+              </span>
+            </button>
           }
-        </ul>
+        </div>
+        @if (priceFor(plan, changePeriod()); as sel) {
+          <ul class="explain">
+            <li><mat-icon>today</mat-icon> El nuevo plan empieza <strong>hoy</strong>.</li>
+            <li><mat-icon>receipt</mat-icon> Se crea un nuevo cobro de {{ sel.price | number: '1.2-2' }} € ({{ periodLabel[sel.period].toLowerCase() }}) que podrás pagar desde esta página.</li>
+            @if (subState() !== 'none') {
+              <li><mat-icon>block</mat-icon> Los cobros pendientes de tu plan actual se anulan.</li>
+            }
+          </ul>
+        }
+        @if (sub(); as cur) {
+          @if (cur.customPrice !== null) {
+            <div class="alert warn special-warn">
+              <mat-icon>warning</mat-icon>
+              <div>
+                Ahora tienes <strong>condiciones especiales</strong> ({{ cur.effectivePrice | number: '1.0-2' }} €{{ periodSuffix[cur.billingPeriod] }}).
+                Si cambias de plan o de periodo las perderás y pagarás el precio normal. Si quieres mantenerlas, habla antes con tu entrenador.
+              </div>
+            </div>
+          }
+        }
+        @if (isCurrent(plan, changePeriod())) {
+          <div class="alert info special-warn"><mat-icon>info</mat-icon><div>Ya tienes este plan con este periodo de pago.</div></div>
+        }
       </div>
       <div class="modal-foot">
         <button class="btn btn-outline" (click)="changeTarget.set(null)" [disabled]="changing()">Volver</button>
-        <button class="btn btn-primary" (click)="confirmChange()" [disabled]="changing()">
+        <button class="btn btn-primary" (click)="confirmChange()" [disabled]="changing() || isCurrent(plan, changePeriod())">
           {{ changing() ? 'Procesando...' : 'Confirmar' }}
         </button>
       </div>

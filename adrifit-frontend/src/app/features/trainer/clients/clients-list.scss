@@ -69,34 +69,6 @@
 }
 .notes-hint { font-size: 0.78rem; color: var(--text-subtle); }
 
-/* Plan picker: selectable cards */
-.plan-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.plan-option {
-  position: relative; text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
-  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md);
-  padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow-xs);
-  transition: border-color 0.2s, box-shadow 0.25s var(--ease), transform 0.25s var(--ease), background 0.2s;
-  &:hover { border-color: var(--ink-300); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-  &.selected { border-color: var(--brand); background: var(--brand-50); box-shadow: var(--ring); }
-}
-.po-head { display: flex; flex-direction: column; gap: 2px; padding-right: 30px; }
-.po-name { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.98rem; letter-spacing: -0.015em; }
-.po-price { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.35rem; letter-spacing: -0.03em; }
-.po-price small { font-family: 'Inter', sans-serif; font-weight: 500; color: var(--text-muted); font-size: 0.78rem; margin-left: 2px; letter-spacing: 0; }
-.po-desc { margin: 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; }
-.po-freq {
-  display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px;
-  font-size: 0.78rem; font-weight: 600; color: var(--ink-600);
-  mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--text-subtle); }
-}
-.po-radio {
-  position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%;
-  border: 1.5px solid var(--border-strong); background: var(--surface); display: grid; place-items: center; color: transparent;
-  transition: all 0.2s var(--ease);
-  mat-icon { font-size: 15px; width: 15px; height: 15px; }
-}
-.plan-option.selected .po-radio { background: var(--brand); border-color: var(--brand); color: #fff; }
-
 .form-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 18px; border-top: 1px solid var(--ink-100); }
 
 /* ── Toolbar ── */
@@ -162,6 +134,5 @@
   .form-grid { grid-template-columns: 1fr; }
   .client-form { padding: 18px; }
   .search { max-width: none; flex-basis: 100%; }
-  .plan-picker { grid-template-columns: 1fr; }
   .form-actions .btn { flex: 1; }
 }

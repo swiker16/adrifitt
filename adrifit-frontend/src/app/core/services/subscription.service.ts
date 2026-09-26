@@ -6,7 +6,9 @@ import {
   AssignPlanRequest,
   Subscription,
   SubscriptionStatus,
+  UpdatePricingRequest,
 } from '../../shared/models/subscription.model';
+import { BillingPeriod } from '../../shared/models/plan.model';
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
@@ -31,6 +33,11 @@ export class SubscriptionService {
     return this.http.patch<Subscription>(`${this.baseUrl}/clients/${clientId}/subscription/status`, { status });
   }
 
+  /** Special conditions (custom price) of the client's current subscription. */
+  updatePricing(clientId: number, payload: UpdatePricingRequest): Observable<Subscription> {
+    return this.http.patch<Subscription>(`${this.baseUrl}/clients/${clientId}/subscription/pricing`, payload);
+  }
+
   // ── Client ──────────────────────────────────────────────────────────────
 
   getMine(): Observable<Subscription> {
@@ -41,8 +48,8 @@ export class SubscriptionService {
     return this.http.get<Subscription[]>(`${this.baseUrl}/subscriptions/me/history`);
   }
 
-  changeMyPlan(planId: number): Observable<Subscription> {
-    return this.http.post<Subscription>(`${this.baseUrl}/subscriptions/me/change-plan`, { planId });
+  changeMyPlan(planId: number, billingPeriod: BillingPeriod = 'MONTHLY'): Observable<Subscription> {
+    return this.http.post<Subscription>(`${this.baseUrl}/subscriptions/me/change-plan`, { planId, billingPeriod });
   }
 
   cancelMine(): Observable<Subscription> {

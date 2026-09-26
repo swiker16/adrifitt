@@ -260,7 +260,17 @@ section[id] { scroll-margin-top: 80px; }
 }
 
 /* Plans */
-.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: stretch; max-width: 1080px; margin-inline: auto; }
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: stretch; max-width: 920px; margin-inline: auto; }
+.period-toggle-wrap { display: flex; justify-content: center; margin: -8px 0 28px; }
+.period-toggle {
+  flex-wrap: nowrap; background: var(--surface); box-shadow: var(--shadow-xs); border-color: var(--border);
+  button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 16px; font-size: 0.88rem; }
+  button.active { background: var(--ink-900); color: #fff; }
+}
+.seg-save {
+  font-size: 0.7rem; font-weight: 700; padding: 1px 6px; border-radius: 999px;
+  background: var(--success-bg); color: var(--success);
+}
 .plan-skeleton { height: 420px; border-radius: var(--radius); }
 .plan-card {
   position: relative; display: flex; flex-direction: column; padding: 30px 28px;
@@ -278,6 +288,27 @@ section[id] { scroll-margin-top: 80px; }
 .plan-card h3 { font-size: 1.2rem; font-weight: 700; padding-right: 110px; }
 .price { margin-top: 16px; font-family: 'Sora', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
 .price span { font-size: 1rem; font-weight: 500; letter-spacing: 0; color: var(--text-subtle); margin-left: 2px; }
+.plan-desc { margin: 8px 0 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+.price-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 10px; min-height: 24px;
+  font-size: 0.86rem; color: var(--text-muted);
+  strong { color: var(--text); font-weight: 700; }
+}
+.save-badge {
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
+  background: var(--success-bg); color: var(--success); font-size: 0.76rem; font-weight: 700;
+}
+.review-line {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 0.84rem; font-weight: 600; color: var(--text-muted);
+  mat-icon { font-size: 17px; width: 17px; height: 17px; color: var(--brand); }
+}
+.f-detail { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.86rem; margin-top: 1px; }
+.plan-card li strong { font-weight: 700; color: var(--text); }
+.more-btn {
+  display: none; align-items: center; justify-content: center; gap: 4px; margin: -14px 0 20px; padding: 8px;
+  border: none; background: transparent; font: inherit; font-size: 0.86rem; font-weight: 600; color: var(--brand-600); cursor: pointer;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
 .plan-card ul { list-style: none; padding: 22px 0 0; margin: 22px 0 28px; border-top: 1px solid var(--border); display: grid; gap: 12px; flex: 1; }
 .plan-card li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.93rem; color: var(--ink-700); line-height: 1.45; }
 .plan-card li mat-icon {
@@ -287,6 +318,17 @@ section[id] { scroll-margin-top: 80px; }
 .featured .price span { color: var(--ink-400); }
 .featured ul { border-color: rgba(255, 255, 255, 0.1); }
 .featured li { color: var(--ink-200); }
+.featured li strong { color: #fff; }
+.featured .f-detail, .featured .plan-desc, .featured .price-meta, .featured .review-line { color: var(--ink-300); }
+.featured .price-meta strong { color: #fff; }
+.featured .save-badge { background: rgba(34, 197, 94, 0.16); color: #4ade80; }
+.featured .more-btn { color: var(--brand-400); }
+@media (max-width: 640px) {
+  .plan-card:not(.expanded) li.extra { display: none; }
+  .more-btn { display: inline-flex; }
+  .period-toggle-wrap { margin: -4px 0 22px; }
+  .period-toggle { width: 100%; button { flex: 1; padding: 8px 6px; font-size: 0.8rem; flex-direction: column; gap: 1px; } }
+}
 .featured li mat-icon { background: rgba(255, 107, 26, 0.18); color: var(--brand-400); }
 .plans-empty {
   display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; max-width: 420px; margin: 0 auto;

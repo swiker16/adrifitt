@@ -7,10 +7,15 @@ import { DashboardService } from '../../../core/services/dashboard.service';
 import { apiErrorMessage } from '../../../shared/utils/download';
 import { ClientDashboard as ClientDashboardData } from '../../../shared/models/dashboard.model';
 import { SUBSCRIPTION_STATUS_LABEL } from '../../../shared/models/subscription.model';
+import { BILLING_PERIOD_SUFFIX } from '../../../shared/models/plan.model';
+import { REPORT_MAX_PHOTOS, REPORT_MIN_PHOTOS } from '../../../shared/models/report.model';
+import { ProgressPhoto } from '../../../shared/models/photo.model';
+import { SecureImg } from '../../../shared/components/secure-img';
+import { PhotoLightbox } from '../report/photo-lightbox';
 
 @Component({
   selector: 'app-client-dashboard',
-  imports: [RouterLink, DatePipe, DecimalPipe, MatIconModule],
+  imports: [RouterLink, DatePipe, DecimalPipe, MatIconModule, SecureImg, PhotoLightbox],
   templateUrl: './client-dashboard.html',
   styleUrl: './client-dashboard.scss',
 })
@@ -19,6 +24,12 @@ export class ClientDashboard {
   private readonly dashboardService = inject(DashboardService);
 
   readonly statusLabel = SUBSCRIPTION_STATUS_LABEL;
+  readonly periodSuffix = BILLING_PERIOD_SUFFIX;
+  readonly minPhotos = REPORT_MIN_PHOTOS;
+  readonly maxPhotos = REPORT_MAX_PHOTOS;
+
+  readonly lbPhotos = signal<ProgressPhoto[]>([]);
+  readonly lbIndex = signal<number | null>(null);
   readonly today = new Date();
 
   readonly data = signal<ClientDashboardData | null>(null);
@@ -53,6 +64,11 @@ export class ClientDashboard {
 
   constructor() {
     this.load();
+  }
+
+  openPhotos(photos: ProgressPhoto[], index: number): void {
+    this.lbPhotos.set(photos);
+    this.lbIndex.set(index);
   }
 
   load(): void {

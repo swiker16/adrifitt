@@ -48,14 +48,50 @@
     </div>
 
     <section class="panel">
-      <div class="panel-head"><h2>Funcionalidades incluidas</h2></div>
+      <div class="panel-head"><h2>Precios por periodo</h2></div>
+      <div class="price-cards">
+        @for (pp of plan()!.prices; track pp.period) {
+          <div class="pcard">
+            <span class="overline">{{ periodLabel[pp.period] }}</span>
+            <div class="pc-price"><strong>{{ pp.price | number: '1.0-2' }}€</strong><span>{{ periodSuffix[pp.period] }}</span></div>
+            <div class="pc-meta">
+              @if (pp.months > 1) { <span>equivale a {{ pp.monthlyEquivalent | number: '1.0-2' }} €/mes</span> }
+              @else { <span>Pago mes a mes</span> }
+              @if (pp.savingPercent > 0) { <span class="save-pill">Ahorra {{ pp.savingPercent | number: '1.0-1' }} %</span> }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Qué incluye</h2></div>
+      @if (featureItems().length) {
+        <ul class="feat-list">
+          @for (f of featureItems(); track $index) {
+            <li>
+              <span class="lib-tile green"><mat-icon>check</mat-icon></span>
+              <div class="min0">
+                <div class="f-title">{{ f.title }}</div>
+                @if (f.detail) { <div class="f-detail">{{ f.detail }}</div> }
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="empty"><mat-icon>checklist</mat-icon><p>Este plan aún no tiene puntos descritos.</p></div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Ajustes del plan</h2></div>
       <div class="feature-grid">
         @for (f of features(); track f.label) {
           <div class="feature" [class.on]="f.enabled">
             <span class="lib-tile" [class.green]="f.enabled" [class.gray]="!f.enabled"><mat-icon>{{ f.icon }}</mat-icon></span>
             <span class="f-label">{{ f.label }}</span>
-            @if (f.enabled) { <span class="badge green">Incluido</span> }
-            @else { <span class="badge gray">No incluido</span> }
+            @if (f.enabled) { <span class="badge green">Activado</span> }
+            @else { <span class="badge gray">Desactivado</span> }
           </div>
         }
       </div>

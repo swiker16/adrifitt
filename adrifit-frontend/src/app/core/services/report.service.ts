@@ -9,8 +9,18 @@ export class ReportService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = API_BASE_URL;
 
-  createMine(payload: CreateWeeklyReportRequest): Observable<WeeklyReport> {
-    return this.http.post<WeeklyReport>(`${this.baseUrl}/reports`, payload);
+  /** Client check-in: 4-6 photos, weight and an optional comment. */
+  submitMine(weight: number, comments: string | null, photos: File[]): Observable<WeeklyReport> {
+    const fd = new FormData();
+    fd.append('weight', String(weight));
+    if (comments && comments.trim()) fd.append('comments', comments.trim());
+    photos.forEach((f) => fd.append('files', f, f.name));
+    return this.http.post<WeeklyReport>(`${this.baseUrl}/reports`, fd);
+  }
+
+  /** Client edits a check-in that has not been reviewed yet (weight / comment only). */
+  updateMine(id: number, weight: number, comments: string | null): Observable<WeeklyReport> {
+    return this.http.put<WeeklyReport>(`${this.baseUrl}/reports/${id}`, { weight, comments });
   }
 
   findMine(): Observable<WeeklyReport[]> {

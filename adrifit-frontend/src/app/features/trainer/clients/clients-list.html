@@ -91,24 +91,15 @@
         } @else if (plans().length === 0) {
           <div class="alert warn"><mat-icon>info</mat-icon> No hay planes activos. Crea uno en la sección Planes.</div>
         }
-        <div class="plan-picker">
-          @for (p of plans(); track p.id) {
-            <button type="button" class="plan-option"
-                    [class.selected]="form.controls.planId.value === p.id"
-                    (click)="form.controls.planId.setValue(p.id); form.controls.planId.markAsTouched()">
-              <div class="po-head">
-                <span class="po-name">{{ p.name }}</span>
-                <span class="po-price">{{ p.monthlyPrice | number:'1.0-0' }}€<small>/mes</small></span>
-              </div>
-              <p class="po-desc">{{ p.description }}</p>
-              <span class="po-freq"><mat-icon>event_repeat</mat-icon> Revisión cada {{ p.reviewFrequencyDays }} días</span>
-              <span class="po-radio"><mat-icon>check</mat-icon></span>
-            </button>
-          }
-        </div>
-        @if (form.controls.planId.touched && form.controls.planId.invalid) {
-          <small class="err">Selecciona un plan para el cliente.</small>
-        }
+        <app-plan-pricing-picker
+          [plans]="plans()"
+          [showErrors]="submitted()"
+          [planId]="form.controls.planId.value"
+          (planIdChange)="form.controls.planId.setValue($event); form.controls.planId.markAsTouched()"
+          [(period)]="period"
+          [(special)]="special"
+          [(customPrice)]="customPrice"
+          [(customNote)]="customNote" />
       </div>
 
       <div class="cf-section">

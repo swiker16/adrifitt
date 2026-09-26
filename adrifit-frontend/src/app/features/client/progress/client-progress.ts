@@ -14,6 +14,7 @@ import { WeeklyReport } from '../../../shared/models/report.model';
 import { ExerciseProgress, ExerciseProgressPoint } from '../../../shared/models/workout-log.model';
 import { POSE_LABEL, PhotoPose, ProgressPhoto } from '../../../shared/models/photo.model';
 import { ClientDashboard } from '../../../shared/models/dashboard.model';
+import { PhotoLightbox } from '../report/photo-lightbox';
 
 interface Delta {
   from: number;
@@ -38,7 +39,7 @@ function safe<T>(obs: Observable<T>, fallback: T): Observable<{ data: T; failed:
 
 @Component({
   selector: 'app-client-progress',
-  imports: [MatIconModule, DatePipe, DecimalPipe, RouterLink, LineChart, BarChart, SecureImg],
+  imports: [MatIconModule, DatePipe, DecimalPipe, RouterLink, LineChart, BarChart, SecureImg, PhotoLightbox],
   templateUrl: './client-progress.html',
   styleUrl: './client-progress.scss',
 })
@@ -81,9 +82,36 @@ export class ClientProgress {
   readonly waistPoints = computed(() => this.pointsOf((r) => r.waist));
   readonly fatPoints = computed(() => this.pointsOf((r) => r.bodyFat));
 
+  /** Legacy metrics (only old check-ins have them): sections render only when there is data. */
+  readonly hasWaist = computed(() => this.waistPoints().some((p) => p.value != null));
+  readonly hasFat = computed(() => this.fatPoints().some((p) => p.value != null));
+  readonly secondaryAvailable = computed<SecondaryMetric[]>(() => {
+    const r = this.sortedReports();
+    const out: SecondaryMetric[] = [];
+    if (r.some((x) => x.energyLevel != null)) out.push('energy');
+    if (r.some((x) => x.dietAdherence != null)) out.push('diet');
+    if (r.some((x) => x.trainingAdherence != null)) out.push('training');
+    return out;
+  });
+  /** Selected metric, falling back to the first one that has data. */
+  readonly secondaryMetric = computed<SecondaryMetric>(() => {
+    const avail = this.secondaryAvailable();
+    return avail.includes(this.secondary()) ? this.secondary() : (avail[0] ?? 'energy');
+  });
+
+  /** Check-ins with photos, newest first (for the "Fotos de mis seguimientos" strip). */
+  readonly reportsWithPhotos = computed(() =>
+    [...this.sortedReports()].reverse().filter((r) => r.photos.length > 0).slice(0, 8),
+  );
+
+  readonly lbPhotos = signal<ProgressPhoto[]>([]);
+  readonly lbTitle = signal('');
+  readonly lbIndex = signal<number | null>(null);
+
   readonly secondaryPoints = computed<BarPoint[]>(() => {
-    const metric = this.secondary();
+    const metric = this.secondaryMetric();
     return this.sortedReports()
+      .filter((r) => (metric === 'energy' ? r.energyLevel : metric === 'diet' ? r.dietAdherence : r.trainingAdherence) != null)
       .slice(-12)
       .map((r) => ({
         label: this.shortDate(r.createdAt),
@@ -187,6 +215,12 @@ export class ClientProgress {
       );
       this.loading.set(false);
     });
+  }
+
+  openPhotos(r: WeeklyReport, index: number): void {
+    this.lbPhotos.set(r.photos);
+    this.lbTitle.set('Seguimiento del ' + this.shortDate(r.createdAt));
+    this.lbIndex.set(index);
   }
 
   onExercise(event: Event): void {

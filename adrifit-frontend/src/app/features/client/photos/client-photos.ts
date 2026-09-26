@@ -10,6 +10,9 @@ import { POSE_LABEL, PhotoPose, ProgressPhoto } from '../../../shared/models/pho
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
 
+/** Pose filter, or 'REPORT' = photos sent with a check-in (seguimiento). */
+type PhotoFilter = PhotoPose | 'ALL' | 'REPORT';
+
 interface PhotoGroup {
   date: string;
   photos: ProgressPhoto[];
@@ -33,7 +36,7 @@ export class ClientPhotos implements OnDestroy {
   readonly photos = signal<ProgressPhoto[]>([]);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
-  readonly poseFilter = signal<PhotoPose | 'ALL'>('ALL');
+  readonly poseFilter = signal<PhotoFilter>('ALL');
   readonly deletingId = signal<number | null>(null);
 
   // ── Upload form ─────────────────────────────────────────────────────────
@@ -55,7 +58,7 @@ export class ClientPhotos implements OnDestroy {
 
   readonly filtered = computed(() => {
     const f = this.poseFilter();
-    return f === 'ALL' ? this.photos() : this.photos().filter((p) => p.pose === f);
+    return this.photos().filter((p) => this.matches(p, f));
   });
 
   readonly groups = computed<PhotoGroup[]>(() => {
@@ -107,8 +110,21 @@ export class ClientPhotos implements OnDestroy {
     });
   }
 
-  countFor(pose: PhotoPose | 'ALL'): number {
-    return pose === 'ALL' ? this.photos().length : this.photos().filter((p) => p.pose === pose).length;
+  readonly reportCount = computed(() => this.photos().filter((p) => p.reportId != null).length);
+
+  countFor(filter: PhotoFilter): number {
+    return this.photos().filter((p) => this.matches(p, filter)).length;
+  }
+
+  private matches(p: ProgressPhoto, f: PhotoFilter): boolean {
+    if (f === 'ALL') return true;
+    if (f === 'REPORT') return p.reportId != null;
+    return p.pose === f;
+  }
+
+  /** Label shown on a photo: "Seguimiento" for check-in photos, the pose otherwise. */
+  labelOf(p: ProgressPhoto): string {
+    return p.reportId != null ? 'Seguimiento' : this.poseLabel[p.pose];
   }
 
   // ── Upload ──────────────────────────────────────────────────────────────

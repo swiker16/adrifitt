@@ -16,3 +16,22 @@
     mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-subtle); }
   }
 }
+
+.period-prices {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  .pp {
+    display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; min-width: 0;
+    border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--ink-100);
+  }
+  .pp-l { font-size: 0.72rem; color: var(--text-subtle); font-weight: 600; }
+  .pp-v { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.95rem; letter-spacing: -0.02em; }
+  .pp-s { font-size: 0.72rem; font-weight: 700; color: var(--success); }
+}
+
+.feat-mini {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px;
+  li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.86rem; color: var(--text); font-weight: 600; min-width: 0; }
+  li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--success); flex-shrink: 0; margin-top: 1px; }
+  .more { color: var(--text-subtle); font-weight: 500; padding-left: 24px; font-size: 0.82rem; }
+}

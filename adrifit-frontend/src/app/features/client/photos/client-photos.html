@@ -29,6 +29,9 @@
   <div class="filters">
     <div class="segmented">
       <button type="button" [class.active]="poseFilter() === 'ALL'" (click)="poseFilter.set('ALL')">Todas ({{ countFor('ALL') }})</button>
+      @if (reportCount() > 0) {
+        <button type="button" [class.active]="poseFilter() === 'REPORT'" (click)="poseFilter.set('REPORT')">De seguimientos ({{ reportCount() }})</button>
+      }
       @for (p of poses; track p) {
         <button type="button" [class.active]="poseFilter() === p" (click)="poseFilter.set(p)">{{ poseLabel[p] }} ({{ countFor(p) }})</button>
       }
@@ -52,7 +55,7 @@
       </div>
     </div>
   } @else if (groups().length === 0) {
-    <div class="panel"><div class="empty"><mat-icon>filter_alt_off</mat-icon><p>No hay fotos con esta pose.</p></div></div>
+    <div class="panel"><div class="empty"><mat-icon>filter_alt_off</mat-icon><p>No hay fotos con este filtro.</p></div></div>
   } @else {
     @for (g of groups(); track g.date) {
       <section class="group">
@@ -68,8 +71,8 @@
               (keydown.enter)="onPhotoClick(p)"
             >
               <div class="thumb">
-                <app-secure-img [src]="p.contentUrl" [alt]="poseLabel[p.pose]" imgClass="thumb-img" />
-                <span class="badge gray pose">{{ poseLabel[p.pose] }}</span>
+                <app-secure-img [src]="p.contentUrl" [alt]="labelOf(p)" imgClass="thumb-img" />
+                <span class="badge pose" [class.gray]="p.reportId == null" [class.orange]="p.reportId != null">{{ labelOf(p) }}</span>
                 @if (compareMode()) {
                   <span class="select-dot" [class.on]="isSelected(p.id)"><mat-icon>check</mat-icon></span>
                 } @else {
@@ -156,11 +159,11 @@
   <div class="modal-backdrop" (click)="viewing.set(null)">
     <div class="modal wide viewer" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
       <div class="modal-head">
-        <h2>{{ poseLabel[v.pose] }} · {{ v.takenOn | date: 'dd/MM/yyyy' }}</h2>
+        <h2>{{ labelOf(v) }} · {{ v.takenOn | date: 'dd/MM/yyyy' }}</h2>
         <button type="button" class="modal-close" aria-label="Cerrar" (click)="viewing.set(null)"><mat-icon>close</mat-icon></button>
       </div>
       <div class="modal-body">
-        <app-secure-img [src]="v.contentUrl" [alt]="poseLabel[v.pose]" imgClass="large-img" />
+        <app-secure-img [src]="v.contentUrl" [alt]="labelOf(v)" imgClass="large-img" />
         @if (v.notes) { <p class="notes mt">{{ v.notes }}</p> }
         @if (v.trainerComment) {
           <div class="trainer-comment mt"><mat-icon>chat</mat-icon><span><strong>Tu entrenador:</strong> {{ v.trainerComment }}</span></div>
@@ -186,10 +189,10 @@
         <div class="compare-grid">
           @for (p of comparePhotos(); track p.id; let i = $index) {
             <figure>
-              <app-secure-img [src]="p.contentUrl" [alt]="poseLabel[p.pose]" imgClass="compare-img" />
+              <app-secure-img [src]="p.contentUrl" [alt]="labelOf(p)" imgClass="compare-img" />
               <figcaption>
                 <span class="badge" [class.gray]="i === 0" [class.orange]="i === 1">{{ i === 0 ? 'Antes' : 'Después' }}</span>
-                {{ p.takenOn | date: 'dd/MM/yyyy' }} · {{ poseLabel[p.pose] }}
+                {{ p.takenOn | date: 'dd/MM/yyyy' }} · {{ labelOf(p) }}
               </figcaption>
             </figure>
           }

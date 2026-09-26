@@ -5,7 +5,7 @@
     <div class="subtitle">Este es el resumen de tu semana</div>
   </div>
   <div class="topbar-actions desktop-only">
-    <a routerLink="/client/report" class="btn btn-primary"><mat-icon>send</mat-icon> Enviar seguimiento</a>
+    <a routerLink="/client/report" class="btn btn-primary" title="{{ minPhotos }}–{{ maxPhotos }} fotos + tu peso"><mat-icon>add_a_photo</mat-icon> Enviar seguimiento</a>
   </div>
 </div>
 
@@ -74,7 +74,10 @@
           <div class="rc-date">Envía tu primer seguimiento</div>
           <div class="rc-when">Tu entrenador lo revisará y ajustará tu plan.</div>
         }
-        <a routerLink="/client/report" class="btn btn-primary rc-btn"><mat-icon>send</mat-icon> Enviar seguimiento</a>
+        <div class="rc-cta">
+          <a routerLink="/client/report" class="btn btn-primary rc-btn"><mat-icon>add_a_photo</mat-icon> Enviar seguimiento</a>
+          <span class="rc-hint">{{ minPhotos }}–{{ maxPhotos }} fotos + tu peso · 2 min</span>
+        </div>
       </section>
 
       <!-- ── Plan ── -->
@@ -100,8 +103,8 @@
         @if (d.subscription; as s) {
           <div class="pc-meta">
             <div>
-              <span>Cuota</span>
-              <strong>{{ s.plan.monthlyPrice | number: '1.2-2' }} €/mes</strong>
+              <span>Cuota{{ s.customPrice != null ? ' · condiciones especiales' : '' }}</span>
+              <strong>{{ s.effectivePrice | number: '1.0-2' }} €{{ periodSuffix[s.billingPeriod] }}</strong>
             </div>
             <div>
               <span>{{ s.cancelAtPeriodEnd ? 'Acceso hasta' : 'Próximo cobro' }}</span>
@@ -190,16 +193,24 @@
       @if (d.latestReport; as r) {
         <div class="last-report">
           <div class="lr-date">
-            <span>{{ r.createdAt | date: 'dd/MM/yyyy' }}</span>
+            <span>{{ r.createdAt | date: "d 'de' MMMM" }}</span>
             <span class="badge" [class]="'badge ' + (r.status === 'REVIEWED' ? 'green' : 'orange')">{{ r.status === 'REVIEWED' ? 'Revisado' : 'Pendiente de revisión' }}</span>
           </div>
-          <div class="lr-chips">
-            <span><strong>{{ r.weight }}</strong> kg</span>
-            @if (r.waist) { <span>Cintura <strong>{{ r.waist }}</strong> cm</span> }
-            @if (r.bodyFat) { <span>Grasa <strong>{{ r.bodyFat }}</strong>%</span> }
-            @if (r.energyLevel) { <span>Energía <strong>{{ r.energyLevel }}</strong>/10</span> }
-            @if (r.dietAdherence != null) { <span>Dieta <strong>{{ r.dietAdherence }}</strong>%</span> }
-            @if (r.trainingAdherence != null) { <span>Entreno <strong>{{ r.trainingAdherence }}</strong>%</span> }
+          <div class="lr-main">
+            <div class="lr-text">
+              <div class="lr-weight">{{ r.weight | number: '1.0-1' }}<small> kg</small></div>
+              @if (r.comments) { <p class="lr-comment">{{ r.comments }}</p> }
+            </div>
+            @if (r.photos.length) {
+              <div class="lr-thumbs">
+                @for (p of r.photos.slice(0, 3); track p.id; let i = $index) {
+                  <button type="button" class="lr-thumb" (click)="openPhotos(r.photos, i)" [attr.aria-label]="'Ver foto ' + (i + 1)">
+                    <app-secure-img [src]="p.contentUrl" alt="" imgClass="lr-img" />
+                    @if (i === 2 && r.photos.length > 3) { <span class="lr-more">+{{ r.photos.length - 3 }}</span> }
+                  </button>
+                }
+              </div>
+            }
           </div>
           @if (r.coachFeedback) {
             <div class="feedback-block">
@@ -217,8 +228,8 @@
       } @else {
         <div class="empty">
           <mat-icon>assignment</mat-icon>
-          <p>Envía tu primer seguimiento para recibir feedback de tu entrenador.</p>
-          <a routerLink="/client/report" class="btn btn-primary btn-sm"><mat-icon>send</mat-icon> Enviar seguimiento</a>
+          <p>Envía tu primer seguimiento ({{ minPhotos }}–{{ maxPhotos }} fotos + tu peso) para recibir feedback de tu entrenador.</p>
+          <a routerLink="/client/report" class="btn btn-primary btn-sm"><mat-icon>add_a_photo</mat-icon> Enviar seguimiento</a>
         </div>
       }
     </div>
@@ -236,3 +247,5 @@
     }
   }
 </div>
+
+<app-photo-lightbox [photos]="lbPhotos()" title="Último seguimiento" [(index)]="lbIndex" />

@@ -72,7 +72,7 @@
       </div>
 
       <div class="quick">
-        <button class="quick-btn" (click)="activeTab.set('suscripciones'); showAssignPlan.set(true)">
+        <button class="quick-btn" (click)="activeTab.set('suscripciones'); openAssignPlan()">
           <mat-icon>swap_horiz</mat-icon> Cambiar plan
         </button>
         <button class="quick-btn" (click)="activeTab.set('rutinas'); showAssignWorkout.set(true)">
@@ -183,7 +183,10 @@
                 <span class="tile blue"><mat-icon>workspace_premium</mat-icon></span>
                 <div class="sum-info">
                   <div class="sum-name">{{ sub.planName }}</div>
-                  <div class="sum-sub">{{ sub.plan.monthlyPrice | number:'1.0-2' }}€/mes · cada {{ sub.plan.reviewFrequencyDays }} días</div>
+                  <div class="sum-sub">
+                    {{ sub.effectivePrice | number:'1.0-2' }}€{{ periodSuffix[sub.billingPeriod] }} · {{ periodLabel[sub.billingPeriod] }}
+                    @if (sub.customPrice !== null) { · <span class="special-inline">precio especial</span> }
+                  </div>
                 </div>
                 <span class="badge" [class]="subStatusBadge(sub.status)">{{ subStatusLabel[sub.status] }}</span>
               </div>
@@ -194,7 +197,7 @@
               <button class="btn btn-link" (click)="activeTab.set('suscripciones')">Ver historial</button>
             } @else {
               <div class="empty-sm"><mat-icon>card_membership</mat-icon><p>Sin plan activo.</p></div>
-              <button class="btn btn-primary btn-sm" (click)="activeTab.set('suscripciones'); showAssignPlan.set(true)">Asignar plan</button>
+              <button class="btn btn-primary btn-sm" (click)="activeTab.set('suscripciones'); openAssignPlan()">Asignar plan</button>
             }
           </div>
         </div>
@@ -240,6 +243,16 @@
                 @if (r.dietAdherence) { <div class="metric-item"><span>Dieta</span><strong>{{ r.dietAdherence }}%</strong></div> }
                 @if (r.trainingAdherence) { <div class="metric-item"><span>Entreno</span><strong>{{ r.trainingAdherence }}%</strong></div> }
               </div>
+              @if (r.photos.length) {
+                <div class="thumb-strip">
+                  @for (ph of r.photos.slice(0, 4); track ph.id; let i = $index) {
+                    <button type="button" class="thumb" (click)="openLightbox(r, i)" [attr.aria-label]="'Ver foto ' + (i + 1)">
+                      <app-secure-img [src]="ph.contentUrl" imgClass="thumb-img" alt="Foto de seguimiento" />
+                      @if (i === 3 && r.photos.length > 4) { <span class="thumb-more">+{{ r.photos.length - 4 }}</span> }
+                    </button>
+                  }
+                </div>
+              }
               @if (!r.coachFeedback) {
                 <div class="no-feedback-bar"><mat-icon>pending</mat-icon> Pendiente de feedback</div>
               }
@@ -261,7 +274,7 @@
                 <span class="tile blue"><mat-icon>assignment</mat-icon></span>
                 <div class="act-info">
                   <div class="act-title">Seguimiento enviado</div>
-                  <div class="act-sub">Peso: {{ r.weight }} kg@if (r.waist) { · Cintura: {{ r.waist }} cm}</div>
+                  <div class="act-sub">Peso: {{ r.weight }} kg@if (r.photos.length) { · {{ r.photos.length }} fotos }@if (r.waist) { · Cintura: {{ r.waist }} cm}</div>
                 </div>
                 <div class="act-time">{{ r.createdAt | date:'dd MMM yyyy' }}</div>
                 @if (!r.coachFeedback) { <span class="badge orange">Sin feedback</span> }
@@ -279,20 +292,36 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Plan y suscripción</h2>
-          <button class="btn btn-primary btn-sm" (click)="showAssignPlan.set(!showAssignPlan())">
-            <mat-icon>{{ showAssignPlan() ? 'close' : 'swap_horiz' }}</mat-icon>
-            Cambiar plan
-          </button>
+          <div class="panel-head-actions">
+            @if (subscription()) {
+              <button class="btn btn-outline btn-sm" (click)="openPricing()">
+                <mat-icon>sell</mat-icon> Editar precio especial
+              </button>
+            }
+            <button class="btn btn-primary btn-sm" (click)="openAssignPlan()">
+              <mat-icon>swap_horiz</mat-icon> {{ subscription() ? 'Cambiar plan' : 'Asignar plan' }}
+            </button>
+          </div>
         </div>
         <div class="panel-body sub-body">
           @if (subscription(); as sub) {
             <div class="active-row">
               <div class="active-info">
                 <span class="active-name">{{ sub.planName }}</span>
+                <span class="tag-pill">{{ periodLabel[sub.billingPeriod] }}</span>
                 <span class="tag-pill">Revisión cada {{ sub.plan.reviewFrequencyDays }} días</span>
               </div>
               <div class="active-meta">
-                <div class="meta-item"><span>Precio</span><strong>{{ sub.plan.monthlyPrice | number:'1.0-2' }}€/mes</strong></div>
+                <div class="meta-item">
+                  <span>Precio</span>
+                  <strong>
+                    {{ sub.effectivePrice | number:'1.0-2' }}€{{ periodSuffix[sub.billingPeriod] }}
+                    @if (sub.customPrice !== null && planPriceOf(sub) !== null) { <s class="old-price">{{ planPriceOf(sub) | number:'1.0-2' }}€</s> }
+                  </strong>
+                </div>
+                @if (sub.billingPeriod !== 'MONTHLY') {
+                  <div class="meta-item"><span>Equivale a</span><strong>{{ sub.monthlyEquivalent | number:'1.0-2' }}€/mes</strong></div>
+                }
                 <div class="meta-item"><span>Inicio</span><strong>{{ sub.startDate | date:'dd/MM/yyyy' }}</strong></div>
                 <div class="meta-item"><span>Próximo cobro</span><strong>{{ sub.renewalDate | date:'dd/MM/yyyy' }}</strong></div>
                 @if (sub.plan.analyticsEnabled) { <div class="meta-item"><span>Analíticas</span><strong>Incluidas</strong></div> }
@@ -303,6 +332,20 @@
                 @if (sub.cancelAtPeriodEnd) { <span class="badge red">Cancelación programada</span> }
               </div>
             </div>
+            @if (sub.customPrice !== null) {
+              <div class="special-row">
+                <span class="special-tile"><mat-icon>sell</mat-icon></span>
+                <div class="special-text">
+                  <strong>Condiciones especiales</strong>
+                  <span>
+                    {{ sub.effectivePrice | number:'1.0-2' }}€{{ periodSuffix[sub.billingPeriod] }}
+                    @if (planPriceOf(sub) !== null) { (precio de plan {{ planPriceOf(sub) | number:'1.0-2' }}€) }
+                    @if (sub.customPriceNote) { · {{ sub.customPriceNote }} }
+                  </span>
+                </div>
+                <button class="btn btn-light btn-sm" (click)="openPricing()">Editar</button>
+              </div>
+            }
             @if (sub.cancelAtPeriodEnd) {
               <div class="alert warn">
                 <mat-icon>event_busy</mat-icon>
@@ -335,34 +378,21 @@
           } @else {
             <div class="empty"><mat-icon>card_membership</mat-icon><p>Sin plan activo.</p></div>
           }
-          @if (showAssignPlan()) {
-            <div class="assign-row">
-              <div class="assign-controls">
-                <select [ngModel]="selectedPlanId()" (ngModelChange)="selectedPlanId.set(+$event)">
-                  <option [ngValue]="null" disabled>Selecciona un plan</option>
-                  @for (p of plans(); track p.id) {
-                    <option [ngValue]="p.id">{{ p.name }} · {{ p.monthlyPrice | number:'1.0-2' }}€ · cada {{ p.reviewFrequencyDays }}d</option>
-                  }
-                </select>
-                <button class="btn btn-primary" [disabled]="savingPlan() || !selectedPlanId()" (click)="assignPlan()">
-                  {{ savingPlan() ? 'Guardando...' : 'Asignar' }}
-                </button>
-              </div>
-              @if (planMessage()) { <small class="assign-msg">{{ planMessage() }}</small> }
-            </div>
-          }
           @if (subscriptionHistory().length > 0) {
             <div class="history-section">
               <h4>Historial de suscripciones</h4>
               <div class="table-wrap">
               <table class="history-table">
-                <thead><tr><th>Plan</th><th>Precio</th><th>Período</th><th>Estado</th><th>Desde</th><th>Hasta</th></tr></thead>
+                <thead><tr><th>Plan</th><th>Periodo</th><th>Precio</th><th>Estado</th><th>Desde</th><th>Hasta</th></tr></thead>
                 <tbody>
                   @for (h of subscriptionHistory(); track h.id) {
                     <tr>
                       <td>{{ h.planName }}</td>
-                      <td>{{ h.plan.monthlyPrice | number:'1.0-2' }}€/mes</td>
-                      <td>cada {{ h.plan.reviewFrequencyDays }} días</td>
+                      <td>{{ periodLabel[h.billingPeriod] }}</td>
+                      <td>
+                        {{ h.effectivePrice | number:'1.0-2' }}€{{ periodSuffix[h.billingPeriod] }}
+                        @if (h.customPrice !== null) { <span class="special-inline">especial</span> }
+                      </td>
                       <td>
                         @if (h.active) {
                           <span class="badge" [class]="subStatusBadge(h.status)">{{ subStatusLabel[h.status] }}</span>
@@ -730,17 +760,29 @@
                 </div>
                 <div class="rc-metrics">
                   <div class="metric-item"><span>Peso</span><strong>{{ r.weight }} kg</strong></div>
-                  <div class="metric-item"><span>Cintura</span><strong>{{ r.waist ? r.waist + ' cm' : '—' }}</strong></div>
-                  <div class="metric-item"><span>% Grasa</span><strong>{{ r.bodyFat ?? '—' }}</strong></div>
-                  <div class="metric-item"><span>Energía</span><strong>{{ r.energyLevel ?? '—' }}/10</strong></div>
-                  <div class="metric-item"><span>Dieta</span><strong>{{ r.dietAdherence ? r.dietAdherence + '%' : '—' }}</strong></div>
-                  <div class="metric-item"><span>Entreno</span><strong>{{ r.trainingAdherence ? r.trainingAdherence + '%' : '—' }}</strong></div>
+                  <div class="metric-item"><span>Fotos</span><strong>{{ r.photos.length }}</strong></div>
+                  @if (r.waist != null) { <div class="metric-item"><span>Cintura</span><strong>{{ r.waist }} cm</strong></div> }
+                  @if (r.bodyFat != null) { <div class="metric-item"><span>% Grasa</span><strong>{{ r.bodyFat }}%</strong></div> }
+                  @if (r.energyLevel != null) { <div class="metric-item"><span>Energía</span><strong>{{ r.energyLevel }}/10</strong></div> }
+                  @if (r.dietAdherence != null) { <div class="metric-item"><span>Dieta</span><strong>{{ r.dietAdherence }}%</strong></div> }
+                  @if (r.trainingAdherence != null) { <div class="metric-item"><span>Entreno</span><strong>{{ r.trainingAdherence }}%</strong></div> }
                 </div>
+                @if (r.photos.length) {
+                  <div class="rc-photos">
+                    @for (ph of r.photos; track ph.id; let i = $index) {
+                      <button type="button" class="thumb" (click)="openLightbox(r, i)" [attr.aria-label]="'Ampliar foto ' + (i + 1) + ' de ' + r.photos.length">
+                        <app-secure-img [src]="ph.contentUrl" imgClass="thumb-img" alt="Foto de seguimiento" />
+                      </button>
+                    }
+                  </div>
+                }
                 @if (r.comments) {
                   <div class="rc-comment"><mat-icon>chat_bubble_outline</mat-icon> <em>{{ r.comments }}</em></div>
                 }
                 @if (r.coachFeedback) {
                   <div class="rc-feedback"><mat-icon>rate_review</mat-icon> <span>{{ r.coachFeedback }}</span></div>
+                } @else {
+                  <a routerLink="/trainer/reports" class="btn btn-outline btn-sm rc-review"><mat-icon>rate_review</mat-icon> Dar feedback</a>
                 }
               </div>
             }
@@ -790,19 +832,23 @@
         </div>
 
         <!-- Gráficas -->
-        <div class="charts-grid three">
+        <div class="charts-grid" [class.three]="hasMetric().waist && hasMetric().bodyFat" [class.one]="!hasMetric().waist && !hasMetric().bodyFat">
           <div class="panel chart-panel">
             <div class="panel-head"><h2>Peso (kg)</h2></div>
             <div class="panel-body chart-body"><app-line-chart [points]="weightPoints()" unit="kg" color="#FF7A1A" /></div>
           </div>
-          <div class="panel chart-panel">
-            <div class="panel-head"><h2>Cintura (cm)</h2></div>
-            <div class="panel-body chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#3b82f6" /></div>
-          </div>
-          <div class="panel chart-panel">
-            <div class="panel-head"><h2>% Grasa corporal</h2></div>
-            <div class="panel-body chart-body"><app-line-chart [points]="bodyFatPoints()" unit="%" color="#8b5cf6" /></div>
-          </div>
+          @if (hasMetric().waist) {
+            <div class="panel chart-panel">
+              <div class="panel-head"><h2>Cintura (cm)</h2></div>
+              <div class="panel-body chart-body"><app-line-chart [points]="waistPoints()" unit="cm" color="#3b82f6" /></div>
+            </div>
+          }
+          @if (hasMetric().bodyFat) {
+            <div class="panel chart-panel">
+              <div class="panel-head"><h2>% Grasa corporal</h2></div>
+              <div class="panel-body chart-body"><app-line-chart [points]="bodyFatPoints()" unit="%" color="#8b5cf6" /></div>
+            </div>
+          }
         </div>
 
         <!-- Tabla histórica -->
@@ -812,8 +858,13 @@
             <table class="history-table full">
               <thead>
                 <tr>
-                  <th>Fecha</th><th>Peso (kg)</th><th>Cintura (cm)</th><th>% Grasa</th>
-                  <th>Energía</th><th>Dieta</th><th>Entreno</th><th>Feedback</th>
+                  <th>Fecha</th><th>Peso (kg)</th><th>Fotos</th>
+                  @if (hasMetric().waist) { <th>Cintura (cm)</th> }
+                  @if (hasMetric().bodyFat) { <th>% Grasa</th> }
+                  @if (hasMetric().energy) { <th>Energía</th> }
+                  @if (hasMetric().diet) { <th>Dieta</th> }
+                  @if (hasMetric().training) { <th>Entreno</th> }
+                  <th>Feedback</th>
                 </tr>
               </thead>
               <tbody>
@@ -821,11 +872,12 @@
                   <tr>
                     <td>{{ r.date | date:'dd MMM yyyy' }}</td>
                     <td>{{ r.weight }}</td>
-                    <td>{{ r.waist ?? '—' }}</td>
-                    <td>{{ r.bodyFat ?? '—' }}</td>
-                    <td>{{ r.energyLevel !== null ? r.energyLevel + '/10' : '—' }}</td>
-                    <td>{{ r.dietAdherence !== null ? r.dietAdherence + '%' : '—' }}</td>
-                    <td>{{ r.trainingAdherence !== null ? r.trainingAdherence + '%' : '—' }}</td>
+                    <td>{{ r.photoCount || '—' }}</td>
+                    @if (hasMetric().waist) { <td>{{ r.waist ?? '—' }}</td> }
+                    @if (hasMetric().bodyFat) { <td>{{ r.bodyFat ?? '—' }}</td> }
+                    @if (hasMetric().energy) { <td>{{ r.energyLevel !== null ? r.energyLevel + '/10' : '—' }}</td> }
+                    @if (hasMetric().diet) { <td>{{ r.dietAdherence !== null ? r.dietAdherence + '%' : '—' }}</td> }
+                    @if (hasMetric().training) { <td>{{ r.trainingAdherence !== null ? r.trainingAdherence + '%' : '—' }}</td> }
                     <td>
                       @if (r.hasFeedback) { <span class="badge green">Sí</span> } @else { <span class="badge orange">Pendiente</span> }
                     </td>
@@ -1086,6 +1138,128 @@
           {{ savingCommentId() === vp.id ? 'Guardando...' : 'Guardar comentario' }}
         </button>
       </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: cambiar plan ── -->
+@if (showAssignPlan()) {
+  <div class="modal-backdrop" (click)="closeAssignPlan()">
+    <div class="modal wide" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="assign-title">
+      <div class="modal-head">
+        <h2 id="assign-title">{{ subscription() ? 'Cambiar plan' : 'Asignar plan' }}</h2>
+        <button class="modal-close" (click)="closeAssignPlan()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        @if (plans().length === 0) {
+          <div class="alert warn"><mat-icon>info</mat-icon> No hay planes activos. Crea uno en la sección Planes.</div>
+        } @else {
+          <app-plan-pricing-picker
+            [plans]="plans()"
+            [currentPlanId]="subscription()?.planId ?? null"
+            [showErrors]="assignSubmitted()"
+            [(planId)]="selectedPlanId"
+            [(period)]="assignPeriod"
+            [(special)]="assignSpecial"
+            [(customPrice)]="assignCustomPrice"
+            [(customNote)]="assignNote" />
+          @if (subscription()) {
+            <div class="alert info assign-note">
+              <mat-icon>info</mat-icon>
+              <div>
+                El nuevo plan empieza hoy y se genera su primer cobro; los cobros pendientes del plan actual se anulan.
+                @if (subscription()!.customPrice !== null && !assignSpecial()) { Las condiciones especiales actuales no se mantienen. }
+              </div>
+            </div>
+          }
+        }
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="closeAssignPlan()" [disabled]="savingPlan()">Cancelar</button>
+        <button class="btn btn-primary" [disabled]="savingPlan() || !selectedPlanId()" (click)="assignPlan()">
+          {{ savingPlan() ? 'Guardando...' : (subscription() ? 'Cambiar plan' : 'Asignar plan') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: precio especial ── -->
+@if (pricingOpen() && subscription(); as sub) {
+  <div class="modal-backdrop" (click)="closePricing()">
+    <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="pricing-title">
+      <div class="modal-head">
+        <h2 id="pricing-title">Precio especial</h2>
+        <button class="modal-close" (click)="closePricing()" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="pricing-plan">
+          <div>
+            <strong>{{ sub.planName }} · {{ periodLabel[sub.billingPeriod] }}</strong>
+            <span>Precio de plan: {{ planPriceOf(sub) !== null ? (planPriceOf(sub) | number:'1.0-2') + '€' + periodSuffix[sub.billingPeriod] : '—' }}</span>
+          </div>
+          @if (sub.customPrice !== null) { <span class="badge violet">Especial activo</span> }
+        </div>
+        <div class="form-grid pricing-grid">
+          <div class="field">
+            <label for="pr-price">Precio especial *</label>
+            <div class="affix">
+              <input id="pr-price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="85"
+                     [value]="pricingPrice() ?? ''" (input)="onPricingInput($event)" />
+              <span>€{{ periodSuffix[sub.billingPeriod] }}</span>
+            </div>
+            @if (sub.billingPeriod !== 'MONTHLY' && pricingMonthly() !== null) {
+              <small class="hint">Equivale a {{ pricingMonthly() | number:'1.0-2' }} €/mes.</small>
+            }
+          </div>
+          <div class="field">
+            <label for="pr-note">Nota (opcional)</label>
+            <input id="pr-note" maxlength="255" placeholder="Ej. Precio amigo" [ngModel]="pricingNote()" (ngModelChange)="pricingNote.set($event)" />
+          </div>
+        </div>
+        <p class="pricing-help">Los cobros pendientes del periodo actual se actualizan al nuevo precio.</p>
+      </div>
+      <div class="modal-foot">
+        @if (sub.customPrice !== null) {
+          <button class="btn btn-light remove-special" (click)="savePricing(true)" [disabled]="savingPricing()">
+            <mat-icon>undo</mat-icon> Quitar precio especial
+          </button>
+        }
+        <button class="btn btn-outline" (click)="closePricing()" [disabled]="savingPricing()">Cancelar</button>
+        <button class="btn btn-primary" (click)="savePricing()"
+                [disabled]="savingPricing() || pricingPrice() === null || pricingPrice()! < 0">
+          {{ savingPricing() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Lightbox: fotos del seguimiento ── -->
+@if (lightbox(); as lb) {
+  <div class="modal-backdrop" (click)="lightbox.set(null)">
+    <div class="modal wide photo-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="lb-title"
+         (keydown.arrowLeft)="moveLightbox(-1)" (keydown.arrowRight)="moveLightbox(1)" (keydown.escape)="lightbox.set(null)" tabindex="-1">
+      <div class="modal-head">
+        <h2 id="lb-title">Seguimiento · {{ lb.date | date:'dd/MM/yyyy' }} <span class="lb-count">{{ lb.index + 1 }} / {{ lb.photos.length }}</span></h2>
+        <button class="modal-close" (click)="lightbox.set(null)" aria-label="Cerrar"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body lb-body">
+        <app-secure-img [src]="lb.photos[lb.index].contentUrl" imgClass="photo-large" alt="Foto de seguimiento" />
+        @if (lb.photos.length > 1) {
+          <button type="button" class="lb-nav prev" (click)="moveLightbox(-1)" aria-label="Foto anterior"><mat-icon>chevron_left</mat-icon></button>
+          <button type="button" class="lb-nav next" (click)="moveLightbox(1)" aria-label="Foto siguiente"><mat-icon>chevron_right</mat-icon></button>
+        }
+      </div>
+      @if (lb.photos.length > 1) {
+        <div class="lb-strip">
+          @for (ph of lb.photos; track ph.id; let i = $index) {
+            <button type="button" class="thumb" [class.active]="i === lb.index" (click)="lightbox.set({ photos: lb.photos, index: i, date: lb.date })" [attr.aria-label]="'Foto ' + (i + 1)">
+              <app-secure-img [src]="ph.contentUrl" imgClass="thumb-img" alt="" />
+            </button>
+          }
+        </div>
+      }
     </div>
   </div>
 }

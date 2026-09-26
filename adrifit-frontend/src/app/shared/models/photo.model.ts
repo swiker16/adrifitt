@@ -3,6 +3,8 @@ export type PhotoPose = 'FRONT' | 'SIDE' | 'BACK' | 'OTHER';
 export interface ProgressPhoto {
   id: number;
   clientId: number;
+  /** Check-in report the photo was sent with (null = uploaded from the gallery). */
+  reportId: number | null;
   takenOn: string;
   pose: PhotoPose;
   notes: string | null;

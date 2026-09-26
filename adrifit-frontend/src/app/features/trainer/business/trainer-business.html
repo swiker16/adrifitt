@@ -140,7 +140,7 @@
               <thead>
                 <tr>
                   <th>Plan</th>
-                  <th class="num">Precio</th>
+                  <th class="num">Tarifa mensual</th>
                   <th class="num">Activos</th>
                   <th class="num">MRR</th>
                   <th class="share-col">% del MRR</th>
@@ -150,7 +150,7 @@
                 @for (p of plans(); track p.planId) {
                   <tr>
                     <td><span class="plan-name">{{ p.planName }}</span></td>
-                    <td class="num">{{ p.monthlyPrice | number: '1.2-2' }} €</td>
+                    <td class="num">{{ p.monthlyPrice | number: '1.2-2' }} €/mes</td>
                     <td class="num">{{ p.activeClients }}</td>
                     <td class="num"><span class="amount">{{ p.mrr | number: '1.2-2' }} €</span></td>
                     <td class="share-col">

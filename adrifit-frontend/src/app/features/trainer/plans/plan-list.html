@@ -44,10 +44,25 @@
             <span class="amount">{{ p.monthlyPrice | number: '1.0-2' }}€</span><span class="per">/mes</span>
             <span class="review"><mat-icon>event_repeat</mat-icon>Revisión cada {{ p.reviewFrequencyDays }} días</span>
           </div>
-          <div class="chips">
-            @for (f of features(p); track f) { <span class="chip brand"><mat-icon>check</mat-icon>{{ f }}</span> }
-            @if (features(p).length === 0) { <span class="chip">Básico</span> }
-          </div>
+          @if (longPrices(p).length) {
+            <div class="period-prices">
+              @for (pp of longPrices(p); track pp.period) {
+                <div class="pp">
+                  <span class="pp-l">{{ periodLabel[pp.period] }}</span>
+                  <span class="pp-v">{{ pp.price | number: '1.0-2' }}€</span>
+                  @if (pp.savingPercent > 0) { <span class="pp-s">-{{ pp.savingPercent | number: '1.0-0' }}%</span> }
+                </div>
+              }
+            </div>
+          }
+          @if (p.features.length) {
+            <ul class="feat-mini">
+              @for (f of p.features.slice(0, 3); track $index) {
+                <li><mat-icon>check</mat-icon><span>{{ title(f) }}</span></li>
+              }
+              @if (p.features.length > 3) { <li class="more">+{{ p.features.length - 3 }} más</li> }
+            </ul>
+          }
           <div class="lib-foot">
             <span class="lib-date">Ver detalle</span>
             <div class="lib-actions">

@@ -7,7 +7,15 @@ import { PlanService } from '../../../core/services/plan.service';
 import { PaymentService } from '../../../core/services/payment.service';
 import { NotifyService } from '../../../core/services/notify.service';
 import { apiErrorMessage } from '../../../shared/utils/download';
-import { Plan } from '../../../shared/models/plan.model';
+import {
+  BILLING_PERIOD_LABEL,
+  BILLING_PERIOD_SUFFIX,
+  BILLING_PERIODS,
+  BillingPeriod,
+  Plan,
+  PlanPeriodPrice,
+  splitFeature,
+} from '../../../shared/models/plan.model';
 import { Subscription, SUBSCRIPTION_STATUS_LABEL } from '../../../shared/models/subscription.model';
 import {
   Payment,
@@ -62,6 +70,8 @@ export class ClientSubscription {
   readonly statusLabel = SUBSCRIPTION_STATUS_LABEL;
   readonly paymentStatusLabel = PAYMENT_STATUS_LABEL;
   readonly methodLabel = PAYMENT_METHOD_LABEL;
+  readonly periodLabel = BILLING_PERIOD_LABEL;
+  readonly periodSuffix = BILLING_PERIOD_SUFFIX;
 
   // ── Subscription ─────────────────────────────────────────────
   readonly subState = signal<LoadState>('loading');
@@ -73,6 +83,13 @@ export class ClientSubscription {
   // ── Plans ────────────────────────────────────────────────────
   readonly plans = signal<Plan[]>([]);
   readonly plansLoading = signal(true);
+  /** Billing period shown in the plan cards (defaults to the current one). */
+  readonly period = signal<BillingPeriod>('MONTHLY');
+  readonly periods = computed<BillingPeriod[]>(() => {
+    const offered = new Set<BillingPeriod>(['MONTHLY']);
+    this.plans().forEach((p) => (p.prices ?? []).forEach((pp) => offered.add(pp.period)));
+    return BILLING_PERIODS.filter((b) => offered.has(b));
+  });
 
   // ── Payments ─────────────────────────────────────────────────
   readonly payments = signal<Payment[]>([]);
@@ -97,6 +114,7 @@ export class ClientSubscription {
 
   // ── Modals ───────────────────────────────────────────────────
   readonly changeTarget = signal<Plan | null>(null);
+  readonly changePeriod = signal<BillingPeriod>('MONTHLY');
   readonly changing = signal(false);
   readonly showCancel = signal(false);
   readonly cancelling = signal(false);
@@ -138,6 +156,7 @@ export class ClientSubscription {
       next: (s) => {
         this.sub.set(s);
         this.subState.set('ok');
+        this.period.set(s.billingPeriod ?? 'MONTHLY');
       },
       error: (err) => {
         this.sub.set(null);
@@ -176,19 +195,28 @@ export class ClientSubscription {
   }
 
   // ── Plan helpers ─────────────────────────────────────────────
-  isCurrent(plan: Plan): boolean {
+  /** Same plan AND same billing period as the current subscription. */
+  isCurrent(plan: Plan, period: BillingPeriod = this.period()): boolean {
+    const s = this.sub();
+    return !!s && s.planId === plan.id && s.billingPeriod === period;
+  }
+
+  isCurrentPlan(plan: Plan): boolean {
     const s = this.sub();
     return !!s && s.planId === plan.id;
   }
 
-  planFeatures(plan: Plan): { label: string; on: boolean }[] {
-    return [
-      { label: `Revisión cada ${plan.reviewFrequencyDays} días`, on: true },
-      { label: 'Chat con tu entrenador', on: plan.messagingEnabled },
-      { label: 'Analíticas avanzadas', on: plan.analyticsEnabled },
-      { label: 'Exportación PDF', on: plan.pdfExportEnabled },
-      { label: 'Soporte prioritario', on: plan.prioritySupport },
-    ];
+  priceFor(plan: Plan, period: BillingPeriod = this.period()): PlanPeriodPrice | null {
+    return (plan.prices ?? []).find((pp) => pp.period === period) ?? null;
+  }
+
+  featureItems(plan: Plan | null | undefined): { title: string; detail: string }[] {
+    return (plan?.features ?? []).map(splitFeature);
+  }
+
+  /** Plan price of the current subscription's period (before special conditions). */
+  planPriceOf(s: Subscription): number | null {
+    return this.priceFor(s.plan, s.billingPeriod)?.price ?? (s.billingPeriod === 'MONTHLY' ? s.plan.monthlyPrice : null);
   }
 
   statusBadge(s: Subscription): string {
@@ -208,20 +236,23 @@ export class ClientSubscription {
   // ── Change plan ──────────────────────────────────────────────
   askChange(plan: Plan): void {
     if (this.isCurrent(plan)) return;
+    const period = this.priceFor(plan) ? this.period() : 'MONTHLY';
+    this.changePeriod.set(period);
     this.changeTarget.set(plan);
   }
 
   confirmChange(): void {
     const plan = this.changeTarget();
-    if (!plan || this.changing()) return;
+    if (!plan || this.changing() || this.isCurrent(plan, this.changePeriod())) return;
     this.changing.set(true);
-    this.subscriptionService.changeMyPlan(plan.id).subscribe({
+    this.subscriptionService.changeMyPlan(plan.id, this.changePeriod()).subscribe({
       next: (s) => {
         this.sub.set(s);
         this.subState.set('ok');
         this.changing.set(false);
         this.changeTarget.set(null);
-        this.notify.success(`Ahora estás en el plan ${s.planName}`);
+        this.period.set(s.billingPeriod ?? this.changePeriod());
+        this.notify.success(`Ahora estás en el plan ${s.planName} (${BILLING_PERIOD_LABEL[s.billingPeriod ?? this.changePeriod()].toLowerCase()})`);
         this.loadPayments();
         this.loadHistory();
       },

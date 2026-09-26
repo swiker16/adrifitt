@@ -1,9 +1,9 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { PlanService } from '../../../core/services/plan.service';
-import { Plan } from '../../../shared/models/plan.model';
+import { BILLING_PERIOD_LABEL, BILLING_PERIOD_SUFFIX, Plan, splitFeature } from '../../../shared/models/plan.model';
 
 interface FeatureFlag {
   label: string;
@@ -22,7 +22,11 @@ export class PlanDetails {
 
   readonly id = input.required<string>();
 
+  readonly periodLabel = BILLING_PERIOD_LABEL;
+  readonly periodSuffix = BILLING_PERIOD_SUFFIX;
+
   readonly plan = signal<Plan | null>(null);
+  readonly featureItems = computed(() => (this.plan()?.features ?? []).map(splitFeature));
   readonly loading = signal(true);
   readonly error = signal(false);
 
@@ -47,7 +51,7 @@ export class PlanDetails {
     const p = this.plan();
     if (!p) return [];
     return [
-      { label: 'Mensajería con el coach', enabled: p.messagingEnabled, icon: 'chat' },
+      { label: 'Chat con el coach', enabled: p.messagingEnabled, icon: 'chat' },
       { label: 'Analíticas de evolución', enabled: p.analyticsEnabled, icon: 'insights' },
       { label: 'Exportación a PDF', enabled: p.pdfExportEnabled, icon: 'picture_as_pdf' },
       { label: 'Soporte prioritario', enabled: p.prioritySupport, icon: 'support_agent' },
