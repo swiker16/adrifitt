@@ -84,10 +84,4 @@ class ProgressPhotoIT extends AbstractIntegrationTest {
         return rest.exchange("/api/photos/me", HttpMethod.POST, new HttpEntity<>(body, headers), MAP);
     }
 
-    private static byte[] png() throws Exception {
-        BufferedImage image = new BufferedImage(8, 8, BufferedImage.TYPE_INT_RGB);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", out);
-        return out.toByteArray();
-    }
 }

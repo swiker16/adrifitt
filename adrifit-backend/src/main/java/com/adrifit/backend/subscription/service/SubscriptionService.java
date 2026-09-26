@@ -9,11 +9,13 @@ import com.adrifit.backend.common.exception.ResourceNotFoundException;
 import com.adrifit.backend.email.domain.EmailType;
 import com.adrifit.backend.email.service.EmailService;
 import com.adrifit.backend.email.service.EmailTemplates;
+import com.adrifit.backend.plan.domain.BillingPeriod;
 import com.adrifit.backend.plan.domain.Plan;
 import com.adrifit.backend.plan.service.PlanService;
 import com.adrifit.backend.subscription.domain.Subscription;
 import com.adrifit.backend.subscription.domain.SubscriptionStatus;
 import com.adrifit.backend.subscription.dto.AssignPlanRequest;
+import com.adrifit.backend.subscription.dto.UpdatePricingRequest;
 import com.adrifit.backend.subscription.dto.SubscriptionResponse;
 import com.adrifit.backend.subscription.event.SubscriptionChargeEvent;
 import com.adrifit.backend.subscription.event.SubscriptionClosedEvent;
@@ -83,7 +85,25 @@ public class SubscriptionService {
         if (!plan.isActive()) {
             throw new BusinessException("No se puede asignar un plan inactivo");
         }
-        return subscriptionMapper.toResponse(startNewSubscription(client, plan));
+        BillingPeriod period = request.billingPeriod() != null ? request.billingPeriod() : BillingPeriod.MONTHLY;
+        return subscriptionMapper.toResponse(startNewSubscription(client, plan, period,
+                request.customPrice(), blankToNull(request.customPriceNote())));
+    }
+
+    /**
+     * Special conditions for the client's current subscription. Also updates the charges of that
+     * subscription that are still unpaid; paid ones keep their amount.
+     */
+    @Transactional
+    public SubscriptionResponse updatePricing(Long clientId, UpdatePricingRequest request) {
+        clientService.getEntityById(clientId);
+        Subscription current = getActiveOrThrow(clientId);
+        current.setCustomPrice(request.customPrice());
+        current.setCustomPriceNote(request.customPrice() != null ? blankToNull(request.customPriceNote()) : null);
+        Subscription saved = subscriptionRepository.save(current);
+        events.publishEvent(new com.adrifit.backend.subscription.event.SubscriptionPriceChangedEvent(
+                saved.getId(), saved.effectivePrice()));
+        return subscriptionMapper.toResponse(saved);
     }
 
     @Transactional
@@ -122,30 +142,33 @@ public class SubscriptionService {
      * starts today and is charged immediately; unpaid charges of the old subscription are voided.
      */
     @Transactional
-    public SubscriptionResponse changeMyPlan(Long planId) {
+    public SubscriptionResponse changeMyPlan(Long planId, BillingPeriod requestedPeriod) {
         Client client = clientService.getCurrentClient();
         Plan plan = planService.getEntityById(planId);
         if (!plan.isActive()) {
             throw new BusinessException("Ese plan ya no está disponible");
         }
+        BillingPeriod period = requestedPeriod != null ? requestedPeriod : BillingPeriod.MONTHLY;
         Optional<Subscription> current = subscriptionRepository.findByClientIdAndActiveTrue(client.getId());
         if (current.isPresent()) {
             Subscription sub = current.get();
             if (sub.getStatus() == SubscriptionStatus.PAUSED) {
                 throw new BusinessException("Tu suscripción está pausada. Habla con tu entrenador para reactivarla.");
             }
-            if (sub.getPlan().getId().equals(plan.getId())) {
+            if (sub.getPlan().getId().equals(plan.getId()) && sub.getBillingPeriod() == period) {
                 if (sub.isCancelAtPeriodEnd()) {
                     return resumeMySubscription();
                 }
-                throw new BusinessException("Ya tienes contratado ese plan");
+                throw new BusinessException("Ya tienes contratado ese plan con esa modalidad de pago");
             }
         }
-        Subscription created = startNewSubscription(client, plan);
+        // Special conditions are agreed with the trainer for a given plan: a self-service change drops them.
+        Subscription created = startNewSubscription(client, plan, period, null, null);
         emailService.sendToClient(client.getId(), EmailType.SUBSCRIPTION, "Tu plan ha cambiado",
                 emailTemplates.subscriptionChanged(client.getFirstName(), "Tu nuevo plan: " + plan.getName(),
                         "Tu suscripción al plan " + plan.getName() + " está activa desde hoy. "
-                                + "Se renovará el " + created.getRenewalDate().format(DATE) + "."));
+                                + "Modalidad " + period.label() + ". Se renovará el "
+                                + created.getRenewalDate().format(DATE) + "."));
         return subscriptionMapper.toResponse(created);
     }
 
@@ -237,10 +260,10 @@ public class SubscriptionService {
             int renewals = 0;
             while (!sub.getRenewalDate().isAfter(today) && renewals < MAX_RENEWALS_PER_RUN) {
                 LocalDate periodStart = sub.getRenewalDate();
-                LocalDate periodEnd = periodStart.plusMonths(1);
+                LocalDate periodEnd = periodStart.plusMonths(sub.getBillingPeriod().months());
                 sub.setRenewalDate(periodEnd);
                 events.publishEvent(new SubscriptionChargeEvent(sub.getClientId(), sub.getId(),
-                        sub.getPlan().getName(), sub.getPlan().getMonthlyPrice(), periodStart, periodEnd));
+                        sub.getPlan().getName(), sub.effectivePrice(), periodStart, periodEnd));
                 renewals++;
             }
             subscriptionRepository.save(sub);
@@ -259,7 +282,11 @@ public class SubscriptionService {
 
     // ── internals ───────────────────────────────────────────────────────────
 
-    private Subscription startNewSubscription(Client client, Plan plan) {
+    private Subscription startNewSubscription(Client client, Plan plan, BillingPeriod period,
+                                              java.math.BigDecimal customPrice, String customPriceNote) {
+        if (customPrice == null && plan.priceFor(period) == null) {
+            throw new BusinessException("El plan " + plan.getName() + " no tiene modalidad " + period.label());
+        }
         LocalDate today = LocalDate.now();
         subscriptionRepository.findByClientIdAndActiveTrue(client.getId()).ifPresent(current -> {
             close(current, today);
@@ -271,13 +298,16 @@ public class SubscriptionService {
                 .clientId(client.getId())
                 .plan(plan)
                 .startDate(today)
-                .renewalDate(today.plusMonths(1))
+                .renewalDate(today.plusMonths(period.months()))
+                .billingPeriod(period)
+                .customPrice(customPrice)
+                .customPriceNote(customPriceNote)
                 .status(SubscriptionStatus.ACTIVE)
                 .active(true)
                 .build());
 
         events.publishEvent(new SubscriptionChargeEvent(client.getId(), subscription.getId(), plan.getName(),
-                plan.getMonthlyPrice(), today, subscription.getRenewalDate()));
+                subscription.effectivePrice(), today, subscription.getRenewalDate()));
         return subscription;
     }
 
@@ -289,6 +319,10 @@ public class SubscriptionService {
             sub.setCancelledAt(Instant.now());
         }
         events.publishEvent(new SubscriptionClosedEvent(sub.getClientId(), sub.getId()));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private Subscription getActiveOrThrow(Long clientId) {

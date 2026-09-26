@@ -1,6 +1,8 @@
 package com.adrifit.backend.subscription.controller;
 
 import com.adrifit.backend.subscription.dto.AssignPlanRequest;
+import com.adrifit.backend.subscription.dto.ChangePlanRequest;
+import com.adrifit.backend.subscription.dto.UpdatePricingRequest;
 import com.adrifit.backend.subscription.dto.SubscriptionResponse;
 import com.adrifit.backend.subscription.dto.UpdateSubscriptionStatusRequest;
 import com.adrifit.backend.subscription.service.SubscriptionService;
@@ -41,6 +43,13 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptionService.updateStatus(clientId, request.status()));
     }
 
+    @PatchMapping("/api/clients/{clientId}/subscription/pricing")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<SubscriptionResponse> updatePricing(@PathVariable Long clientId,
+                                                              @Valid @RequestBody UpdatePricingRequest request) {
+        return ResponseEntity.ok(subscriptionService.updatePricing(clientId, request));
+    }
+
     @GetMapping("/api/clients/{clientId}/subscription")
     @PreAuthorize("hasAnyRole('TRAINER','CLIENT')")
     public ResponseEntity<SubscriptionResponse> getActive(@PathVariable Long clientId) {
@@ -69,8 +78,8 @@ public class SubscriptionController {
 
     @PostMapping("/api/subscriptions/me/change-plan")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<SubscriptionResponse> changePlan(@Valid @RequestBody AssignPlanRequest request) {
-        return ResponseEntity.ok(subscriptionService.changeMyPlan(request.planId()));
+    public ResponseEntity<SubscriptionResponse> changePlan(@Valid @RequestBody ChangePlanRequest request) {
+        return ResponseEntity.ok(subscriptionService.changeMyPlan(request.planId(), request.billingPeriod()));
     }
 
     @PostMapping("/api/subscriptions/me/cancel")

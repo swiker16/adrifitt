@@ -26,6 +26,11 @@ public class SubscriptionMapper {
                 subscription.getStatus(),
                 subscription.isActive(),
                 subscription.isCancelAtPeriodEnd(),
+                subscription.getBillingPeriod(),
+                subscription.getCustomPrice(),
+                subscription.getCustomPriceNote(),
+                subscription.effectivePrice(),
+                subscription.monthlyEquivalent(),
                 subscription.getCancelledAt(),
                 planMapper.toResponse(subscription.getPlan())
         );

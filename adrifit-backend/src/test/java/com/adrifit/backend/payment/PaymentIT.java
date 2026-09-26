@@ -38,7 +38,7 @@ class PaymentIT extends AbstractIntegrationTest {
         assertThat(mine.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(mine.getBody()).hasSize(1);
         assertThat(mine.getBody().get(0).get("status")).isEqualTo("PENDING");
-        assertThat(mine.getBody().get(0).get("amount")).isEqualTo(119.0);
+        assertThat(mine.getBody().get(0).get("amount")).isEqualTo(143.0);
     }
 
     @Test
@@ -114,7 +114,7 @@ class PaymentIT extends AbstractIntegrationTest {
         assertThat(cash.getBody().get("status")).isEqualTo("PAID");
 
         ResponseEntity<Map<String, Object>> summary = get("/api/payments/summary", trainer);
-        assertThat(((Number) summary.getBody().get("paidThisMonthAmount")).doubleValue()).isEqualTo(119.0);
+        assertThat(((Number) summary.getBody().get("paidThisMonthAmount")).doubleValue()).isEqualTo(143.0);
 
         ResponseEntity<Map<String, Object>> refund = post("/api/payments/" + paymentId + "/refund", Map.of(), trainer);
         assertThat(refund.getBody().get("status")).isEqualTo("REFUNDED");

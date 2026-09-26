@@ -191,7 +191,7 @@ public class DashboardService {
                     Client c = clients.get(s.getClientId());
                     return new TrainerDashboardResponse.UpcomingRenewal(s.getClientId(),
                             c != null ? c.getFirstName() : "—", c != null ? c.getLastName() : "",
-                            s.getPlan().getName(), s.getPlan().getMonthlyPrice(), s.getRenewalDate(),
+                            s.getPlan().getName(), s.effectivePrice(), s.getRenewalDate(),
                             ChronoUnit.DAYS.between(today, s.getRenewalDate()));
                 })
                 .toList();
@@ -209,7 +209,7 @@ public class DashboardService {
         List<Payment> pending = paymentRepository.findByStatus(PaymentStatus.PENDING);
         long overdue = pending.stream().filter(p -> p.getDueDate().isBefore(today)).count();
         BigDecimal revenueThisMonth = sum(paymentRepository.findByStatusAndPaidAtBetween(PaymentStatus.PAID, monthStart, now));
-        BigDecimal mrr = activeSubs.stream().map(s -> s.getPlan().getMonthlyPrice()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal mrr = activeSubs.stream().map(Subscription::monthlyEquivalent).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // ── Actividad reciente ──
         List<TrainerDashboardResponse.ActivityItem> recentActivity = new ArrayList<>();
@@ -279,7 +279,7 @@ public class DashboardService {
         long paused = subscriptionRepository.countByStatus(SubscriptionStatus.PAUSED);
         long cancellations = subscriptionRepository.countByStatusAndEndDateBetween(
                 SubscriptionStatus.CANCELLED, today.minusDays(30), today);
-        BigDecimal mrr = activeSubs.stream().map(s -> s.getPlan().getMonthlyPrice()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal mrr = activeSubs.stream().map(Subscription::monthlyEquivalent).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Instant from12 = thisMonth.minusMonths(11).atDay(1).atStartOfDay(ZONE).toInstant();
         List<Payment> paid12 = paymentRepository.findByStatusAndPaidAtBetween(PaymentStatus.PAID, from12, now);
@@ -317,7 +317,7 @@ public class DashboardService {
                 .map(subs -> {
                     Plan plan = subs.get(0).getPlan();
                     return new PlanBreakdown(plan.getId(), plan.getName(), plan.getMonthlyPrice(), subs.size(),
-                            plan.getMonthlyPrice().multiply(BigDecimal.valueOf(subs.size())));
+                            subs.stream().map(Subscription::monthlyEquivalent).reduce(BigDecimal.ZERO, BigDecimal::add));
                 })
                 .sorted(Comparator.comparing(PlanBreakdown::mrr).reversed())
                 .toList();

@@ -24,7 +24,7 @@ class SubscriptionIT extends AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         trainer = trainerToken();
-        clientId = createClient(trainer, "ana", "ana@mail.com", "ana12345", "Basic");
+        clientId = createClient(trainer, "ana", "ana@mail.com", "ana12345", "Básica");
         client = login("ana", "ana12345");
     }
 
@@ -38,7 +38,7 @@ class SubscriptionIT extends AbstractIntegrationTest {
         assertThat(count("SELECT COUNT(*) FROM subscriptions WHERE client_id = ?", clientId)).isEqualTo(2);
         assertThat(count("SELECT COUNT(*) FROM subscriptions WHERE client_id = ? AND active = TRUE", clientId)).isEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM payments WHERE client_id = ? AND status = 'CANCELLED'", clientId)).isEqualTo(1);
-        assertThat(count("SELECT COUNT(*) FROM payments WHERE client_id = ? AND status = 'PENDING' AND amount = 119", clientId))
+        assertThat(count("SELECT COUNT(*) FROM payments WHERE client_id = ? AND status = 'PENDING' AND amount = 143", clientId))
                 .isEqualTo(1);
 
         ResponseEntity<Map<String, Object>> same = post("/api/subscriptions/me/change-plan",
@@ -63,7 +63,7 @@ class SubscriptionIT extends AbstractIntegrationTest {
         assertThat(get("/api/subscriptions/me", client).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
         // Can subscribe again afterwards.
-        assertThat(post("/api/subscriptions/me/change-plan", Map.of("planId", planId("Basic")), client).getStatusCode())
+        assertThat(post("/api/subscriptions/me/change-plan", Map.of("planId", planId("Básica")), client).getStatusCode())
                 .isEqualTo(HttpStatus.OK);
     }
 

@@ -9,4 +9,6 @@ public interface ProgressPhotoRepository extends JpaRepository<ProgressPhoto, Lo
     List<ProgressPhoto> findByClientIdOrderByTakenOnDescIdDesc(Long clientId);
 
     long countByClientId(Long clientId);
+
+    List<ProgressPhoto> findByReportIdInOrderByIdAsc(java.util.Collection<Long> reportIds);
 }

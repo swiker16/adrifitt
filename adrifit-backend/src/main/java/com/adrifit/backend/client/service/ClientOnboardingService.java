@@ -38,7 +38,8 @@ public class ClientOnboardingService {
     public ClientCreatedResponse create(CreateClientRequest request) {
         ClientCreatedResponse created = clientService.create(request);
         SubscriptionResponse subscription =
-                subscriptionService.assignPlan(created.client().id(), new AssignPlanRequest(request.planId()));
+                subscriptionService.assignPlan(created.client().id(), new AssignPlanRequest(request.planId(),
+                        request.billingPeriod(), request.customPrice(), request.customPriceNote()));
         emailService.sendToClient(created.client().id(), EmailType.WELCOME, "Bienvenido/a a AdriFit",
                 emailTemplates.welcome(created.client().firstName(), created.username(),
                         created.temporaryPassword(), subscription.planName()));

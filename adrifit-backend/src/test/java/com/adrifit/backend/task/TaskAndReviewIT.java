@@ -51,7 +51,7 @@ class TaskAndReviewIT extends AbstractIntegrationTest {
 
         // The client sends its check-in and the trainer reviews it: the task is closed and the schedule moves.
         String client = login("ana", "ana12345");
-        Long reportId = id(post("/api/reports", Map.of("weight", 70), client));
+        Long reportId = id(submitReport(client, 70, null, 4));
         patch("/api/reports/" + reportId + "/feedback", Map.of("coachFeedback", "Bien"), trainer);
 
         assertThat(count("SELECT COUNT(*) FROM trainer_tasks WHERE client_id = ? AND status = 'PENDING'", clientId)).isZero();

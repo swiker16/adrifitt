@@ -57,8 +57,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Optional demo content (adrifit.seed.demo-data=true, on by default in the "local" profile) so the
  * app can be explored right away:
  * <ul>
- *   <li>cliente / cliente123 — Laura Martín, plan Premium, with routine, diet, check-ins, logs, chat.</li>
- *   <li>carlos / carlos123 — Carlos Ruiz, plan Basic, with an overdue payment and no routine.</li>
+ *   <li>cliente / cliente123 — Laura Martín, plan Premium with special price (85 €/month), with routine, diet, check-ins, logs, chat.</li>
+ *   <li>carlos / carlos123 — Carlos Ruiz, plan Básica, with an overdue payment and no routine.</li>
  * </ul>
  */
 @Component
@@ -126,7 +126,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         }
         User trainer = userRepository.findByUsername("trainer").orElse(null);
         List<Plan> plans = planRepository.findAllByOrderByMonthlyPriceAsc();
-        if (trainer == null || plans.size() < 3) {
+        if (trainer == null || plans.size() < 2) {
             return;
         }
         Plan basic = plans.get(0);
@@ -139,10 +139,11 @@ public class DemoDataSeeder implements CommandLineRunner {
         LocalDate lauraStart = today.minusDays(20);
         Subscription lauraSub = subscriptionRepository.save(Subscription.builder()
                 .clientId(laura.getId()).plan(premium).startDate(lauraStart).renewalDate(lauraStart.plusMonths(1))
+                .customPrice(new BigDecimal("85.00")).customPriceNote("Condiciones especiales")
                 .status(SubscriptionStatus.ACTIVE).active(true).build());
         paymentRepository.save(Payment.builder()
                 .clientId(laura.getId()).subscriptionId(lauraSub.getId())
-                .concept("Plan " + premium.getName() + " · primer mes").amount(premium.getMonthlyPrice()).currency("EUR")
+                .concept("Plan " + premium.getName() + " · primer mes").amount(lauraSub.effectivePrice()).currency("EUR")
                 .status(PaymentStatus.PAID).method(PaymentMethod.CARD).cardBrand("VISA").cardLast4("4242")
                 .providerReference("test_card_demo0001").dueDate(lauraStart).periodStart(lauraStart)
                 .periodEnd(lauraStart.plusMonths(1)).paidAt(lauraStart.atStartOfDay(ZoneId.systemDefault()).toInstant().plusSeconds(3600))
@@ -191,7 +192,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         messageRepository.save(Message.builder().clientId(laura.getId()).senderUserId(laura.getUserId()).senderRole(Role.CLIENT)
                 .content("¡Gracias! ¿Puedo cambiar el arroz de la comida por patata?").build());
 
-        // ── Carlos (Basic) ──
+        // ── Carlos (Básica) ──
         Client carlos = createClient("carlos", "carlos123", "carlos@demo.adrifit.app", "Carlos", "Ruiz",
                 "698765432", LocalDate.of(1988, 11, 3), "Mejorar la salud y perder peso", trainer.getId());
         LocalDate carlosStart = today.minusDays(35);
@@ -215,7 +216,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 .content("En un mes he cambiado mis hábitos por completo. El seguimiento es cercano y muy profesional.")
                 .visible(true).build());
 
-        log.info("Demo data created -> cliente/cliente123 (Premium), carlos/carlos123 (Basic)");
+        log.info("Demo data created -> cliente/cliente123 (Premium), carlos/carlos123 (Básica)");
     }
 
     private Client createClient(String username, String password, String email, String firstName, String lastName,

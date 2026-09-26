@@ -26,14 +26,14 @@ class DashboardIT extends AbstractIntegrationTest {
         assertThat(trainerDash.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(trainerDash.getBody().get("totalClients")).isEqualTo(1);
         assertThat(trainerDash.getBody().get("unreadMessages")).isEqualTo(1);
-        assertThat(((Number) trainerDash.getBody().get("revenueThisMonth")).doubleValue()).isEqualTo(119.0);
-        assertThat(((Number) trainerDash.getBody().get("monthlyRecurringRevenue")).doubleValue()).isEqualTo(119.0);
+        assertThat(((Number) trainerDash.getBody().get("revenueThisMonth")).doubleValue()).isEqualTo(143.0);
+        assertThat(((Number) trainerDash.getBody().get("monthlyRecurringRevenue")).doubleValue()).isEqualTo(143.0);
 
         ResponseEntity<Map<String, Object>> business = get("/api/dashboard/business", trainer);
         assertThat(business.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<?> byMonth = (List<?>) business.getBody().get("revenueByMonth");
         assertThat(byMonth).hasSize(12);
-        assertThat(((Number) business.getBody().get("revenueThisMonth")).doubleValue()).isEqualTo(119.0);
+        assertThat(((Number) business.getBody().get("revenueThisMonth")).doubleValue()).isEqualTo(143.0);
         assertThat((List<?>) business.getBody().get("revenueByMethod")).hasSize(1);
 
         ResponseEntity<Map<String, Object>> clientDash = get("/api/dashboard/client", client);
@@ -49,7 +49,8 @@ class DashboardIT extends AbstractIntegrationTest {
     void workoutPdf_clientOnlyOwnAndOnlyWithPlanFeature() {
         String trainer = trainerToken();
         Long anaId = createClient(trainer, "ana", "ana@mail.com", "ana12345", "Premium");
-        Long bobId = createClient(trainer, "bob", "bob@mail.com", "bob12345", "Basic");
+        createPlan(trainer, "Sin PDF", true, false);
+        Long bobId = createClient(trainer, "bob", "bob@mail.com", "bob12345", "Sin PDF");
         Long workoutId = id(post("/api/workouts", Map.of("name", "Full body", "exercises",
                 List.of(Map.of("exerciseName", "Sentadilla", "sets", 3, "reps", 8, "orderIndex", 0))), trainer));
         post("/api/workouts/clients/" + anaId + "/assign", Map.of("workoutId", workoutId), trainer);
@@ -62,7 +63,7 @@ class DashboardIT extends AbstractIntegrationTest {
         // Someone else's PDF
         assertThat(rest.exchange("/api/workouts/" + workoutId + "/pdf/" + anaId, org.springframework.http.HttpMethod.GET,
                 auth(bob), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        // Basic plan has no PDF export
+        // A plan without PDF export
         assertThat(rest.exchange("/api/workouts/" + workoutId + "/pdf/" + bobId, org.springframework.http.HttpMethod.GET,
                 auth(bob), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }

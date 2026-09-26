@@ -15,9 +15,21 @@ public record UpdatePlanRequest(
         @Size(max = 1000, message = "Description must be at most 1000 characters")
         String description,
 
-        @NotNull(message = "Monthly price is required")
-        @PositiveOrZero(message = "Monthly price must be zero or positive")
+        @NotNull(message = "El precio mensual es obligatorio")
+        @PositiveOrZero(message = "El precio debe ser cero o positivo")
         BigDecimal monthlyPrice,
+
+        @PositiveOrZero(message = "El precio debe ser cero o positivo")
+        BigDecimal quarterlyPrice,
+
+        @PositiveOrZero(message = "El precio debe ser cero o positivo")
+        BigDecimal semiannualPrice,
+
+        @PositiveOrZero(message = "El precio debe ser cero o positivo")
+        BigDecimal annualPrice,
+
+        @Size(max = 10000, message = "Demasiado texto en las características")
+        String features,
 
         @NotNull(message = "Review frequency is required")
         @Min(value = 1, message = "Review frequency must be at least 1 day")

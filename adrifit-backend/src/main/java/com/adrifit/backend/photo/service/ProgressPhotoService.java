@@ -42,7 +42,6 @@ public class ProgressPhotoService {
     @Transactional
     public PhotoResponse uploadMine(MultipartFile file, LocalDate takenOn, PhotoPose pose, String notes) {
         Client client = clientService.getCurrentClient();
-        String contentType = detectImageType(file);
         if (takenOn == null) {
             takenOn = LocalDate.now();
         }
@@ -52,21 +51,51 @@ public class ProgressPhotoService {
         if (notes != null && notes.length() > 500) {
             throw new BusinessException("Las notas no pueden superar los 500 caracteres");
         }
+        return toResponse(store(client.getId(), null, file, detectImageType(file), takenOn, pose, notes));
+    }
+
+    /**
+     * Photos sent together with a check-in report. Every file is validated before anything is
+     * stored, so an invalid photo rejects the whole report.
+     */
+    @Transactional
+    public List<PhotoResponse> storeForReport(Long clientId, Long reportId, List<MultipartFile> files, LocalDate takenOn) {
+        List<String> types = files.stream().map(this::detectImageType).toList();
+        List<PhotoResponse> stored = new java.util.ArrayList<>();
+        for (int i = 0; i < files.size(); i++) {
+            stored.add(toResponse(store(clientId, reportId, files.get(i), types.get(i), takenOn, PhotoPose.OTHER, null)));
+        }
+        return stored;
+    }
+
+    /** Photos of several reports at once, grouped by report id. */
+    public java.util.Map<Long, List<PhotoResponse>> findForReports(java.util.Collection<Long> reportIds) {
+        if (reportIds.isEmpty()) {
+            return java.util.Map.of();
+        }
+        return repository.findByReportIdInOrderByIdAsc(reportIds).stream()
+                .collect(java.util.stream.Collectors.groupingBy(ProgressPhoto::getReportId,
+                        java.util.stream.Collectors.mapping(this::toResponse, java.util.stream.Collectors.toList())));
+    }
+
+    private ProgressPhoto store(Long clientId, Long reportId, MultipartFile file, String contentType,
+                                LocalDate takenOn, PhotoPose pose, String notes) {
 
         String extension = switch (contentType) {
             case "image/png" -> ".png";
             case "image/webp" -> ".webp";
             default -> ".jpg";
         };
-        String key = "photos/" + client.getId() + "/" + UUID.randomUUID() + extension;
+        String key = "photos/" + clientId + "/" + UUID.randomUUID() + extension;
         try (InputStream in = file.getInputStream()) {
             storage.store(key, in, file.getSize(), contentType);
         } catch (IOException e) {
             throw new BusinessException("No se pudo leer la imagen");
         }
 
-        ProgressPhoto photo = repository.save(ProgressPhoto.builder()
-                .clientId(client.getId())
+        return repository.save(ProgressPhoto.builder()
+                .clientId(clientId)
+                .reportId(reportId)
                 .takenOn(takenOn)
                 .pose(pose != null ? pose : PhotoPose.FRONT)
                 .notes(notes)
@@ -74,7 +103,6 @@ public class ProgressPhotoService {
                 .contentType(contentType)
                 .fileSize(file.getSize())
                 .build());
-        return toResponse(photo);
     }
 
     public List<PhotoResponse> findMine() {
@@ -165,7 +193,7 @@ public class ProgressPhotoService {
     }
 
     private PhotoResponse toResponse(ProgressPhoto p) {
-        return new PhotoResponse(p.getId(), p.getClientId(), p.getTakenOn(), p.getPose(), p.getNotes(),
+        return new PhotoResponse(p.getId(), p.getClientId(), p.getReportId(), p.getTakenOn(), p.getPose(), p.getNotes(),
                 p.getTrainerComment(), p.getContentType(), p.getFileSize(), p.getUploadedAt(),
                 "/api/photos/" + p.getId() + "/content");
     }

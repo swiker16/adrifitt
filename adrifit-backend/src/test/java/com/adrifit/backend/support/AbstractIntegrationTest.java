@@ -47,6 +47,7 @@ public abstract class AbstractIntegrationTest {
     void resetDatabase() {
         TABLES.forEach(t -> jdbc.execute("DELETE FROM " + t));
         jdbc.update("DELETE FROM users WHERE role <> 'TRAINER'");
+        jdbc.update("DELETE FROM plans WHERE name NOT IN ('Básica', 'Premium')");
     }
 
     protected String login(String username, String password) {
@@ -110,6 +111,54 @@ public abstract class AbstractIntegrationTest {
         jdbc.update("UPDATE users SET username = ?, password = ?, must_change_password = FALSE WHERE id = ?",
                 username, passwordEncoder.encode(password), userId);
         return clientId;
+    }
+
+    /** Creates an extra plan (e.g. without chat or PDF) to test plan-gated features. */
+    protected Long createPlan(String trainerToken, String name, boolean messaging, boolean pdf) {
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("name", name);
+        body.put("monthlyPrice", 50);
+        body.put("reviewFrequencyDays", 30);
+        body.put("messagingEnabled", messaging);
+        body.put("analyticsEnabled", false);
+        body.put("pdfExportEnabled", pdf);
+        body.put("prioritySupport", false);
+        return id(post("/api/plans", body, trainerToken));
+    }
+
+    /** Client check-in through the real multipart endpoint with {@code photos} PNG files. */
+    protected ResponseEntity<Map<String, Object>> submitReport(String token, double weight, String comments, int photos) {
+        org.springframework.util.MultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
+        body.add("weight", String.valueOf(weight));
+        if (comments != null) {
+            body.add("comments", comments);
+        }
+        for (int i = 0; i < photos; i++) {
+            final int n = i;
+            HttpHeaders part = new HttpHeaders();
+            part.setContentType(MediaType.IMAGE_PNG);
+            body.add("files", new HttpEntity<>(new org.springframework.core.io.ByteArrayResource(png()) {
+                @Override
+                public String getFilename() {
+                    return "foto" + n + ".png";
+                }
+            }, part));
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        return rest.exchange("/api/reports", HttpMethod.POST, new HttpEntity<>(body, headers), MAP);
+    }
+
+    protected static byte[] png() {
+        try {
+            java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(8, 8, java.awt.image.BufferedImage.TYPE_INT_RGB);
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(image, "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     // ── small HTTP helpers ──────────────────────────────────────────────────

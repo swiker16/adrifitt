@@ -13,6 +13,7 @@ public final class PhotoDtos {
     public record PhotoResponse(
             Long id,
             Long clientId,
+            Long reportId,
             LocalDate takenOn,
             PhotoPose pose,
             String notes,

@@ -25,6 +25,7 @@ import com.adrifit.backend.payment.gateway.TestPaymentGateway;
 import com.adrifit.backend.payment.repository.PaymentRepository;
 import com.adrifit.backend.subscription.event.SubscriptionChargeEvent;
 import com.adrifit.backend.subscription.event.SubscriptionClosedEvent;
+import com.adrifit.backend.subscription.event.SubscriptionPriceChangedEvent;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -99,6 +100,18 @@ public class PaymentService {
     public void onSubscriptionClosed(SubscriptionClosedEvent event) {
         for (Payment payment : paymentRepository.findBySubscriptionIdAndStatus(event.subscriptionId(), PaymentStatus.PENDING)) {
             payment.setStatus(PaymentStatus.CANCELLED);
+            paymentRepository.save(payment);
+        }
+    }
+
+    @EventListener
+    @Transactional
+    public void onSubscriptionPriceChanged(SubscriptionPriceChangedEvent event) {
+        if (event.newAmount() == null || event.newAmount().signum() <= 0) {
+            return;
+        }
+        for (Payment payment : paymentRepository.findBySubscriptionIdAndStatus(event.subscriptionId(), PaymentStatus.PENDING)) {
+            payment.setAmount(event.newAmount());
             paymentRepository.save(payment);
         }
     }

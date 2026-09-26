@@ -41,7 +41,7 @@ class ClientControllerIT extends AbstractIntegrationTest {
     void newClientMustChangeTemporaryPassword() {
         String token = trainerToken();
         Map<String, Object> body = Map.of("firstName", "Lucía", "lastName", "Pérez", "phone", "611111111",
-                "birthDate", "1995-03-03", "objective", "Fuerza", "email", "lucia@mail.com", "planId", planId("Basic"));
+                "birthDate", "1995-03-03", "objective", "Fuerza", "email", "lucia@mail.com", "planId", planId("Básica"));
         ResponseEntity<Map<String, Object>> created = post("/api/clients", body, token);
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         String username = (String) created.getBody().get("username");
@@ -81,7 +81,7 @@ class ClientControllerIT extends AbstractIntegrationTest {
         createClient(token, "ana", "ana@mail.com", "ana12345");
 
         Map<String, Object> body = Map.of("firstName", "Ana", "lastName", "Dup", "phone", "600000001",
-                "birthDate", "1990-01-01", "objective", "x", "email", "ana@mail.com", "planId", planId("Basic"));
+                "birthDate", "1990-01-01", "objective", "x", "email", "ana@mail.com", "planId", planId("Básica"));
 
         ResponseEntity<String> response = rest.exchange("/api/clients", HttpMethod.POST, entity(body, token), String.class);
 
@@ -118,7 +118,7 @@ class ClientControllerIT extends AbstractIntegrationTest {
         String trainer = trainerToken();
         Long id = createClient(trainer, "ana", "ana@mail.com", "ana12345");
         String client = login("ana", "ana12345");
-        post("/api/reports", Map.of("weight", 70), client);
+        submitReport(client, 70, "ok", 4);
         post("/api/messages/me", Map.of("content", "hola"), client);
         post("/api/tasks", Map.of("title", "Llamar", "clientId", id), trainer);
         post("/api/testimonials/me", Map.of("rating", 5, "content", "Muy buen entrenador"), client);

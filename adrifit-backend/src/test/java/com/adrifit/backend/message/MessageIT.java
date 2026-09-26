@@ -46,8 +46,9 @@ class MessageIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void basicPlanCannotMessage_eitherSide() {
-        Long clientId = createClient(trainer, "ana", "ana@mail.com", "ana12345", "Basic");
+    void planWithoutMessagingCannotMessage_eitherSide() {
+        createPlan(trainer, "Sin chat", false, false);
+        Long clientId = createClient(trainer, "ana", "ana@mail.com", "ana12345", "Sin chat");
         String client = login("ana", "ana12345");
 
         ResponseEntity<Map<String, Object>> mine = get("/api/messages/me", client);

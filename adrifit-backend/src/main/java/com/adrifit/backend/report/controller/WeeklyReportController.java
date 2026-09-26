@@ -28,10 +28,15 @@ public class WeeklyReportController {
         this.reportService = reportService;
     }
 
-    @PostMapping("/api/reports")
+    /** Client check-in: 4-6 photos ("files"), weight and an optional comment. */
+    @PostMapping(value = "/api/reports", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<WeeklyReportResponse> createMine(@Valid @RequestBody CreateWeeklyReportRequest request) {
-        WeeklyReportResponse created = reportService.createForCurrentClient(request);
+    public ResponseEntity<WeeklyReportResponse> createMine(
+            @org.springframework.web.bind.annotation.RequestParam("weight") java.math.BigDecimal weight,
+            @org.springframework.web.bind.annotation.RequestParam(value = "comments", required = false) String comments,
+            @org.springframework.web.bind.annotation.RequestParam(value = "files", required = false)
+            List<org.springframework.web.multipart.MultipartFile> files) {
+        WeeklyReportResponse created = reportService.submitForCurrentClient(weight, comments, files);
         return ResponseEntity.created(URI.create("/api/reports/" + created.id())).body(created);
     }
 
@@ -54,7 +59,7 @@ public class WeeklyReportController {
     }
 
     @PostMapping("/api/clients/{clientId}/reports")
-    @PreAuthorize("hasAnyRole('TRAINER','CLIENT')")
+    @PreAuthorize("hasRole('TRAINER')")
     public ResponseEntity<WeeklyReportResponse> create(@PathVariable Long clientId,
                                                        @Valid @RequestBody CreateWeeklyReportRequest request) {
         WeeklyReportResponse created = reportService.create(clientId, request);

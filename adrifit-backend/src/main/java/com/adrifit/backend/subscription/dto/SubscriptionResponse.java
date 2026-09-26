@@ -16,6 +16,12 @@ public record SubscriptionResponse(
         SubscriptionStatus status,
         boolean active,
         boolean cancelAtPeriodEnd,
+        com.adrifit.backend.plan.domain.BillingPeriod billingPeriod,
+        java.math.BigDecimal customPrice,
+        String customPriceNote,
+        /* Amount charged each billing period (custom price if any). */
+        java.math.BigDecimal effectivePrice,
+        java.math.BigDecimal monthlyEquivalent,
         Instant cancelledAt,
         PlanResponse plan
 ) {

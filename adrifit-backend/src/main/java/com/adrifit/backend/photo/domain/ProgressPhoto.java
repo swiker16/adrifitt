@@ -36,6 +36,10 @@ public class ProgressPhoto {
     @Column(name = "client_id", nullable = false)
     private Long clientId;
 
+    /** Check-in report this photo was sent with (null = uploaded from the gallery). */
+    @Column(name = "report_id")
+    private Long reportId;
+
     @Column(name = "taken_on", nullable = false)
     private LocalDate takenOn;
 
