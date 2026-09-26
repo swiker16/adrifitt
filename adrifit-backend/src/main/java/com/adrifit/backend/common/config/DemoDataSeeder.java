@@ -57,8 +57,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Optional demo content (adrifit.seed.demo-data=true, on by default in the "local" profile) so the
  * app can be explored right away:
  * <ul>
- *   <li>cliente / cliente123 — Laura Martín, plan Premium with special price (85 €/month), with routine, diet, check-ins, logs, chat.</li>
- *   <li>carlos / carlos123 — Carlos Ruiz, plan Básica, with an overdue payment and no routine.</li>
+ *   <li>cliente — Laura Martín, plan Premium with special price (85 €/month), with routine, diet, check-ins, logs, chat.</li>
+ *   <li>carlos — Carlos Ruiz, plan Básica, with an overdue payment and no routine.</li>
  * </ul>
  */
 @Component
@@ -83,8 +83,11 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final TestimonialRepository testimonialRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbc;
+    /** DEMO_PASSWORD or a random one (printed in the log): never a known default. */
+    private final String demoPassword;
 
     public DemoDataSeeder(@Value("${adrifit.seed.demo-data:false}") boolean enabled,
+                          @Value("${adrifit.seed.demo-password:}") String demoPassword,
                           UserRepository userRepository,
                           ClientRepository clientRepository,
                           PlanRepository planRepository,
@@ -101,6 +104,8 @@ public class DemoDataSeeder implements CommandLineRunner {
                           PasswordEncoder passwordEncoder,
                           JdbcTemplate jdbc) {
         this.enabled = enabled;
+        this.demoPassword = demoPassword == null || demoPassword.isBlank()
+                ? com.adrifit.backend.common.security.RandomPasswords.generate(12) : demoPassword;
         this.userRepository = userRepository;
         this.clientRepository = clientRepository;
         this.planRepository = planRepository;
@@ -134,7 +139,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         LocalDate today = LocalDate.now();
 
         // ── Laura (Premium) ──
-        Client laura = createClient("cliente", "cliente123", "laura@demo.adrifitt.app", "Laura", "Martín",
+        Client laura = createClient("cliente", demoPassword, "laura@demo.adrifitt.app", "Laura", "Martín",
                 "612345678", LocalDate.of(1994, 5, 12), "Perder grasa y ganar fuerza", trainer.getId());
         LocalDate lauraStart = today.minusDays(20);
         Subscription lauraSub = subscriptionRepository.save(Subscription.builder()
@@ -193,7 +198,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 .content("¡Gracias! ¿Puedo cambiar el arroz de la comida por patata?").build());
 
         // ── Carlos (Básica) ──
-        Client carlos = createClient("carlos", "carlos123", "carlos@demo.adrifitt.app", "Carlos", "Ruiz",
+        Client carlos = createClient("carlos", demoPassword, "carlos@demo.adrifitt.app", "Carlos", "Ruiz",
                 "698765432", LocalDate.of(1988, 11, 3), "Mejorar la salud y perder peso", trainer.getId());
         LocalDate carlosStart = today.minusDays(35);
         Subscription carlosSub = subscriptionRepository.save(Subscription.builder()
@@ -216,7 +221,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 .content("En un mes he cambiado mis hábitos por completo. El seguimiento es cercano y muy profesional.")
                 .visible(true).build());
 
-        log.info("Demo data created -> cliente/cliente123 (Premium), carlos/carlos123 (Básica)");
+        log.info("Demo data created -> users 'cliente' (Premium) and 'carlos' (Básica), password: {}", demoPassword);
     }
 
     private Client createClient(String username, String password, String email, String firstName, String lastName,

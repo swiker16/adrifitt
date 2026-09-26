@@ -18,7 +18,7 @@ adrifit:
       base-dir: target/test-uploads
   security:
     jwt:
-      secret: c2VjcmV0LWtleS1hZHJpZml0LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uLTEyMzQ1Ng==
+      # No secret: a random key is generated for the test run.
       expiration-ms: 86400000
   mail:
     mode: test

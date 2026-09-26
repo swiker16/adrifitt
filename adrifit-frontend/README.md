@@ -113,11 +113,14 @@ src/app
 
 ## Usuarios de prueba (backend con perfil `local`)
 
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| `trainer` | `trainer123` | Entrenador |
-| `cliente` | `cliente123` | Cliente Premium (chat, PDF, revisión semanal) |
-| `carlos` | `carlos123` | Cliente Basic (sin chat) con un pago vencido |
+| Usuario | Rol |
+|---|---|
+| `trainer` | Entrenador |
+| `cliente` | Cliente Premium (chat, PDF, revisión semanal) |
+| `carlos` | Cliente Básica con un pago vencido |
+
+No hay contraseñas en el repositorio: el backend usa `TRAINER_PASSWORD` y `DEMO_PASSWORD` (en su `.env`)
+o genera unas aleatorias y las muestra una sola vez en su log al crear los usuarios.
 
 Pagos en **modo test**: tarjeta `4242 4242 4242 4242` (aprobada), `4000 0000 0000 0002` (rechazada),
 Bizum con cualquier móvil salvo `600 000 000` (rechazado). Los emails se guardan en *Emails* (no se envían).

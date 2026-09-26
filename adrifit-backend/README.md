@@ -87,13 +87,24 @@ $env:JAVA_HOME="C:\Program Files\Java\jdk-21.0.11"
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
+Configuración privada: copia `.env.example` a `.env` (git lo ignora) y rellena `DB_PASSWORD` y `JWT_SECRET`;
+`run.ps1` lo lee al arrancar. **En el repositorio no hay ninguna contraseña ni clave.**
+
 Usuarios:
 
-| Usuario | Contraseña | Notas |
-|---|---|---|
-| `trainer` | `trainer123` | Entrenador (se crea siempre) |
-| `cliente` | `cliente123` | Solo perfil `local`: plan Premium con rutina, dieta, seguimientos, entrenos y chat |
-| `carlos` | `carlos123` | Solo perfil `local`: plan Basic, pago vencido, sin rutina |
+| Usuario | Notas |
+|---|---|
+| `trainer` (o `TRAINER_USERNAME`) | Entrenador. Se crea en el primer arranque con `TRAINER_PASSWORD`; si no está definida, con una contraseña aleatoria que se muestra **una sola vez** en el log |
+| `cliente` | Solo perfil `local`: plan Premium con rutina, dieta, seguimientos, entrenos y chat |
+| `carlos` | Solo perfil `local`: plan Básica, pago vencido, sin rutina |
+
+Los clientes de demo usan `DEMO_PASSWORD` (o una aleatoria que aparece en el log).
+
+### Producción: variables obligatorias
+
+- `JWT_SECRET`: clave propia (`openssl rand -base64 64`). Sin ella las sesiones se invalidan en cada reinicio.
+- `DB_PASSWORD` y el resto de datos de la base de datos.
+- `TRAINER_PASSWORD` antes del **primer** arranque (o usa la del log y cámbiala en *Ajustes*).
 
 ## Tests
 
@@ -196,9 +207,11 @@ El entrenador también puede lanzarlas desde la app (`POST /api/jobs/daily/run`)
 
 | Variable | Defecto | Descripción |
 |---|---|---|
-| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | `jdbc:postgresql://localhost:5432/adrifit` / `adrifit` / `adrifit` | Base de datos |
+| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | `jdbc:postgresql://localhost:5432/adrifit` / `adrifit` / *(sin valor)* | Base de datos |
 | `SERVER_PORT` | `8080` | |
-| `JWT_SECRET` | clave de desarrollo | **Cámbiala en producción** (Base64, 256 bits) |
+| `JWT_SECRET` | *(aleatoria en cada arranque)* | **Obligatoria en producción** (Base64, 256+ bits) |
+| `TRAINER_USERNAME` / `TRAINER_EMAIL` / `TRAINER_PASSWORD` | `trainer` / `trainer@adrifit.com` / *(aleatoria, en el log)* | Primer entrenador (solo si no existe) |
+| `DEMO_PASSWORD` | *(aleatoria, en el log)* | Clientes de demo del perfil `local` |
 | `JWT_EXPIRATION_MS` | `86400000` | 24 h |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:[*],http://127.0.0.1:[*]` | Orígenes del frontend |
 | `PUBLIC_URL` | `http://localhost:4200` | URL del frontend (enlaces de los emails) |

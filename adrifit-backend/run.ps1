@@ -13,6 +13,22 @@ if (-not $env:JAVA_HOME -or -not (Test-Path "$env:JAVA_HOME\bin\java.exe")) {
 Write-Host "Usando JAVA_HOME=$env:JAVA_HOME"
 
 Set-Location $PSScriptRoot
+
+# Private settings (DB_PASSWORD, JWT_SECRET, TRAINER_PASSWORD...) from .env — never committed.
+# Copy .env.example to .env and fill it in. Variables already set in the environment win.
+$envFile = Join-Path $PSScriptRoot '.env'
+if (Test-Path $envFile) {
+    Get-Content $envFile | Where-Object { $_ -match '^\s*[A-Za-z_][A-Za-z0-9_]*\s*=' } | ForEach-Object {
+        $name, $value = $_ -split '=', 2
+        $name = $name.Trim()
+        if (-not [Environment]::GetEnvironmentVariable($name)) {
+            [Environment]::SetEnvironmentVariable($name, $value.Trim().Trim('"'), 'Process')
+        }
+    }
+    Write-Host 'Variables cargadas de .env'
+} else {
+    Write-Warning 'No hay .env: copia .env.example a .env y rellena DB_PASSWORD y JWT_SECRET.'
+}
 if ($Local) {
     & .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 } else {

@@ -1,5 +1,6 @@
 package com.adrifit.backend.common.config;
 
+import com.adrifit.backend.common.security.RandomPasswords;
 import com.adrifit.backend.plan.domain.Plan;
 import com.adrifit.backend.plan.repository.PlanRepository;
 import com.adrifit.backend.user.domain.Role;
@@ -8,6 +9,7 @@ import com.adrifit.backend.user.repository.UserRepository;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -21,13 +23,22 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PlanRepository planRepository;
+    private final String trainerUsername;
+    private final String trainerEmail;
+    private final String trainerPassword;
 
     public DataInitializer(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
-                           PlanRepository planRepository) {
+                           PlanRepository planRepository,
+                           @Value("${adrifit.bootstrap.trainer-username:trainer}") String trainerUsername,
+                           @Value("${adrifit.bootstrap.trainer-email:trainer@adrifit.com}") String trainerEmail,
+                           @Value("${adrifit.bootstrap.trainer-password:}") String trainerPassword) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.planRepository = planRepository;
+        this.trainerUsername = trainerUsername;
+        this.trainerEmail = trainerEmail;
+        this.trainerPassword = trainerPassword;
     }
 
     @Override
@@ -36,17 +47,29 @@ public class DataInitializer implements CommandLineRunner {
         seedPlans();
     }
 
+    /**
+     * First trainer account. The password comes from TRAINER_PASSWORD; without it a random one is
+     * generated and shown once in the log (never a known default).
+     */
     private void seedTrainer() {
-        if (userRepository.existsByUsername("trainer")) {
+        if (userRepository.existsByUsername(trainerUsername) || !userRepository.findByRole(Role.TRAINER).isEmpty()) {
             return;
         }
+        boolean configured = trainerPassword != null && !trainerPassword.isBlank();
+        String password = configured ? trainerPassword : RandomPasswords.generate(16);
         userRepository.save(User.builder()
-                .username("trainer")
-                .email("trainer@adrifit.com")
-                .password(passwordEncoder.encode("trainer123"))
+                .username(trainerUsername)
+                .email(trainerEmail)
+                .password(passwordEncoder.encode(password))
                 .role(Role.TRAINER)
                 .build());
-        log.info("Default TRAINER user created -> username: 'trainer', password: 'trainer123'");
+        if (configured) {
+            log.info("Trainer account '{}' created with the password from TRAINER_PASSWORD", trainerUsername);
+        } else {
+            log.warn("Trainer account '{}' created with a RANDOM password (shown only now): {}  "
+                    + "-> sign in and change it in Ajustes, or set TRAINER_PASSWORD before the first start.",
+                    trainerUsername, password);
+        }
     }
 
     /** Plan features are stored one per line. */

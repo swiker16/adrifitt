@@ -20,7 +20,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public abstract class AbstractIntegrationTest {
 
     protected static final String TRAINER_USERNAME = "trainer";
-    protected static final String TRAINER_PASSWORD = "trainer123";
+    /** Random per test run: no password is hardcoded in the repository. */
+    protected static final String TRAINER_PASSWORD = java.util.UUID.randomUUID().toString();
+
+    @org.springframework.test.context.DynamicPropertySource
+    static void bootstrapTrainer(org.springframework.test.context.DynamicPropertyRegistry registry) {
+        registry.add("adrifit.bootstrap.trainer-password", () -> TRAINER_PASSWORD);
+    }
 
     /** Child tables first so foreign keys never block the cleanup. */
     private static final List<String> TABLES = List.of(

@@ -1,3 +1,11 @@
 @use '../../page';
 
 .device-settings { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; max-width: 960px; }
+
+.content { display: grid; gap: 16px; align-content: start; }
+.password { max-width: 960px; }
+.password h2 { display: flex; align-items: center; gap: 8px; }
+.password h2 mat-icon { color: var(--brand); }
+.pw-body { padding: 18px 22px 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 16px; align-items: start; }
+.pw-body .alert, .pw-body .btn { grid-column: 1 / -1; }
+.pw-body .btn { justify-self: start; }
