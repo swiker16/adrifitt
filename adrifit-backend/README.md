@@ -120,6 +120,34 @@ reseñas, tareas/revisiones, dashboards y seguridad (IDOR en PDFs, acceso entre 
 Emails automáticos: bienvenida con contraseña temporal, restablecimiento de contraseña, cobro pendiente,
 recibo de pago, cambios de suscripción, feedback del seguimiento y recordatorio de revisión.
 
+## Notificaciones push (PWA)
+
+Web Push estándar (VAPID + cifrado `aes128gcm`, RFC 8291/8292), sin servicios de terceros de pago:
+funciona con Chrome/Edge/Firefox en Android y escritorio y con Safari en iPhone/iPad (iOS 16.4+ con la
+app **instalada** en la pantalla de inicio). Las claves VAPID se generan la primera vez y se guardan en
+`app_settings`; en producción se pueden fijar con `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`.
+
+| Evento | Destinatario | Al tocarla abre |
+|---|---|---|
+| El entrenador escribe | Cliente | Mensajes |
+| Un cliente escribe | Entrenador | Conversación del cliente |
+| Cobro pendiente / recordatorio de pago vencido (días 1, 3, 7 y 14) | Cliente | Suscripción y pagos |
+| Pago recibido | Entrenador | Cobros del cliente |
+| Toca revisión | Cliente | Seguimiento |
+| Seguimiento enviado | Entrenador | Seguimientos |
+| Feedback del seguimiento | Cliente | Seguimiento |
+
+Se envían después del commit y en segundo plano (no retrasan la petición). Las suscripciones caducadas
+(404/410) se borran solas; al cerrar sesión el dispositivo se desvincula de la cuenta.
+
+## Passkeys (Face ID, huella, Windows Hello)
+
+WebAuthn con credenciales *discoverable* y verificación de usuario obligatoria (Yubico `webauthn-server-core`).
+Tras entrar con contraseña la app ofrece crear una passkey; después se entra con el botón
+«Entrar con Face ID / huella» o desde el autocompletado del campo usuario. Cada usuario gestiona sus
+passkeys en *Perfil* (cliente) o *Ajustes* (entrenador). En producción hay que configurar el dominio:
+`WEBAUTHN_RP_ID=adrifit.es` y `WEBAUTHN_ORIGINS=https://adrifit.es` (requiere https).
+
 ## Tareas programadas
 
 Cada día (`JOBS_DAILY_CRON`, por defecto 06:00) se ejecuta:
@@ -127,6 +155,7 @@ Cada día (`JOBS_DAILY_CRON`, por defecto 06:00) se ejecuta:
    si el cliente la canceló, se cierra sin cobrar.
 2. **Revisiones**: crea una tarea de revisión para el entrenador y envía un recordatorio al cliente
    cuando le toca revisión según la frecuencia de su plan. Dar feedback a su seguimiento la completa.
+3. **Recordatorios de pago**: notificación push a los clientes con cobros vencidos (días 1, 3, 7 y 14).
 
 El entrenador también puede lanzarlas desde la app (`POST /api/jobs/daily/run`).
 
@@ -145,6 +174,11 @@ El entrenador también puede lanzarlas desde la app (`POST /api/jobs/daily/run`)
 | `MAIL_FROM`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` | | SMTP |
 | `PAYMENTS_MODE` | `test` | Pasarela de pagos |
 | `JOBS_DAILY_CRON` | `0 0 6 * * *` | Tareas diarias |
+| `PUSH_ENABLED` | `true` | Notificaciones push |
+| `PUSH_SUBJECT` | `mailto:hola@adrifit.app` | Contacto VAPID |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | generadas y guardadas en BD | Claves Web Push |
+| `WEBAUTHN_RP_ID` | `localhost` | Dominio de las passkeys |
+| `WEBAUTHN_ORIGINS` | `http://localhost:4200,http://localhost:4300` | Orígenes permitidos |
 | `SEED_DEMO_DATA` | `false` (`true` en perfil `local`) | Datos de demo |
 
 ## API (resumen)
@@ -163,6 +197,8 @@ Todas las rutas protegidas requieren `Authorization: Bearer <token>`.
 | Tareas y revisiones | CRUD `/api/tasks`, `PATCH …/{id}/complete|reopen`, `GET /api/reviews/schedule`, `POST /api/jobs/daily/run` | — |
 | Emails | `GET/POST /api/emails`, `GET /api/emails/{id}` | — |
 | Reseñas | `GET /api/testimonials`, `PATCH /api/testimonials/{id}/visibility` | `GET/POST /api/testimonials/me` · público: `GET /api/public/testimonials` |
+| Push | `GET /api/push/public-key`, `GET /api/push/status`, `POST /api/push/subscriptions(/remove)`, `POST /api/push/test` | ídem |
+| Passkeys | `GET /api/passkeys`, `POST /api/passkeys/register/options|finish`, `DELETE /api/passkeys/{id}` · login: `POST /api/auth/passkey/options|finish` | ídem |
 | Paneles | `GET /api/dashboard/trainer`, `GET /api/dashboard/business` | `GET /api/dashboard/client` |
 | Rutinas, dietas, planes, seguimientos, analíticas | endpoints existentes (`/api/workouts`, `/api/trainer/diets`, `/api/plans`, `/api/reports`, `/api/analyses`) | ídem en su versión de cliente |
 

@@ -1,5 +1,6 @@
 package com.adrifit.backend.jobs;
 
+import com.adrifit.backend.payment.service.PaymentService;
 import com.adrifit.backend.subscription.service.SubscriptionService;
 import com.adrifit.backend.task.service.TaskService;
 import java.time.LocalDate;
@@ -20,10 +21,12 @@ public class DailyJobs {
 
     private final SubscriptionService subscriptionService;
     private final TaskService taskService;
+    private final PaymentService paymentService;
 
-    public DailyJobs(SubscriptionService subscriptionService, TaskService taskService) {
+    public DailyJobs(SubscriptionService subscriptionService, TaskService taskService, PaymentService paymentService) {
         this.subscriptionService = subscriptionService;
         this.taskService = taskService;
+        this.paymentService = paymentService;
     }
 
     @Scheduled(cron = "${adrifit.jobs.daily-cron:0 0 6 * * *}")
@@ -38,10 +41,11 @@ public class DailyJobs {
     public DailyJobResult run(LocalDate today) {
         int renewals = subscriptionService.processRenewals(today);
         int reviews = taskService.generateReviewTasks(today);
-        log.info("Daily jobs done: {} renewals, {} review tasks", renewals, reviews);
-        return new DailyJobResult(renewals, reviews);
+        int reminders = paymentService.remindOverdue(today);
+        log.info("Daily jobs done: {} renewals, {} review tasks, {} payment reminders", renewals, reviews, reminders);
+        return new DailyJobResult(renewals, reviews, reminders);
     }
 
-    public record DailyJobResult(int subscriptionsProcessed, int reviewTasksCreated) {
+    public record DailyJobResult(int subscriptionsProcessed, int reviewTasksCreated, int paymentRemindersSent) {
     }
 }

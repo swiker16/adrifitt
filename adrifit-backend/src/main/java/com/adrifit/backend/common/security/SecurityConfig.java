@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/passkey/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/plans", "/api/plans/**").permitAll()
                         .anyRequest().authenticated())

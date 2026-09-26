@@ -10,6 +10,8 @@ public record MeResponse(
         boolean mustChangePassword,
         Long clientId,
         String firstName,
-        String lastName
+        String lastName,
+        /* Registered passkeys: the app offers to create one when 0. */
+        long passkeys
 ) {
 }

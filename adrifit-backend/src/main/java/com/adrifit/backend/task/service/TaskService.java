@@ -58,6 +58,7 @@ public class TaskService {
     private final WeeklyReportRepository reportRepository;
     private final EmailService emailService;
     private final EmailTemplates emailTemplates;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public TaskService(TrainerTaskRepository repository,
                        ClientRepository clientRepository,
@@ -65,7 +66,9 @@ public class TaskService {
                        SubscriptionRepository subscriptionRepository,
                        WeeklyReportRepository reportRepository,
                        EmailService emailService,
-                       EmailTemplates emailTemplates) {
+                       EmailTemplates emailTemplates,
+                       org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
         this.repository = repository;
         this.clientRepository = clientRepository;
         this.clientService = clientService;
@@ -178,6 +181,8 @@ public class TaskService {
             clientRepository.findById(item.clientId()).ifPresent(client ->
                     emailService.sendToClient(client.getId(), EmailType.REVIEW_REMINDER, "Toca revisión",
                             emailTemplates.reviewReminder(client.getFirstName(), item.nextReviewDate())));
+            events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.ReviewDue(
+                    item.clientId(), item.nextReviewDate()));
             created++;
         }
         if (created > 0) {

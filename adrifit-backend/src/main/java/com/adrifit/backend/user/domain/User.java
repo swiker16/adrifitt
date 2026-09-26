@@ -45,4 +45,8 @@ public class User {
     @Column(name = "must_change_password", nullable = false)
     @ColumnDefault("false")
     private boolean mustChangePassword;
+
+    /** Random WebAuthn user handle (base64url), created with the first passkey. */
+    @Column(name = "webauthn_user_handle", length = 100, unique = true)
+    private String webauthnUserHandle;
 }

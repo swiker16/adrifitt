@@ -28,13 +28,16 @@ public class AuthService {
     private final UserService userService;
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.adrifit.backend.passkey.repository.PasskeyCredentialRepository passkeyRepository;
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtService jwtService,
                        UserRepository userRepository,
                        UserService userService,
                        ClientRepository clientRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       com.adrifit.backend.passkey.repository.PasskeyCredentialRepository passkeyRepository) {
+        this.passkeyRepository = passkeyRepository;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
@@ -50,11 +53,14 @@ public class AuthService {
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return issueToken(user);
+    }
 
+    /** JWT session for an already authenticated user (password or passkey). */
+    public AuthResponse issueToken(User user) {
         String token = jwtService.generateToken(
                 user.getUsername(),
                 Map.of("role", user.getRole().name(), "userId", user.getId()));
-
         return new AuthResponse(token, user.getId(), user.getUsername(), user.getRole(), user.isMustChangePassword());
     }
 
@@ -66,7 +72,8 @@ public class AuthService {
                 user.isMustChangePassword(),
                 client != null ? client.getId() : null,
                 client != null ? client.getFirstName() : null,
-                client != null ? client.getLastName() : null);
+                client != null ? client.getLastName() : null,
+                passkeyRepository.countByUserId(user.getId()));
     }
 
     @Transactional

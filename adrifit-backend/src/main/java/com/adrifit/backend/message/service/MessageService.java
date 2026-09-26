@@ -43,12 +43,15 @@ public class MessageService {
     private final ClientRepository clientRepository;
     private final SubscriptionService subscriptionService;
     private final UserService userService;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public MessageService(MessageRepository repository,
                           ClientService clientService,
                           ClientRepository clientRepository,
                           SubscriptionService subscriptionService,
-                          UserService userService) {
+                          UserService userService,
+                          org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
         this.repository = repository;
         this.clientService = clientService;
         this.clientRepository = clientRepository;
@@ -168,12 +171,15 @@ public class MessageService {
 
     private Message save(Long clientId, Role role, String content) {
         User sender = userService.getCurrentUser();
-        return repository.save(Message.builder()
+        Message saved = repository.save(Message.builder()
                 .clientId(clientId)
                 .senderUserId(sender.getId())
                 .senderRole(role)
                 .content(content.trim())
                 .build());
+        events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.MessageSent(
+                clientId, role, saved.getContent()));
+        return saved;
     }
 
     private MessageResponse toResponse(Message m) {

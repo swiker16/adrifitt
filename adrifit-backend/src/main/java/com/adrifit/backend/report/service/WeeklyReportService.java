@@ -102,6 +102,8 @@ public class WeeklyReportService {
                 .build());
         List<PhotoResponse> stored = photoService.storeForReport(client.getId(), report.getId(), photos,
                 java.time.LocalDate.now());
+        events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.ReportSubmitted(
+                client.getId(), report.getId()));
         return reportMapper.toResponse(report, stored);
     }
 

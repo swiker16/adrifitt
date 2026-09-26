@@ -54,6 +54,7 @@ public class PaymentService {
     private final EmailService emailService;
     private final EmailTemplates emailTemplates;
     private final String currency;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public PaymentService(PaymentRepository paymentRepository,
                           PaymentGateway gateway,
@@ -61,7 +62,9 @@ public class PaymentService {
                           ClientRepository clientRepository,
                           EmailService emailService,
                           EmailTemplates emailTemplates,
-                          @Value("${adrifit.payments.currency:EUR}") String currency) {
+                          @Value("${adrifit.payments.currency:EUR}") String currency,
+                          org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
         this.paymentRepository = paymentRepository;
         this.gateway = gateway;
         this.clientService = clientService;
@@ -248,6 +251,8 @@ public class PaymentService {
         payment.setMethod(method);
         payment.setLastFailureReason(null);
         markPaid(payment, result.reference());
+        events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.PaymentReceived(
+                payment.getClientId(), payment.getAmount(), methodLabel(method)));
         return toResponse(payment);
     }
 
@@ -264,7 +269,28 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Daily reminder for unpaid charges 1, 3, 7 and 14 days after their due date.
+     *
+     * @return reminders sent
+     */
+    @Transactional(readOnly = true)
+    public int remindOverdue(LocalDate today) {
+        int sent = 0;
+        for (Payment p : paymentRepository.findByStatus(PaymentStatus.PENDING)) {
+            long days = java.time.temporal.ChronoUnit.DAYS.between(p.getDueDate(), today);
+            if (days == 1 || days == 3 || days == 7 || days == 14) {
+                events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.PaymentOverdue(
+                        p.getClientId(), p.getAmount(), days));
+                sent++;
+            }
+        }
+        return sent;
+    }
+
     private void notifyDue(Payment payment) {
+        events.publishEvent(new com.adrifit.backend.notification.event.NotificationEvents.PaymentDue(
+                payment.getClientId(), payment.getAmount(), payment.getConcept(), payment.getDueDate()));
         clientRepository.findById(payment.getClientId()).ifPresent(client ->
                 emailService.sendToClient(client.getId(), EmailType.PAYMENT_DUE, "Nuevo pago pendiente",
                         emailTemplates.paymentDue(client.getFirstName(), payment.getConcept(), payment.getAmount(),

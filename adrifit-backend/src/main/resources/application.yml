@@ -68,3 +68,15 @@ adrifit:
   seed:
     # Creates a demo client with routine, diet, reports, logs... (only if it does not exist).
     demo-data: ${SEED_DEMO_DATA:false}
+  push:
+    # Web Push (PWA notifications). VAPID keys are generated once and stored in the DB
+    # unless provided here (they must never change or existing subscriptions break).
+    enabled: ${PUSH_ENABLED:true}
+    subject: ${PUSH_SUBJECT:mailto:hola@adrifit.app}
+    vapid-public-key: ${VAPID_PUBLIC_KEY:}
+    vapid-private-key: ${VAPID_PRIVATE_KEY:}
+  webauthn:
+    # Passkeys: rp-id = domain of the frontend (no scheme/port); origins = exact frontend URLs.
+    rp-id: ${WEBAUTHN_RP_ID:localhost}
+    rp-name: AdriFit
+    origins: ${WEBAUTHN_ORIGINS:http://localhost:4200,http://localhost:4300}
