@@ -120,6 +120,25 @@ reseñas, tareas/revisiones, dashboards y seguridad (IDOR en PDFs, acceso entre 
 Emails automáticos: bienvenida con contraseña temporal, restablecimiento de contraseña, cobro pendiente,
 recibo de pago, cambios de suscripción, feedback del seguimiento y recordatorio de revisión.
 
+## Captación de clientes nuevos (solicitudes)
+
+Flujo: **solicitud → cuestionario → alta → activación**.
+
+1. Formulario público `POST /api/public/leads` (nombre, email, teléfono, objetivo, plan de interés,
+   consentimiento). Protección anti-spam: campo trampa (*honeypot*), máx. 10 envíos/hora por IP y sin
+   duplicados para un email con una solicitud abierta. Respuesta siempre igual (no revela si el email existe).
+   Emails: acuse al interesado y aviso al entrenador (`LEADS_NOTIFY_EMAIL` o el email de los entrenadores) + push.
+2. El entrenador envía el **cuestionario** (enlace personal, caduca en 14 días; solo se guarda el SHA-256 del
+   token) o **rechaza** con un email de «lo sentimos» y mensaje personal opcional.
+3. El interesado responde (salud, lesiones, entrenamiento, alimentación, hábitos, plan y periodo) con
+   **consentimiento explícito para datos de salud**. Aviso al entrenador (resalta lesiones/condiciones).
+4. El entrenador **acepta** (plan, periodo y precio especial) → se crean cuenta, suscripción y primer cobro, y se
+   envía un email de **activación** (enlace de 7 días) donde el cliente elige su contraseña y entra directamente;
+   o **rechaza**. El cuestionario queda en la ficha del cliente y las notas clave (lesiones, alergias) en sus notas.
+5. Las solicitudes se pueden borrar (RGPD) con sus respuestas de salud.
+
+Estados: `NEW`, `QUESTIONNAIRE_SENT`, `QUESTIONNAIRE_COMPLETED`, `ACCEPTED`, `REJECTED` (tabla `leads`, Flyway V7).
+
 ## Vídeos de técnica
 
 El cliente graba un ejercicio con el móvil (o lo sube de la galería) para que el entrenador le corrija la
@@ -188,6 +207,7 @@ El entrenador también puede lanzarlas desde la app (`POST /api/jobs/daily/run`)
 | `MAIL_FROM`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` | | SMTP |
 | `PAYMENTS_MODE` | `test` | Pasarela de pagos |
 | `JOBS_DAILY_CRON` | `0 0 6 * * *` | Tareas diarias |
+| `LEADS_NOTIFY_EMAIL` | (vacío) | Email que recibe los avisos de solicitudes nuevas |
 | `VIDEOS_MAX_SIZE_MB` | `200` | Tamaño máximo de un vídeo de técnica |
 | `PUSH_ENABLED` | `true` | Notificaciones push |
 | `PUSH_SUBJECT` | `mailto:hola@adrifitt.app` | Contacto VAPID |
@@ -212,6 +232,7 @@ Todas las rutas protegidas requieren `Authorization: Bearer <token>`.
 | Tareas y revisiones | CRUD `/api/tasks`, `PATCH …/{id}/complete|reopen`, `GET /api/reviews/schedule`, `POST /api/jobs/daily/run` | — |
 | Emails | `GET/POST /api/emails`, `GET /api/emails/{id}` | — |
 | Reseñas | `GET /api/testimonials`, `PATCH /api/testimonials/{id}/visibility` | `GET/POST /api/testimonials/me` · público: `GET /api/public/testimonials` |
+| Solicitudes | `GET /api/leads(?status=)`, `GET /api/leads/counts`, `GET /api/leads/{id}`, `POST …/{id}/questionnaire|reject|approve|resend-activation`, `PATCH …/{id}/note`, `DELETE …/{id}`, `GET /api/clients/{id}/questionnaire` | público: `POST /api/public/leads`, `GET/POST /api/public/questionnaire/{token}`, `GET/POST /api/public/activation/{token}` |
 | Vídeos de técnica | `GET /api/videos(?pending=true)`, `GET /api/videos/counts`, `GET/POST /api/clients/{id}/videos`, `PATCH /api/videos/{id}/feedback`, `DELETE /api/videos/{id}` | `GET/POST /api/videos/me`, `POST /api/videos/me/seen`, `DELETE /api/videos/{id}` (los suyos) · ambos: `GET /api/videos/{id}/link` → `…/stream?exp&sig` |
 | Push | `GET /api/push/public-key`, `GET /api/push/status`, `POST /api/push/subscriptions(/remove)`, `POST /api/push/test` | ídem |
 | Passkeys | `GET /api/passkeys`, `POST /api/passkeys/register/options|finish`, `DELETE /api/passkeys/{id}` · login: `POST /api/auth/passkey/options|finish` | ídem |

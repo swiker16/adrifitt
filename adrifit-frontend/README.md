@@ -36,6 +36,17 @@ npm run start:pwa   # build + http://localhost:4300 con proxy de /api a :8080 (A
 
 `ng serve` no activa el service worker, así que las notificaciones solo funcionan con la build.
 
+### Clientes nuevos: solicitud → cuestionario → activación
+
+- **`/empezar`**: formulario «Quiero empezar» (los botones «Empezar ahora» y «Empezar con …» de la web llevan
+  aquí, con el plan preseleccionado). El login enlaza «Solicita tu plaza».
+- **Solicitudes** (menú del entrenador, con aviso): pendientes, esperando cuestionario, aceptadas y rechazadas.
+  Detalle con contacto (email, teléfono, WhatsApp), objetivo, línea de tiempo, cuestionario, nota privada y
+  acciones: enviar/reenviar cuestionario, rechazar, aceptar con plan y precio, reenviar activación, borrar.
+- **`/cuestionario/:token`**: cuestionario en 5 pasos con validación por paso y borrador guardado en el dispositivo.
+- **`/activar/:token`**: el cliente aceptado elige su contraseña y entra en la app.
+- Ficha del cliente → pestaña **Cuestionario** con sus respuestas.
+
 ### Descargar la app (instalar la PWA)
 
 - **Enlace para compartir:** `https://<tu-dominio>/app` (también `/descargar`). Página con el logo, ventajas, botón

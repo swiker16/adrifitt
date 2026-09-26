@@ -29,6 +29,10 @@
       <a routerLink="/trainer/clients" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>group</mat-icon> <span>Clientes</span>
       </a>
+      <a routerLink="/trainer/leads" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>person_add</mat-icon> <span>Solicitudes</span>
+        @if (pendingLeads() > 0) { <span class="nav-badge">{{ pendingLeads() }}</span> }
+      </a>
       <a routerLink="/trainer/messages" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>chat_bubble</mat-icon> <span>Mensajes</span>
         @if (unreadMessages() > 0) { <span class="nav-badge">{{ unreadMessages() }}</span> }

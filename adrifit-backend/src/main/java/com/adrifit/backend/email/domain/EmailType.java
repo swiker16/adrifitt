@@ -8,5 +8,11 @@ public enum EmailType {
     SUBSCRIPTION,
     REPORT_FEEDBACK,
     REVIEW_REMINDER,
-    CUSTOM
+    CUSTOM,
+    /** New client intake (contact request, questionnaire, decision, activation). */
+    LEAD_RECEIVED,
+    LEAD_NOTIFICATION,
+    QUESTIONNAIRE_INVITE,
+    LEAD_REJECTED,
+    ACCOUNT_ACTIVATION
 }

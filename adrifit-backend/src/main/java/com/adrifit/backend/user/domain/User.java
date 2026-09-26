@@ -49,4 +49,11 @@ public class User {
     /** Random WebAuthn user handle (base64url), created with the first passkey. */
     @Column(name = "webauthn_user_handle", length = 100, unique = true)
     private String webauthnUserHandle;
+
+    /** SHA-256 of the pending account activation token (new clients coming from a lead). */
+    @Column(name = "activation_token_hash", length = 64, unique = true)
+    private String activationTokenHash;
+
+    @Column(name = "activation_expires_at")
+    private java.time.Instant activationExpiresAt;
 }

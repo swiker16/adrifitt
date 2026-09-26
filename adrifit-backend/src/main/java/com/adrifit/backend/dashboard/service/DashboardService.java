@@ -1,6 +1,7 @@
 package com.adrifit.backend.dashboard.service;
 
 import com.adrifit.backend.video.service.TechniqueVideoService;
+import com.adrifit.backend.lead.service.LeadService;
 import com.adrifit.backend.analysis.service.AnalysisService;
 import com.adrifit.backend.client.domain.Client;
 import com.adrifit.backend.client.mapper.ClientMapper;
@@ -82,6 +83,7 @@ public class DashboardService {
     private final ProgressPhotoService photoService;
     private final TestimonialRepository testimonialRepository;
     private final TechniqueVideoService videoService;
+    private final LeadService leadService;
 
     public DashboardService(ClientRepository clientRepository,
                             ClientService clientService,
@@ -100,7 +102,8 @@ public class DashboardService {
                             WorkoutLogService workoutLogService,
                             ProgressPhotoService photoService,
                             TestimonialRepository testimonialRepository,
-                            TechniqueVideoService videoService) {
+                            TechniqueVideoService videoService,
+                            LeadService leadService) {
         this.clientRepository = clientRepository;
         this.clientService = clientService;
         this.clientMapper = clientMapper;
@@ -119,6 +122,7 @@ public class DashboardService {
         this.photoService = photoService;
         this.testimonialRepository = testimonialRepository;
         this.videoService = videoService;
+        this.leadService = leadService;
     }
 
     // ── Trainer ─────────────────────────────────────────────────────────────
@@ -266,6 +270,7 @@ public class DashboardService {
                 pending.size(), sum(pending), overdue,
                 taskService.countDueToday(),
                 videoService.countPendingReview(),
+                leadService.countPending(),
                 revenueThisMonth, mrr,
                 clientsPerPlan,
                 pendingReviews, reportsWithoutFeedback, clientsWithoutWorkouts, upcomingRenewals,

@@ -129,6 +129,11 @@
         <button class="tab-btn" [class.active]="activeTab() === 'analiticas'" (click)="activeTab.set('analiticas')">
           <mat-icon>analytics</mat-icon> Analíticas
         </button>
+        @if (questionnaire()) {
+          <button class="tab-btn" [class.active]="activeTab() === 'cuestionario'" (click)="activeTab.set('cuestionario')">
+            <mat-icon>assignment_ind</mat-icon> Cuestionario
+          </button>
+        }
         <button class="tab-btn" [class.active]="activeTab() === 'notas'" (click)="activeTab.set('notas')">
           <mat-icon>sticky_note_2</mat-icon> Notas
         </button>
@@ -1016,6 +1021,13 @@
     <!-- ════════════════════════════════════════
          TAB: NOTAS
     ════════════════════════════════════════ -->
+    @if (activeTab() === 'cuestionario' && questionnaire()) {
+      <div class="panel questionnaire-panel">
+        <div class="panel-head"><h2>Cuestionario inicial</h2></div>
+        <div class="q-body"><app-questionnaire-view [q]="questionnaire()" /></div>
+      </div>
+    }
+
     @if (activeTab() === 'notas') {
       <div class="panel">
         <div class="panel-head">

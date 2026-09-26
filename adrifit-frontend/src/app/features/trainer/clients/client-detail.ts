@@ -29,10 +29,13 @@ import { ChartPoint, LineChart } from '../../../shared/components/line-chart';
 import { SecureImg } from '../../../shared/components/secure-img';
 import { openBlob, saveBlob } from '../../../shared/utils/download';
 import { PlanPricingPicker } from './plan-pricing-picker';
+import { QuestionnaireView } from '../../../shared/components/questionnaire-view';
+import { LeadService } from '../../../core/services/lead.service';
+import { Questionnaire } from '../../../shared/models/lead.model';
 
 type DetailTab =
   | 'resumen' | 'suscripciones' | 'pagos' | 'rutinas' | 'entrenos' | 'dietas' | 'reportes'
-  | 'analiticas' | 'progreso' | 'fotos' | 'notas';
+  | 'analiticas' | 'progreso' | 'fotos' | 'notas' | 'cuestionario';
 
 interface PhotoGroup {
   date: string;
@@ -41,12 +44,15 @@ interface PhotoGroup {
 
 @Component({
   selector: 'app-client-detail',
-  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule, MatIconModule, LineChart, SecureImg, PlanPricingPicker],
+  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule, MatIconModule, LineChart, SecureImg, PlanPricingPicker, QuestionnaireView],
   templateUrl: './client-detail.html',
   styleUrl: './client-detail.scss',
 })
 export class ClientDetail {
   private readonly clientService = inject(ClientService);
+  private readonly leadService = inject(LeadService);
+  /** Initial questionnaire (clients that came through a request). */
+  readonly questionnaire = signal<Questionnaire | null>(null);
   private readonly reportService = inject(ReportService);
   private readonly planService = inject(PlanService);
   private readonly subscriptionService = inject(SubscriptionService);
@@ -242,6 +248,7 @@ export class ClientDetail {
   private load(): void {
     const clientId = Number(this.id());
     this.loading.set(true);
+    this.leadService.questionnaireOfClient(clientId).subscribe({ next: (q) => this.questionnaire.set(q), error: () => undefined });
     this.clientService.findById(clientId).subscribe({
       next: (c) => {
         this.client.set(c);

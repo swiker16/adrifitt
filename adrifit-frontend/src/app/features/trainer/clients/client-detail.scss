@@ -346,3 +346,7 @@ textarea { resize: vertical; width: 100%; }
   .special-row { flex-wrap: wrap; }
   .lb-nav.prev { left: 12px; } .lb-nav.next { right: 12px; }
 }
+
+/* Initial questionnaire tab */
+.questionnaire-panel .q-body { padding: 18px 22px 22px; }
+@media (max-width: 560px) { .questionnaire-panel .q-body { padding: 14px; } }

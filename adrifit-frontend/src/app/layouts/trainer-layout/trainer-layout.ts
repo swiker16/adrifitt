@@ -32,8 +32,9 @@ export class TrainerLayout {
   readonly pendingAnalyses = signal(0);
   readonly overduePayments = signal(0);
   readonly pendingVideos = signal(0);
+  readonly pendingLeads = signal(0);
   readonly totalBadges = computed(
-    () => this.unreadMessages() + this.tasksDue() + this.pendingAnalyses() + this.overduePayments() + this.pendingVideos()
+    () => this.unreadMessages() + this.tasksDue() + this.pendingAnalyses() + this.overduePayments() + this.pendingVideos() + this.pendingLeads()
   );
 
   constructor() {
@@ -54,12 +55,13 @@ export class TrainerLayout {
       .subscribe({ next: (d) => this.applyCounts(d), error: () => undefined });
   }
 
-  private applyCounts(d: { unreadMessages: number; tasksDue: number; pendingAnalyses: number; overduePaymentsCount: number; pendingVideos: number }): void {
+  private applyCounts(d: { unreadMessages: number; tasksDue: number; pendingAnalyses: number; overduePaymentsCount: number; pendingVideos: number; pendingLeads: number }): void {
     this.unreadMessages.set(d.unreadMessages ?? 0);
     this.tasksDue.set(d.tasksDue ?? 0);
     this.pendingAnalyses.set(d.pendingAnalyses ?? 0);
     this.overduePayments.set(d.overduePaymentsCount ?? 0);
     this.pendingVideos.set(d.pendingVideos ?? 0);
+    this.pendingLeads.set(d.pendingLeads ?? 0);
   }
 
   toggleMenu(): void { this.menuOpen.update(v => !v); }

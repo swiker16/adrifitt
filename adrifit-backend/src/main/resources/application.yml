@@ -43,6 +43,9 @@ server:
   port: ${SERVER_PORT:8080}
 
 adrifit:
+  leads:
+    # Where new requests / questionnaires are notified (empty = the trainer users' emails)
+    notify-email: ${LEADS_NOTIFY_EMAIL:}
   videos:
     # Technique videos: ~30-60 s clips recorded with the phone.
     max-size-mb: ${VIDEOS_MAX_SIZE_MB:200}

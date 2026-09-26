@@ -44,4 +44,12 @@ public final class NotificationEvents {
     /** The trainer corrected the client's technique video. */
     public record VideoReviewed(Long clientId, String exerciseName) {
     }
+
+    /** Someone filled in the public contact form. */
+    public record LeadReceived(Long leadId, String name, String objectivePreview) {
+    }
+
+    /** A prospect answered the questionnaire. */
+    public record QuestionnaireCompleted(Long leadId, String name, boolean healthFlag) {
+    }
 }

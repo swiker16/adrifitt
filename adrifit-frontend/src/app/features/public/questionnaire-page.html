@@ -1,0 +1,303 @@
+<app-public-frame>
+  @if (loadError()) {
+    <div class="card"><div class="state">
+      <div class="big-icon muted"><mat-icon>wifi_off</mat-icon></div>
+      <h2>No se pudo abrir</h2><p>{{ loadError() }}</p>
+    </div></div>
+  } @else if (!info()) {
+    <div class="card"><div class="skeleton" style="height: 320px"></div></div>
+  } @else if (done()) {
+    <div class="card"><div class="state">
+      <div class="big-icon"><mat-icon>task_alt</mat-icon></div>
+      <h2>¡Gracias, {{ info()!.firstName }}!</h2>
+      <p>Hemos recibido tu cuestionario. Adri lo revisará y te escribiremos muy pronto con la respuesta.</p>
+      <a routerLink="/" class="btn btn-outline">Ir a la web</a>
+    </div></div>
+  } @else if (info()!.state !== 'OPEN') {
+    <div class="card"><div class="state">
+      @switch (info()!.state) {
+        @case ('COMPLETED') {
+          <div class="big-icon"><mat-icon>task_alt</mat-icon></div>
+          <h2>Ya nos enviaste el cuestionario</h2>
+          <p>Adri lo está revisando. Te escribiremos pronto con la respuesta.</p>
+        }
+        @case ('EXPIRED') {
+          <div class="big-icon muted"><mat-icon>timer_off</mat-icon></div>
+          <h2>Este enlace ha caducado</h2>
+          <p>Por seguridad los enlaces caducan. Responde al email que recibiste y te enviaremos uno nuevo.</p>
+        }
+        @default {
+          <div class="big-icon muted"><mat-icon>link_off</mat-icon></div>
+          <h2>Enlace no disponible</h2>
+          <p>Este cuestionario ya no está activo. Si crees que es un error, responde al email que recibiste.</p>
+        }
+      }
+      <a routerLink="/" class="btn btn-outline">Ir a la web</a>
+    </div></div>
+  } @else {
+    <div class="page-head">
+      <h1>Hola, <span class="accent">{{ info()!.firstName }}</span></h1>
+      <p>Cuéntanos un poco más sobre ti para preparar tu plan. Son unos 5 minutos y solo lo verá Adri.</p>
+    </div>
+
+    <div class="stepper" aria-label="Progreso del cuestionario">
+      <div class="stepper-top">
+        <strong>{{ step() + 1 }}. {{ steps[step()] }}</strong>
+        <span>Paso {{ step() + 1 }} de {{ steps.length }}</span>
+      </div>
+      <div class="progress" role="progressbar" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100">
+        <span [style.width.%]="progress()"></span>
+      </div>
+    </div>
+
+    <form class="card" (ngSubmit)="step() === steps.length - 1 ? submit() : next()" (change)="saveDraft()" (input)="revalidate()" novalidate>
+      @switch (step()) {
+        <!-- 1 · Sobre ti -->
+        @case (0) {
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-birth">Fecha de nacimiento</label>
+              <input id="q-birth" type="date" name="birthDate" [(ngModel)]="q.birthDate" max="2015-01-01" />
+            </div>
+            <div class="field">
+              <label for="q-occ">Profesión <span class="opt">(opcional)</span></label>
+              <input id="q-occ" name="occupation" [(ngModel)]="q.occupation" maxlength="100" placeholder="p. ej. Enfermera" />
+            </div>
+            <div class="field">
+              <label for="q-height">Altura (cm)</label>
+              <input id="q-height" type="number" inputmode="decimal" name="heightCm" [(ngModel)]="q.heightCm" min="100" max="250" placeholder="170" />
+            </div>
+            <div class="field">
+              <label for="q-weight">Peso actual (kg)</label>
+              <input id="q-weight" type="number" inputmode="decimal" step="0.1" name="weightKg" [(ngModel)]="q.weightKg" min="30" max="300" placeholder="70" />
+            </div>
+          </div>
+          <fieldset class="group">
+            <legend>Sexo</legend>
+            <div class="chips">
+              @for (o of options(L.sex); track o[0]) {
+                <button type="button" class="chip" [class.on]="q.sex === o[0]" [attr.aria-pressed]="q.sex === o[0]" (click)="q.sex = o[0]; saveDraft()">{{ o[1] }}</button>
+              }
+            </div>
+          </fieldset>
+          <fieldset class="group">
+            <legend>Tu actividad diaria (sin contar el entrenamiento)</legend>
+            <div class="cards">
+              @for (o of options(L.activityLevel); track o[0]) {
+                <button type="button" class="opt-card" [class.on]="q.activityLevel === o[0]" [attr.aria-pressed]="q.activityLevel === o[0]" (click)="q.activityLevel = o[0]; saveDraft()">{{ o[1] }}</button>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <!-- 2 · Objetivo -->
+        @case (1) {
+          <fieldset class="group">
+            <legend>Tu objetivo principal</legend>
+            <div class="cards">
+              @for (o of options(L.mainGoal); track o[0]) {
+                <button type="button" class="opt-card" [class.on]="q.mainGoal === o[0]" [attr.aria-pressed]="q.mainGoal === o[0]" (click)="q.mainGoal = o[0]; saveDraft()">{{ o[1] }}</button>
+              }
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="q-goal">Cuéntanos más <span class="opt">(opcional)</span></label>
+            <textarea id="q-goal" name="goalDetails" [(ngModel)]="q.goalDetails" rows="3" maxlength="1000"
+                      placeholder="p. ej. Quiero llegar a 62 kg para mi boda en junio y ganar fuerza en las piernas"></textarea>
+          </div>
+          <fieldset class="group">
+            <legend>¿Cuánto tiempo llevas entrenando?</legend>
+            <div class="chips">
+              @for (o of options(L.experience); track o[0]) {
+                <button type="button" class="chip" [class.on]="q.experience === o[0]" [attr.aria-pressed]="q.experience === o[0]" (click)="q.experience = o[0]; saveDraft()">{{ o[1] }}</button>
+              }
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="q-current">¿Qué haces ahora? <span class="opt">(opcional)</span></label>
+            <input id="q-current" name="currentTraining" [(ngModel)]="q.currentTraining" maxlength="500" placeholder="p. ej. Pilates 2 días y salgo a correr los domingos" />
+          </div>
+        }
+
+        <!-- 3 · Salud -->
+        @case (2) {
+          <div class="alert info"><mat-icon>health_and_safety</mat-icon>
+            <span>Esta información es confidencial y sirve para que tu plan sea seguro. Sé lo más sincero/a posible.</span></div>
+          <fieldset class="group">
+            <legend>¿Tienes alguna lesión, dolor o molestia (espalda, rodillas, hombros…)?</legend>
+            <div class="chips">
+              <button type="button" class="chip" [class.on]="!q.hasInjuries" (click)="q.hasInjuries = false; saveDraft()">No</button>
+              <button type="button" class="chip" [class.on]="q.hasInjuries" (click)="q.hasInjuries = true; saveDraft()">Sí</button>
+            </div>
+            @if (q.hasInjuries) {
+              <textarea name="injuries" [(ngModel)]="q.injuries" rows="3" maxlength="1000" aria-label="Describe tus lesiones"
+                        placeholder="¿Qué te pasa, desde cuándo y si te lo ha visto un profesional?"></textarea>
+            }
+          </fieldset>
+          <fieldset class="group">
+            <legend>¿Alguna condición médica (tensión, diabetes, tiroides, corazón, embarazo…)?</legend>
+            <div class="chips">
+              <button type="button" class="chip" [class.on]="!q.hasMedicalConditions" (click)="q.hasMedicalConditions = false; saveDraft()">No</button>
+              <button type="button" class="chip" [class.on]="q.hasMedicalConditions" (click)="q.hasMedicalConditions = true; saveDraft()">Sí</button>
+            </div>
+            @if (q.hasMedicalConditions) {
+              <textarea name="medicalConditions" [(ngModel)]="q.medicalConditions" rows="3" maxlength="1000" aria-label="Describe tu condición médica"
+                        placeholder="Indica cuál y si estás en tratamiento"></textarea>
+            }
+          </fieldset>
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-med">Medicación <span class="opt">(opcional)</span></label>
+              <input id="q-med" name="medication" [(ngModel)]="q.medication" maxlength="500" placeholder="Ninguna" />
+            </div>
+            <div class="field">
+              <label for="q-surg">Operaciones <span class="opt">(opcional)</span></label>
+              <input id="q-surg" name="surgeries" [(ngModel)]="q.surgeries" maxlength="500" placeholder="Ninguna" />
+            </div>
+          </div>
+          <fieldset class="group">
+            <legend>¿Tienes una analítica de sangre del último año?</legend>
+            <div class="chips">
+              <button type="button" class="chip" [class.on]="q.recentBloodTest === true" (click)="q.recentBloodTest = true; saveDraft()">Sí</button>
+              <button type="button" class="chip" [class.on]="q.recentBloodTest === false" (click)="q.recentBloodTest = false; saveDraft()">No</button>
+            </div>
+          </fieldset>
+        }
+
+        <!-- 4 · Entrenamiento y hábitos -->
+        @case (3) {
+          <fieldset class="group">
+            <legend>¿Cuántos días a la semana puedes entrenar?</legend>
+            <div class="chips days">
+              @for (d of [1, 2, 3, 4, 5, 6, 7]; track d) {
+                <button type="button" class="chip" [class.on]="q.daysPerWeek === d" (click)="q.daysPerWeek = d; saveDraft()">{{ d }}</button>
+              }
+            </div>
+          </fieldset>
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-min">Tiempo por sesión</label>
+              <select id="q-min" name="minutesPerSession" [(ngModel)]="q.minutesPerSession">
+                <option [ngValue]="undefined" disabled>Elige</option>
+                @for (m of [30, 45, 60, 75, 90, 120]; track m) { <option [ngValue]="m">{{ m }} minutos</option> }
+              </select>
+            </div>
+            <div class="field">
+              <label for="q-place">¿Dónde entrenarás?</label>
+              <select id="q-place" name="trainingPlace" [(ngModel)]="q.trainingPlace">
+                <option [ngValue]="undefined" disabled>Elige</option>
+                @for (o of options(L.trainingPlace); track o[0]) { <option [ngValue]="o[0]">{{ o[1] }}</option> }
+              </select>
+            </div>
+            <div class="field full">
+              <label for="q-equip">Material disponible <span class="opt">(opcional)</span></label>
+              <input id="q-equip" name="equipment" [(ngModel)]="q.equipment" maxlength="500" placeholder="p. ej. Mancuernas hasta 10 kg y gomas" />
+            </div>
+          </div>
+          <h3 class="sub">Alimentación y hábitos</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-diet">Tipo de alimentación</label>
+              <select id="q-diet" name="dietType" [(ngModel)]="q.dietType">
+                <option [ngValue]="undefined" disabled>Elige</option>
+                @for (o of options(L.dietType); track o[0]) { <option [ngValue]="o[0]">{{ o[1] }}</option> }
+              </select>
+            </div>
+            <div class="field">
+              <label for="q-meals">Comidas al día</label>
+              <input id="q-meals" type="number" inputmode="numeric" name="mealsPerDay" [(ngModel)]="q.mealsPerDay" min="1" max="10" placeholder="4" />
+            </div>
+            <div class="field">
+              <label for="q-allergies">Alergias o intolerancias <span class="opt">(opcional)</span></label>
+              <input id="q-allergies" name="allergies" [(ngModel)]="q.allergies" maxlength="500" placeholder="Ninguna" />
+            </div>
+            <div class="field">
+              <label for="q-dislike">Alimentos que no te gustan <span class="opt">(opcional)</span></label>
+              <input id="q-dislike" name="dislikedFoods" [(ngModel)]="q.dislikedFoods" maxlength="500" />
+            </div>
+            <div class="field">
+              <label for="q-sleep">Horas de sueño</label>
+              <input id="q-sleep" type="number" inputmode="decimal" step="0.5" name="sleepHours" [(ngModel)]="q.sleepHours" min="3" max="14" placeholder="7" />
+            </div>
+            <div class="field">
+              <label for="q-alcohol">Alcohol / tabaco <span class="opt">(opcional)</span></label>
+              <input id="q-alcohol" name="alcoholTobacco" [(ngModel)]="q.alcoholTobacco" maxlength="300" placeholder="p. ej. Una cerveza el fin de semana" />
+            </div>
+          </div>
+          <fieldset class="group">
+            <legend>Nivel de estrés (1 = muy bajo · 5 = muy alto)</legend>
+            <div class="chips days">
+              @for (s of [1, 2, 3, 4, 5]; track s) {
+                <button type="button" class="chip" [class.on]="q.stressLevel === s" (click)="q.stressLevel = s; saveDraft()">{{ s }}</button>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <!-- 5 · Plan -->
+        @case (4) {
+          <fieldset class="group">
+            <legend>¿Qué plan te interesa?</legend>
+            <div class="plan-cards">
+              @for (p of plans(); track p.id) {
+                <button type="button" class="plan-card" [class.on]="q.planId === p.id" [attr.aria-pressed]="q.planId === p.id" (click)="q.planId = p.id; saveDraft()">
+                  <strong>{{ p.name }}</strong>
+                  <span>desde {{ p.monthlyPrice | number: '1.0-2' }} €/mes</span>
+                </button>
+              }
+              <button type="button" class="plan-card" [class.on]="!q.planId" (click)="q.planId = null; saveDraft()">
+                <strong>Aún no lo sé</strong><span>Adri te recomendará uno</span>
+              </button>
+            </div>
+          </fieldset>
+          @if (selectedPlan(); as plan) {
+            <fieldset class="group">
+              <legend>¿Cómo prefieres pagar?</legend>
+              <div class="cards periods">
+                @for (pp of periodsOf(plan); track pp.period) {
+                  <button type="button" class="opt-card" [class.on]="q.billingPeriod === pp.period" (click)="q.billingPeriod = pp.period; saveDraft()">
+                    <strong>{{ periodLabel[pp.period] }}</strong>
+                    <span>{{ pp.price | number: '1.0-2' }} €@if (pp.savingPercent > 0) { · ahorras {{ pp.savingPercent }} % }</span>
+                  </button>
+                }
+              </div>
+            </fieldset>
+          }
+          <div class="field">
+            <label for="q-found">¿Cómo nos conociste? <span class="opt">(opcional)</span></label>
+            <input id="q-found" name="howFound" [(ngModel)]="q.howFound" maxlength="100" placeholder="Instagram, un amigo…" />
+          </div>
+          <div class="field">
+            <label for="q-comments">¿Algo más que quieras contarnos? <span class="opt">(opcional)</span></label>
+            <textarea id="q-comments" name="comments" [(ngModel)]="q.comments" rows="3" maxlength="1500"></textarea>
+          </div>
+          <label class="check">
+            <input type="checkbox" name="healthConsent" [(ngModel)]="q.healthConsent" />
+            <span>Doy mi consentimiento expreso para que AdriFitt trate mis datos de salud con el único fin de valorar mi
+              solicitud y preparar mi plan. Puedo pedir que se borren en cualquier momento.</span>
+          </label>
+        }
+      }
+
+      @if (errors().length) {
+        <div class="alert error" role="alert"><mat-icon>error</mat-icon>
+          <ul class="errs">@for (e of errors(); track e) { <li>{{ e }}</li> }</ul></div>
+      }
+
+      <div class="nav-buttons">
+        @if (step() > 0) {
+          <button type="button" class="btn btn-outline" (click)="back()"><mat-icon>arrow_back</mat-icon> Atrás</button>
+        }
+        <span class="grow"></span>
+        @if (step() < steps.length - 1) {
+          <button type="submit" class="btn btn-primary">Siguiente <mat-icon>arrow_forward</mat-icon></button>
+        } @else {
+          <button type="submit" class="btn btn-primary" [disabled]="sending()">
+            @if (sending()) { Enviando… } @else { Enviar cuestionario <mat-icon>send</mat-icon> }
+          </button>
+        }
+      </div>
+      <p class="saved"><mat-icon>cloud_done</mat-icon> Tus respuestas se guardan en este dispositivo mientras rellenas.</p>
+    </form>
+  }
+</app-public-frame>

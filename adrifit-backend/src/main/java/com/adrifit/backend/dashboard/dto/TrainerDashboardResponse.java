@@ -25,6 +25,8 @@ public record TrainerDashboardResponse(
         long tasksDue,
         /** Client technique videos waiting for a correction. */
         long pendingVideos,
+        /** New client requests + answered questionnaires waiting for the trainer. */
+        long pendingLeads,
         BigDecimal revenueThisMonth,
         BigDecimal monthlyRecurringRevenue,
 

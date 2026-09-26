@@ -44,7 +44,7 @@
           sigue tu evolución y recibe feedback en cada revisión.
         </p>
         <div class="hero-actions">
-          <a routerLink="/login" class="btn btn-primary btn-lg">Empezar ahora <mat-icon>arrow_forward</mat-icon></a>
+          <a routerLink="/empezar" class="btn btn-primary btn-lg">Empezar ahora <mat-icon>arrow_forward</mat-icon></a>
           <a href="#planes" class="btn btn-outline btn-lg">Ver planes</a>
           <a routerLink="/app" class="get-app-link"><mat-icon>install_mobile</mat-icon> Descarga la app en tu móvil</a>
         </div>
@@ -218,7 +218,7 @@
         <div class="plans-empty">
           <span class="tile orange"><mat-icon>workspace_premium</mat-icon></span>
           <p>Próximamente disponibles. Escríbenos para más información.</p>
-          <a href="mailto:hola@adrifit.com" class="btn btn-primary">Contactar</a>
+          <a routerLink="/empezar" class="btn btn-primary">Contactar</a>
         </div>
       } @else {
         @if (periods().length > 1) {
@@ -268,7 +268,7 @@
                   <mat-icon>{{ isExpanded(p) ? 'expand_less' : 'expand_more' }}</mat-icon>
                 </button>
               }
-              <a routerLink="/login" class="btn btn-lg btn-block" [class.btn-primary]="isFeatured(p)" [class.btn-outline]="!isFeatured(p)">
+              <a routerLink="/empezar" [queryParams]="{ plan: p.id }" class="btn btn-lg btn-block" [class.btn-primary]="isFeatured(p)" [class.btn-outline]="!isFeatured(p)">
                 Empezar con {{ p.name }}
               </a>
             </article>
@@ -287,8 +287,8 @@
           <p>Únete hoy y recibe tu primer plan personalizado esta misma semana.</p>
         </div>
         <div class="cta-actions">
-          <a routerLink="/login" class="btn btn-primary btn-lg">Acceder al área privada</a>
-          <a href="mailto:hola@adrifit.com" class="btn btn-ghost btn-lg">Escríbenos</a>
+          <a routerLink="/empezar" class="btn btn-primary btn-lg">Quiero empezar</a>
+          <a routerLink="/login" class="btn btn-ghost btn-lg">Acceder al área privada</a>
         </div>
       </div>
     </div>
@@ -319,7 +319,7 @@
         </div>
         <div>
           <h4>Contacto</h4>
-          <a href="mailto:hola@adrifit.com">hola&#64;adrifit.com</a>
+          <a href="mailto:hola@adrifitt.com">hola&#64;adrifitt.com</a>
         </div>
       </div>
     </div>

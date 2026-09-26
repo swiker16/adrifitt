@@ -4,7 +4,9 @@ import com.adrifit.backend.client.domain.Client;
 import com.adrifit.backend.client.repository.ClientRepository;
 import com.adrifit.backend.email.service.EmailTemplates;
 import com.adrifit.backend.notification.dto.PushDtos.PushMessage;
+import com.adrifit.backend.notification.event.NotificationEvents.LeadReceived;
 import com.adrifit.backend.notification.event.NotificationEvents.MessageSent;
+import com.adrifit.backend.notification.event.NotificationEvents.QuestionnaireCompleted;
 import com.adrifit.backend.notification.event.NotificationEvents.PaymentDue;
 import com.adrifit.backend.notification.event.NotificationEvents.PaymentOverdue;
 import com.adrifit.backend.notification.event.NotificationEvents.PaymentReceived;
@@ -124,6 +126,21 @@ public class NotificationDispatcher {
     public void onVideoReviewed(VideoReviewed e) {
         safely(() -> push.sendToClient(e.clientId(), new PushMessage("✅ Tu entrenador ha corregido tu técnica",
                 e.exerciseName() + ": ya tienes sus indicaciones.", "/client/videos", "video")));
+    }
+
+    @Async
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onLeadReceived(LeadReceived e) {
+        safely(() -> push.sendToTrainers(new PushMessage("🙋 Nueva solicitud: " + e.name(),
+                preview(e.objectivePreview()), "/trainer/leads?id=" + e.leadId(), "lead-" + e.leadId())));
+    }
+
+    @Async
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onQuestionnaireCompleted(QuestionnaireCompleted e) {
+        safely(() -> push.sendToTrainers(new PushMessage("📋 " + e.name() + " ha completado el cuestionario",
+                e.healthFlag() ? "Indica lesiones o condiciones médicas: revísalo con atención." : "Ya puedes revisarlo y decidir.",
+                "/trainer/leads?id=" + e.leadId(), "lead-" + e.leadId())));
     }
 
     private String name(Long clientId) {

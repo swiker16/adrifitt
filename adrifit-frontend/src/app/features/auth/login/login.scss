@@ -131,3 +131,5 @@ form { display: grid; gap: 18px; }
 /* Download the PWA */
 .get-app { margin-top: 12px; }
 .get-app:empty { display: none; }
+
+.apply-link { color: var(--brand-600); font-weight: 600; }

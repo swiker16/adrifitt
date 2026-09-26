@@ -78,6 +78,7 @@ export interface TrainerDashboard {
   overduePaymentsCount: number;
   tasksDue: number;
   pendingVideos: number;
+  pendingLeads: number;
   revenueThisMonth: number;
   monthlyRecurringRevenue: number;
 }

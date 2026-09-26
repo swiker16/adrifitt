@@ -117,7 +117,7 @@ export class TrainerEmails {
   }
 
   typeIcon(t: EmailType): string {
-    return {
+    const icons: Record<EmailType, string> = {
       WELCOME: 'waving_hand',
       PASSWORD_RESET: 'key',
       PAYMENT_DUE: 'request_quote',
@@ -126,7 +126,13 @@ export class TrainerEmails {
       REPORT_FEEDBACK: 'rate_review',
       REVIEW_REMINDER: 'event',
       CUSTOM: 'edit_note',
-    }[t];
+      LEAD_RECEIVED: 'mark_email_read',
+      LEAD_NOTIFICATION: 'person_add',
+      QUESTIONNAIRE_INVITE: 'assignment',
+      LEAD_REJECTED: 'block',
+      ACCOUNT_ACTIVATION: 'how_to_reg',
+    };
+    return icons[t];
   }
 
   // ── Compose ───────────────────────────────────────────────────────────

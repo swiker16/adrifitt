@@ -15,6 +15,22 @@ export const routes: Routes = [
     loadComponent: () => import('./features/install/install-page').then((m) => m.InstallPage),
   },
   { path: 'descargar', pathMatch: 'full', redirectTo: 'app' },
+  // New client intake (public): request → questionnaire → account activation.
+  {
+    path: 'empezar',
+    title: 'Empieza con AdriFitt',
+    loadComponent: () => import('./features/public/apply-page').then((m) => m.ApplyPage),
+  },
+  {
+    path: 'cuestionario/:token',
+    title: 'Cuestionario · AdriFitt',
+    loadComponent: () => import('./features/public/questionnaire-page').then((m) => m.QuestionnairePage),
+  },
+  {
+    path: 'activar/:token',
+    title: 'Activa tu cuenta · AdriFitt',
+    loadComponent: () => import('./features/public/activate-page').then((m) => m.ActivatePage),
+  },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
@@ -75,6 +91,11 @@ export const routes: Routes = [
         path: 'analyses',
         loadComponent: () =>
           import('./features/trainer/analyses/trainer-analyses').then((m) => m.TrainerAnalyses),
+      },
+      {
+        path: 'leads',
+        loadComponent: () =>
+          import('./features/trainer/leads/trainer-leads').then((m) => m.TrainerLeads),
       },
       {
         path: 'videos',
