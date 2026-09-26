@@ -3,7 +3,7 @@
   <aside class="brand-panel">
     <a routerLink="/" class="brand">
       <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
-      Adri<span class="dot">Fitt</span>
+      <span>Adri<span class="dot">Fitt</span></span>
     </a>
 
     <div class="brand-copy">
@@ -46,7 +46,7 @@
     <div class="mobile-head">
       <a routerLink="/" class="brand">
         <img class="logo-img" src="brand/logo-96.png" alt="" width="40" height="40" />
-        Adri<span class="dot">Fitt</span>
+        <span>Adri<span class="dot">Fitt</span></span>
       </a>
     </div>
 
@@ -104,6 +104,10 @@
           {{ passkeyLoading() ? 'Esperando a tu dispositivo…' : 'Entrar con ' + biometric }}
         </button>
       }
+
+      <div class="get-app">
+        <app-install-button variant="outline" [block]="true" label="Descargar la app en el móvil" />
+      </div>
 
       <div class="demo">
         <mat-icon>info</mat-icon>

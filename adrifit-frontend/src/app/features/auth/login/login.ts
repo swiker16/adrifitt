@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { InstallButton } from '../../../shared/components/install-button';
 import { ThemeToggle } from '../../../shared/components/theme-toggle';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -11,7 +12,7 @@ import { PublicTestimonial } from '../../../shared/models/testimonial.model';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, MatIconModule, ThemeToggle],
+  imports: [ReactiveFormsModule, RouterLink, MatIconModule, ThemeToggle, InstallButton],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

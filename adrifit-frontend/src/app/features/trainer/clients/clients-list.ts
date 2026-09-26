@@ -11,7 +11,7 @@ import { Client, CreateClientRequest } from '../../../shared/models/client.model
 import { BillingPeriod, Plan } from '../../../shared/models/plan.model';
 import { PlanPricingPicker } from './plan-pricing-picker';
 
-type CopyKind = 'username' | 'password' | 'both';
+type CopyKind = 'username' | 'password' | 'link' | 'both';
 
 @Component({
   selector: 'app-clients-list',
@@ -36,6 +36,8 @@ export class ClientsList {
   readonly formError = signal<string | null>(null);
   readonly createdInfo = signal<{ name: string; email: string; username: string; password: string } | null>(null);
   readonly copied = signal<CopyKind | null>(null);
+  /** Public download page to share with the new client. */
+  readonly appLink = `${location.origin}/app`;
 
   // Billing period + special conditions of the new client's subscription.
   readonly period = signal<BillingPeriod>('MONTHLY');
@@ -179,7 +181,12 @@ export class ClientsList {
     const text =
       kind === 'username' ? info.username
       : kind === 'password' ? info.password
-      : `Usuario: ${info.username}\nContraseña temporal: ${info.password}`;
+      : kind === 'link' ? this.appLink
+      : `¡Hola ${info.name.split(' ')[0]}! Ya tienes tu cuenta en AdriFitt 💪\n\n`
+        + `📲 Descarga la app: ${this.appLink}\n`
+        + `👤 Usuario: ${info.username}\n`
+        + `🔑 Contraseña temporal: ${info.password}\n\n`
+        + `Al entrar te pedirá que la cambies.`;
     try {
       await navigator.clipboard.writeText(text);
       this.copied.set(kind);

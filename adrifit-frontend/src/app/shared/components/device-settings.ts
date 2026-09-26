@@ -1,16 +1,18 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { firstValueFrom } from 'rxjs';
 import { NotifyService } from '../../core/services/notify.service';
 import { isPasskeyCancel, Passkey, PasskeyService } from '../../core/services/passkey.service';
 import { PushAvailability, PushService } from '../../core/services/push.service';
 import { ThemeToggle } from './theme-toggle';
+import { InstallButton } from './install-button';
+import { InstallService } from '../../core/services/install.service';
 
 /** "Acceso y notificaciones": manage passkeys and push notifications on this device. */
 @Component({
   selector: 'app-device-settings',
-  imports: [MatIconModule, DatePipe, ThemeToggle],
+  imports: [MatIconModule, DatePipe, ThemeToggle, InstallButton],
   template: `
     <section class="block">
       <header class="block-head">
@@ -21,6 +23,33 @@ import { ThemeToggle } from './theme-toggle';
         </div>
       </header>
       <app-theme-toggle />
+    </section>
+
+    <section class="block">
+      <header class="block-head">
+        <div class="ico"><mat-icon>install_mobile</mat-icon></div>
+        <div>
+          <h3>La app</h3>
+          <p>AdriFitt en tu pantalla de inicio, como una app más.</p>
+        </div>
+      </header>
+      @if (installer.installed()) {
+        <p class="ok-line"><mat-icon>check_circle</mat-icon> Estás usando la app instalada.</p>
+      } @else {
+        <app-install-button variant="primary" [label]="installer.isMobile ? 'Descargar la app' : 'Descargar en el móvil'" />
+      }
+      @if (shareLink()) {
+        <div class="share">
+          <span class="share-label">Enlace de descarga para tus clientes</span>
+          <div class="share-row">
+            <code>{{ appLink }}</code>
+            <button type="button" class="btn btn-light btn-sm" (click)="copyLink()" aria-label="Copiar enlace"><mat-icon>content_copy</mat-icon></button>
+            @if (canShare) {
+              <button type="button" class="btn btn-light btn-sm" (click)="shareApp()" aria-label="Compartir enlace"><mat-icon>share</mat-icon></button>
+            }
+          </div>
+        </div>
+      }
     </section>
 
     <section class="block">
@@ -120,6 +149,15 @@ import { ThemeToggle } from './theme-toggle';
     .meta span { color: var(--text-subtle); font-size: 0.8rem; }
     .block > .btn { justify-self: start; max-width: 100%; white-space: normal; text-align: left; }
     .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .ok-line { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--success-fg); font-weight: 600; font-size: .92rem; }
+    .ok-line mat-icon { color: var(--success); }
+    .share { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .share-label { font-size: .8rem; font-weight: 600; color: var(--text-muted); }
+    .share-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .share-row code {
+      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem;
+      padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--brand-fg);
+    }
     .switch { width: 50px; height: 30px; border-radius: 99px; border: 0; background: var(--ink-200); position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
     .switch span { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
     .switch.on { background: var(--success); }
@@ -131,6 +169,29 @@ export class DeviceSettings implements OnInit {
   private readonly passkeyService = inject(PasskeyService);
   private readonly push = inject(PushService);
   private readonly notify = inject(NotifyService);
+  readonly installer = inject(InstallService);
+
+  /** Trainer: show the download link to share with clients. */
+  readonly shareLink = input(false);
+  readonly appLink = this.installer.appLink();
+  readonly canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  async copyLink(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.appLink);
+      this.notify.success('Enlace copiado. Pégalo en WhatsApp, un email o tu bio de Instagram.');
+    } catch {
+      this.notify.error('No se pudo copiar. Mantén pulsado el enlace para copiarlo.');
+    }
+  }
+
+  async shareApp(): Promise<void> {
+    try {
+      await navigator.share({ title: 'AdriFitt', text: 'Descarga la app de AdriFitt para seguir tu entrenamiento:', url: this.appLink });
+    } catch {
+      /* cancelled */
+    }
+  }
 
   readonly supported = this.passkeyService.isSupported();
   readonly biometric = this.passkeyService.biometricLabel();

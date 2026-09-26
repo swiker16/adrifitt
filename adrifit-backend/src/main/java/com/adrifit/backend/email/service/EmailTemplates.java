@@ -29,7 +29,10 @@ public class EmailTemplates {
                         + p("Tu entrenador ha creado tu cuenta" + (planName != null ? " con el plan <strong>" + esc(planName) + "</strong>" : "") + ".")
                         + box("Usuario: <strong>" + esc(username) + "</strong><br>Contraseña temporal: <strong>" + esc(temporaryPassword) + "</strong>")
                         + p("Por seguridad, te pediremos que cambies la contraseña la primera vez que entres.")
-                        + button("Entrar en mi área", publicUrl + "/login"));
+                        + button("Entrar en mi área", publicUrl + "/login")
+                        + p("<strong>📲 Llévala en el móvil:</strong> descarga la app de AdriFitt y tendrás tu rutina, tu dieta "
+                                + "y el chat con tu entrenador en la pantalla de inicio, con avisos al momento.")
+                        + button("Descargar la app", publicUrl + "/app"));
     }
 
     public String passwordReset(String firstName, String username, String temporaryPassword) {

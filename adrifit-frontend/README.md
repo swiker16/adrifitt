@@ -36,6 +36,19 @@ npm run start:pwa   # build + http://localhost:4300 con proxy de /api a :8080 (A
 
 `ng serve` no activa el service worker, así que las notificaciones solo funcionan con la build.
 
+### Descargar la app (instalar la PWA)
+
+- **Enlace para compartir:** `https://<tu-dominio>/app` (también `/descargar`). Página con el logo, ventajas, botón
+  de instalar, pasos para iPhone/Android y un **QR** si se abre en un ordenador. Ideal para WhatsApp o la bio de Instagram.
+- **Android / Chrome / Edge:** un toque abre el diálogo nativo de instalación (`beforeinstallprompt`, capturado en
+  `index.html` antes de arrancar). El manifest incluye capturas para el diálogo enriquecido de Android.
+- **iPhone / iPad:** Apple no permite instalar desde la web con un botón; se muestran los pasos (Compartir →
+  «Añadir a pantalla de inicio»). En iPhone es necesario instalarla para recibir notificaciones.
+- Dónde aparece: login («Descargar la app en el móvil»), landing (menú, portada y pie), aviso tras entrar en el
+  móvil, menú lateral («Instalar la app»), *Perfil*/*Ajustes* (con el enlace para copiar o compartir) y el email de
+  bienvenida. Al crear un cliente, «Copiar mensaje para WhatsApp» incluye enlace, usuario y contraseña.
+- Una vez instalada (modo *standalone*) todo lo relacionado con instalar se oculta.
+
 ### Modo claro / oscuro
 
 Selector **Claro · Auto · Oscuro** en el menú lateral (también en el menú del móvil), en *Perfil* /

@@ -74,6 +74,11 @@
       <a routerLink="/client/profile" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>person</mat-icon> <span>Perfil</span>
       </a>
+      @if (install.available()) {
+        <a class="install-link" role="button" tabindex="0" (click)="closeMenu(); installer.start()" (keydown.enter)="installer.start()">
+          <mat-icon>install_mobile</mat-icon> <span>Instalar la app</span>
+        </a>
+      }
     </nav>
 
     <div class="sidebar-footer">
@@ -96,6 +101,7 @@
   </section>
 
   <app-device-setup-prompt />
+  <app-install-button #installer variant="none" />
 
   <!-- ── Barra inferior (móvil / PWA) ── -->
   <nav class="bottom-nav" aria-label="Navegación principal">

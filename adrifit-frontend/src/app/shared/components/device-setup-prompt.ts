@@ -5,6 +5,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { NotifyService } from '../../core/services/notify.service';
 import { isPasskeyCancel, PasskeyService } from '../../core/services/passkey.service';
 import { PushService } from '../../core/services/push.service';
+import { InstallService } from '../../core/services/install.service';
 
 type Step = 'passkey' | 'push' | 'install' | null;
 
@@ -50,19 +51,32 @@ type Step = 'passkey' | 'push' | 'install' | null;
               }
               @case ('install') {
                 <div class="hero-icon"><mat-icon>install_mobile</mat-icon></div>
-                <h2 id="setup-title">Instala AdriFitt en tu iPhone</h2>
-                <p>Para recibir notificaciones en iPhone/iPad, añade la app a tu pantalla de inicio:</p>
-                <ol class="steps">
-                  <li>Pulsa <mat-icon>ios_share</mat-icon> <strong>Compartir</strong> en Safari.</li>
-                  <li>Elige <strong>«Añadir a pantalla de inicio»</strong>.</li>
-                  <li>Abre AdriFitt desde el icono y activa las notificaciones.</li>
-                </ol>
+                <h2 id="setup-title">Descarga la app en tu móvil</h2>
+                @if (installer.canPrompt()) {
+                  <p>Instala AdriFitt en tu pantalla de inicio: se abre al instante, a pantalla completa, y te avisa de mensajes y revisiones.</p>
+                } @else {
+                  <p>Añádela a tu pantalla de inicio{{ installer.platform === 'ios' ? ' (en iPhone es necesario para recibir notificaciones)' : '' }}:</p>
+                  <ol class="steps">
+                    @if (installer.platform === 'ios') {
+                      <li>Pulsa <mat-icon>ios_share</mat-icon> <strong>Compartir</strong> {{ installer.iosBrowser === 'other' ? 'junto a la barra de direcciones' : 'en la barra de Safari' }}.</li>
+                      <li>Elige <strong>«Añadir a pantalla de inicio»</strong> y pulsa <strong>«Añadir»</strong>.</li>
+                    } @else {
+                      <li>Abre el menú <strong>⋮</strong> del navegador.</li>
+                      <li>Elige <strong>«Instalar aplicación»</strong> o <strong>«Añadir a pantalla de inicio»</strong>.</li>
+                    }
+                    <li>Abre AdriFitt desde el icono de tu pantalla de inicio.</li>
+                  </ol>
+                }
               }
             }
           </div>
           <div class="modal-foot">
             <button type="button" class="btn btn-outline" (click)="later()" [disabled]="busy()">Ahora no</button>
-            @if (s !== 'install') {
+            @if (s === 'install' && installer.canPrompt()) {
+              <button type="button" class="btn btn-primary" (click)="accept()" [disabled]="busy()">
+                <mat-icon>install_mobile</mat-icon> {{ busy() ? 'Un momento…' : 'Instalar' }}
+              </button>
+            } @else if (s !== 'install') {
               <button type="button" class="btn btn-primary" (click)="accept()" [disabled]="busy()">
                 <mat-icon>{{ s === 'passkey' ? 'fingerprint' : 'notifications' }}</mat-icon>
                 {{ busy() ? 'Un momento…' : s === 'passkey' ? 'Crear passkey' : 'Activar' }}
@@ -105,6 +119,7 @@ export class DeviceSetupPrompt implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly passkeys = inject(PasskeyService);
   private readonly push = inject(PushService);
+  readonly installer = inject(InstallService);
   private readonly notify = inject(NotifyService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -146,10 +161,12 @@ export class DeviceSetupPrompt implements OnInit {
         /* offline: ask later */
       }
     }
-    const availability = this.push.availability();
-    if (availability === 'ios-needs-install') {
-      return this.snoozed('install') ? null : 'install';
+    // Phones without the installed app: offer it (on iPhone it is also required for notifications).
+    if (this.installer.isMobile && this.installer.available() && !this.installer.inAppBrowser) {
+      if (!this.snoozed('install')) return 'install';
+      if (this.installer.platform === 'ios') return null;
     }
+    const availability = this.push.availability();
     if (availability === 'available' && this.push.permission() === 'default' && !this.snoozed('push')) {
       return 'push';
     }
@@ -163,6 +180,10 @@ export class DeviceSetupPrompt implements OnInit {
       if (s === 'passkey') {
         await this.passkeys.register();
         this.notify.success(`¡Listo! La próxima vez entra con ${this.biometric}.`);
+      } else if (s === 'install') {
+        const outcome = await this.installer.promptInstall();
+        if (outcome !== 'accepted') return;
+        this.notify.success('¡AdriFitt instalada! Ábrela desde tu pantalla de inicio.');
       } else if (s === 'push') {
         await this.push.enable();
         await this.push.sendTest().catch(() => undefined);
@@ -170,7 +191,7 @@ export class DeviceSetupPrompt implements OnInit {
       }
       this.snooze(s!, 3650);
       this.step.set(null);
-      if (s === 'passkey') {
+      if (s === 'passkey' || s === 'install') {
         this.timer = setTimeout(() => this.next(), 600);
       }
     } catch (err) {
@@ -187,9 +208,9 @@ export class DeviceSetupPrompt implements OnInit {
   later(): void {
     const s = this.step();
     if (!s || this.busy()) return;
-    this.snooze(s, s === 'install' ? 30 : 7);
+    this.snooze(s, 7);
     this.step.set(null);
-    if (s === 'passkey') this.timer = setTimeout(() => this.next(), 400);
+    if (s === 'passkey' || s === 'install') this.timer = setTimeout(() => this.next(), 400);
   }
 
   never(): void {
@@ -197,7 +218,7 @@ export class DeviceSetupPrompt implements OnInit {
     if (!s) return;
     this.snooze(s, 3650);
     this.step.set(null);
-    if (s === 'passkey') this.timer = setTimeout(() => this.next(), 400);
+    if (s === 'passkey' || s === 'install') this.timer = setTimeout(() => this.next(), 400);
   }
 
   private key(step: string): string {

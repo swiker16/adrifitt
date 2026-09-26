@@ -12,7 +12,7 @@ import { DeviceSettings } from '../../../shared/components/device-settings';
       </div>
     </div>
     <div class="content">
-      <app-device-settings class="device-settings" />
+      <app-device-settings class="device-settings" [shareLink]="true" />
     </div>
   `,
   styleUrl: './trainer-settings.scss',

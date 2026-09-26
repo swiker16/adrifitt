@@ -7,15 +7,18 @@ import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DeviceSetupPrompt } from '../../shared/components/device-setup-prompt';
 import { ThemeToggle } from '../../shared/components/theme-toggle';
+import { InstallButton } from '../../shared/components/install-button';
+import { InstallService } from '../../core/services/install.service';
 
 @Component({
   selector: 'app-client-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, DeviceSetupPrompt, ThemeToggle],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, DeviceSetupPrompt, ThemeToggle, InstallButton],
   templateUrl: './client-layout.html',
   styleUrl: './client-layout.scss',
 })
 export class ClientLayout {
   private readonly auth = inject(AuthService);
+  readonly install = inject(InstallService);
   private readonly dashboardService = inject(DashboardService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);

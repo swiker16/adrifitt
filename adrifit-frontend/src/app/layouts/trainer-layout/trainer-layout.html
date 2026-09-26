@@ -85,6 +85,11 @@
       <a routerLink="/trainer/settings" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>settings</mat-icon> <span>Ajustes</span>
       </a>
+      @if (install.available()) {
+        <a class="install-link" role="button" tabindex="0" (click)="closeMenu(); installer.start()" (keydown.enter)="installer.start()">
+          <mat-icon>install_mobile</mat-icon> <span>Instalar la app</span>
+        </a>
+      }
     </nav>
 
     <div class="sidebar-footer">
@@ -107,4 +112,5 @@
   </section>
 
   <app-device-setup-prompt />
+  <app-install-button #installer variant="none" />
 </div>

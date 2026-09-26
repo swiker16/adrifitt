@@ -259,6 +259,15 @@
           </button>
         </div>
 
+        <div class="cred">
+          <span class="cred-label">App (enlace de descarga)</span>
+          <code>{{ appLink }}</code>
+          <button type="button" class="btn btn-outline btn-sm" (click)="copy('link')">
+            <mat-icon>{{ copied() === 'link' ? 'check' : 'content_copy' }}</mat-icon>
+            {{ copied() === 'link' ? 'Copiado' : 'Copiar' }}
+          </button>
+        </div>
+
         <div class="alert info cred-alert">
           <mat-icon>mark_email_read</mat-icon>
           <div>
@@ -273,7 +282,7 @@
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-outline" (click)="copy('both')">
-          <mat-icon>{{ copied() === 'both' ? 'check' : 'content_copy' }}</mat-icon> Copiar ambos
+          <mat-icon>{{ copied() === 'both' ? 'check' : 'forum' }}</mat-icon> {{ copied() === 'both' ? 'Mensaje copiado' : 'Copiar mensaje para WhatsApp' }}
         </button>
         <button type="button" class="btn btn-primary" (click)="closeCreated()">Hecho</button>
       </div>

@@ -59,7 +59,7 @@
 .form-panel { display: grid; place-items: center; padding: 40px 24px; }
 .mobile-head { display: none; }
 .form-card {
-  width: min(440px, 100%); padding: 36px; background: var(--surface);
+  width: min(440px, 100%); min-width: 0; padding: 36px; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-md);
 }
 .back {
@@ -121,9 +121,13 @@ form { display: grid; gap: 18px; }
 /* Passkey sign-in */
 .or { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--text-subtle); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; }
 .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.passkey-btn { gap: 8px; }
+.passkey-btn, .get-app .btn { gap: 8px; white-space: normal; text-align: center; line-height: 1.25; }
 .passkey-btn mat-icon { color: var(--brand); }
 
 /* Theme switch (top-right of the form panel) */
 .form-panel { position: relative; }
 .theme-corner { position: absolute; top: 16px; right: 16px; z-index: 2; }
+
+/* Download the PWA */
+.get-app { margin-top: 12px; }
+.get-app:empty { display: none; }

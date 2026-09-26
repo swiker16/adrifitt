@@ -9,6 +9,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/landing/landing').then((m) => m.Landing),
   },
   {
+    // Public download page: the link to share with clients.
+    path: 'app',
+    title: 'Descarga AdriFitt',
+    loadComponent: () => import('./features/install/install-page').then((m) => m.InstallPage),
+  },
+  { path: 'descargar', pathMatch: 'full', redirectTo: 'app' },
+  {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },

@@ -254,3 +254,7 @@
 
   .main { height: calc(100vh - 58px); height: calc(100dvh - 58px - env(safe-area-inset-top, 0px)); }
 }
+
+/* "Instalar la app" (shown until the PWA is installed) */
+.nav .install-link { cursor: pointer; color: var(--brand-400); }
+.nav .install-link mat-icon { color: var(--brand-400); }
