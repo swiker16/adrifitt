@@ -91,4 +91,9 @@
       </form>
     </section>
   </div>
+
+  @if (!mustChange()) {
+    <h2 class="section-title">Acceso y notificaciones</h2>
+    <app-device-settings class="device-settings" />
+  }
 </div>

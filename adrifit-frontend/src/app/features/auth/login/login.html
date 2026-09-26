@@ -63,7 +63,7 @@
           <label for="login-username">Usuario</label>
           <div class="input-wrap">
             <mat-icon aria-hidden="true">person</mat-icon>
-            <input id="login-username" type="text" formControlName="username" placeholder="Tu usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" />
+            <input id="login-username" type="text" formControlName="username" placeholder="Tu usuario" autocomplete="username webauthn" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" />
           </div>
           @if (form.controls.username.touched && form.controls.username.invalid) {
             <small class="err">El usuario es obligatorio.</small>
@@ -95,6 +95,14 @@
           @if (loading()) { <span class="spinner" aria-hidden="true"></span> Accediendo... } @else { Acceder <mat-icon>arrow_forward</mat-icon> }
         </button>
       </form>
+
+      @if (passkeySupported) {
+        <div class="or"><span>o</span></div>
+        <button type="button" class="btn btn-outline btn-lg btn-block passkey-btn" (click)="signInWithPasskey()" [disabled]="passkeyLoading()">
+          <mat-icon>fingerprint</mat-icon>
+          {{ passkeyLoading() ? 'Esperando a tu dispositivo…' : 'Entrar con ' + biometric }}
+        </button>
+      }
 
       <div class="demo">
         <mat-icon>info</mat-icon>

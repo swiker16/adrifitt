@@ -9,6 +9,7 @@ import { NotifyService } from '../../../core/services/notify.service';
 import { apiErrorMessage } from '../../../shared/utils/download';
 import { Client } from '../../../shared/models/client.model';
 import { MeResponse } from '../../../shared/models/auth.model';
+import { DeviceSettings } from '../../../shared/components/device-settings';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   const a = group.get('newPassword')?.value;
@@ -18,7 +19,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-client-profile',
-  imports: [DatePipe, ReactiveFormsModule, MatIconModule],
+  imports: [DatePipe, ReactiveFormsModule, MatIconModule, DeviceSettings],
   templateUrl: './client-profile.html',
   styleUrl: './client-profile.scss',
 })

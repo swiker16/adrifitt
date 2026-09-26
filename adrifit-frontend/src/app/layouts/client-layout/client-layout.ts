@@ -5,10 +5,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { filter, interval, merge, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { DeviceSetupPrompt } from '../../shared/components/device-setup-prompt';
 
 @Component({
   selector: 'app-client-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, DeviceSetupPrompt],
   templateUrl: './client-layout.html',
   styleUrl: './client-layout.scss',
 })

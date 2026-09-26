@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "serve:pwa": "node scripts/serve-pwa.js",
+    "start:pwa": "ng build && node scripts/serve-pwa.js"
   },
   "prettier": {
     "printWidth": 100,

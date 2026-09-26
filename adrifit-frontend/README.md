@@ -26,15 +26,31 @@ npm run build      # dist/adrifit-frontend/browser
 ```
 
 La build de producción incluye el **service worker** (`ngsw-config.json`): la app se puede instalar
-(“Añadir a pantalla de inicio”), arranca sin conexión y cachea la landing y los planes. Para probar la
-PWA en local sirve `dist/adrifit-frontend/browser` con cualquier servidor estático con fallback a
-`index.html` y proxy de `/api`.
+(“Añadir a pantalla de inicio”), arranca sin conexión y cachea la landing y los planes.
+
+Para probar la PWA completa en local (service worker, notificaciones push, instalación):
+
+```bash
+npm run start:pwa   # build + http://localhost:4300 con proxy de /api a :8080 (API_PORT para cambiarlo)
+```
+
+`ng serve` no activa el service worker, así que las notificaciones solo funcionan con la build.
+
+### Notificaciones y passkeys
+
+- Al entrar, la app ofrece **crear una passkey** (Face ID / Touch ID, huella en Android, Windows Hello)
+  y después **activar las notificaciones**. «Ahora no» lo vuelve a preguntar en 7 días; «No volver a
+  preguntar» lo oculta en ese dispositivo. Todo se gestiona luego en *Perfil* (cliente) o *Ajustes* (entrenador).
+- En el login: botón «Entrar con Face ID / huella» y passkeys en el autocompletado del campo usuario.
+- **iPhone/iPad**: las notificaciones web requieren iOS 16.4+ y abrir AdriFit desde la pantalla de inicio;
+  la app lo explica si se abre desde Safari.
+- Passkeys y push necesitan **https** en producción (en `localhost` funcionan sin él).
 
 ## Estructura
 
 ```
 src/app
-├── core           auth (JWT), guards, interceptor, servicios HTTP por módulo, notificaciones
+├── core           auth (JWT), guards, interceptor, servicios HTTP por módulo, push, passkeys
 ├── shared         modelos (contratos de la API), componentes (gráficos SVG, imagen autenticada), utilidades
 ├── layouts        layout de entrenador y de cliente (menú lateral, badges, barra inferior móvil)
 └── features

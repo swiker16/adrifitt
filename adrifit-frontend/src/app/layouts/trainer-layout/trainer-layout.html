@@ -78,6 +78,9 @@
       <a routerLink="/trainer/testimonials" routerLinkActive="active" (click)="closeMenu()">
         <mat-icon>reviews</mat-icon> <span>Reseñas</span>
       </a>
+      <a routerLink="/trainer/settings" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>settings</mat-icon> <span>Ajustes</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -97,4 +100,6 @@
   <section class="main">
     <router-outlet />
   </section>
+
+  <app-device-setup-prompt />
 </div>

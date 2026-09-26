@@ -22,6 +22,8 @@ export interface MeResponse {
   clientId: number | null;
   firstName: string | null;
   lastName: string | null;
+  /** Registered passkeys of the user (0 → offer to create one). */
+  passkeys: number;
 }
 
 export interface ChangePasswordRequest {

@@ -121,3 +121,9 @@ form { display: grid; gap: 18px; }
   .form-card { padding: 26px 20px; border-radius: var(--radius); }
   .form-card h2 { font-size: 1.5rem; }
 }
+
+/* Passkey sign-in */
+.or { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--text-subtle); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.passkey-btn { gap: 8px; }
+.passkey-btn mat-icon { color: var(--brand); }

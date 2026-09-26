@@ -70,6 +70,11 @@ export const routes: Routes = [
           import('./features/trainer/analyses/trainer-analyses').then((m) => m.TrainerAnalyses),
       },
       {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/trainer/settings/trainer-settings').then((m) => m.TrainerSettings),
+      },
+      {
         path: 'testimonials',
         loadComponent: () =>
           import('./features/trainer/testimonials/trainer-testimonials').then((m) => m.TrainerTestimonials),

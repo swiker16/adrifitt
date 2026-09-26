@@ -24,7 +24,8 @@ export const appConfig: ApplicationConfig = {
     // PWA: offline shell + installable app (only in production builds).
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
+      // Register soon: push notifications need the worker (polling keeps the app 'unstable').
+      registrationStrategy: 'registerWhenStable:5000',
     }),
   ],
 };

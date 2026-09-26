@@ -53,7 +53,30 @@ export class AuthService {
     );
   }
 
-  logout(): void {
+  /** Stores the session returned by a passkey sign-in. */
+  completeLogin(res: AuthResponse): void {
+    this.storeSession(res);
+  }
+
+  /**
+   * Hook run right before the session is cleared (e.g. detach this device from push
+   * notifications while the token is still valid). Registered by PushService consumers.
+   */
+  beforeLogout: (() => Promise<void>) | null = null;
+
+  /** @param expired the token is no longer valid (401): skip the hook, just clear the session. */
+  logout(expired = false): void {
+    const hook = this.beforeLogout;
+    if (!expired && hook && this.getToken()) {
+      // Never let a slow/offline network block the logout.
+      const timeout = new Promise<void>((resolve) => setTimeout(resolve, 3000));
+      Promise.race([hook(), timeout]).catch(() => undefined).finally(() => this.clearSession());
+      return;
+    }
+    this.clearSession();
+  }
+
+  private clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this._user.set(null);
