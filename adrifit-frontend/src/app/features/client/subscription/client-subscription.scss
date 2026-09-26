@@ -26,20 +26,20 @@
   mat-icon { font-size: 26px; width: 26px; height: 26px; }
 }
 .cc-info { flex: 1; min-width: 180px; }
-.cc-label { font-size: 0.72rem; color: var(--ink-300); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.cc-label { font-size: 0.72rem; color: var(--on-dark-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 .cc-name {
   font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.45rem; letter-spacing: -0.03em;
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 2px;
 }
 .cc-price {
   font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--brand-400); margin-top: 4px; letter-spacing: -0.02em;
-  span { color: var(--ink-300); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 0.85rem; }
+  span { color: var(--on-dark-3); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 0.85rem; }
 }
 .cc-next {
   display: flex; align-items: center; gap: 10px; border-radius: var(--radius-md); padding: 12px 16px;
   background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1);
   mat-icon { color: var(--brand-400); }
-  span { display: block; font-size: 0.74rem; color: var(--ink-300); }
+  span { display: block; font-size: 0.74rem; color: var(--on-dark-3); }
   strong { font-family: 'Sora', sans-serif; font-size: 1.05rem; letter-spacing: -0.02em; }
 }
 .cc-features {
@@ -51,18 +51,18 @@
   li.off { color: var(--text-subtle); }
   li.off mat-icon { color: var(--ink-300); }
 }
-.cc-old { font-size: 0.9rem; font-weight: 500; color: var(--ink-400); margin-left: 8px; }
-.cc-sub { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; font-size: 0.84rem; color: var(--ink-300); }
+.cc-old { font-size: 0.9rem; font-weight: 500; color: var(--on-dark-4); margin-left: 8px; }
+.cc-sub { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; font-size: 0.84rem; color: var(--on-dark-3); }
 .cc-special { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; }
 .special-badge {
   display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
   background: rgba(255, 107, 26, 0.18); color: var(--brand-400); font-size: 0.76rem; font-weight: 700;
   mat-icon { font-size: 15px; width: 15px; height: 15px; }
 }
-.cc-note { font-size: 0.84rem; color: var(--ink-200); }
+.cc-note { font-size: 0.84rem; color: var(--on-dark-2); }
 .cc-alert { margin: 0 24px 16px; align-items: center; flex-wrap: wrap; }
 .cc-actions { display: flex; justify-content: flex-end; padding: 14px 24px 18px; border-top: 1px solid var(--ink-100); }
-.danger-link:hover { border-color: #fbd9db; background: var(--danger-bg); color: var(--danger); }
+.danger-link:hover { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
 
 /* ── Pending payments ── */
 .pending-list { display: flex; flex-direction: column; gap: 12px; }
@@ -71,7 +71,7 @@
   background: var(--surface); border: 1px solid var(--brand-100); border-radius: var(--radius);
   padding: 18px 20px; box-shadow: var(--shadow-sm);
 }
-.pending-card.overdue { border-color: #fbd9db; }
+.pending-card.overdue { border-color: var(--danger-border); }
 .pc-icon {
   width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center;
   background: var(--brand-50); color: var(--brand);
@@ -81,7 +81,7 @@
 .pc-concept { font-weight: 700; font-size: 0.98rem; }
 .pc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 6px; color: var(--text-muted); font-size: 0.84rem; }
 .pc-fail {
-  display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.82rem; color: #b4262b;
+  display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.82rem; color: var(--danger-fg);
   mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 .pc-right { display: flex; align-items: center; gap: 16px; margin-left: auto; }
@@ -184,8 +184,8 @@
   .segmented mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 .test-data {
-  display: flex; flex-direction: column; gap: 2px; font-size: 0.78rem; color: #5b3fd6;
-  background: var(--violet-bg); border: 1px dashed #cbbefd; border-radius: 12px;
+  display: flex; flex-direction: column; gap: 2px; font-size: 0.78rem; color: var(--violet-fg);
+  background: var(--violet-bg); border: 1px dashed var(--violet-border); border-radius: 12px;
   padding: 10px 12px; margin-bottom: 16px;
   span { font-family: ui-monospace, monospace; }
 }

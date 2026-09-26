@@ -30,8 +30,8 @@
 .stat-link .stat-sub { color: var(--brand); font-weight: 600; }
 .stat-sub .inline { font-size: 16px; width: 16px; height: 16px; }
 .delta { font-weight: 700; padding: 1px 8px; border-radius: 999px; }
-.delta.good { background: var(--success-bg); color: #117a38; }
-.delta.bad { background: var(--danger-bg); color: #b4262b; }
+.delta.good { background: var(--success-bg); color: var(--success-fg); }
+.delta.bad { background: var(--danger-bg); color: var(--danger-fg); }
 .delta.neutral { background: var(--ink-100); color: var(--ink-600); }
 
 /* Charts */

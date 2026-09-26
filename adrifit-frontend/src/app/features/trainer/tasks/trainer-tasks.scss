@@ -26,8 +26,8 @@
   background: var(--ink-100); color: var(--ink-600);
   display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
 }
-.state-OVERDUE .rv-date { background: var(--danger-bg); color: #b4262b; }
-.state-DUE_SOON .rv-date { background: var(--brand-50); color: #c2480b; }
+.state-OVERDUE .rv-date { background: var(--danger-bg); color: var(--danger-fg); }
+.state-DUE_SOON .rv-date { background: var(--brand-50); color: var(--brand-fg); }
 .rv-day { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; }
 .rv-month { font-size: 0.66rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; margin-top: 3px; }
 .rv-info { flex: 1; min-width: 0; }
@@ -36,7 +36,7 @@
 .rv-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
 .rv-pending {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 3px 10px; border-radius: 8px;
-  font-size: 0.78rem; font-weight: 600; background: var(--info-bg); color: #1d4fb8;
+  font-size: 0.78rem; font-weight: 600; background: var(--info-bg); color: var(--info-fg);
   mat-icon { font-size: 15px; width: 15px; height: 15px; }
 }
 .rv-state { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }

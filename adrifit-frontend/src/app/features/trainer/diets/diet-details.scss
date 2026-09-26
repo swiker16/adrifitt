@@ -16,7 +16,7 @@
   .dt-num { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
   .dt-name { font-size: 0.9rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   &:hover { border-color: var(--border-strong); }
-  &.active { background: var(--ink-900); border-color: var(--ink-900); .dt-num { color: var(--brand-400); } .dt-name { color: #fff; } }
+  &.active { background: var(--inverse); border-color: var(--inverse); .dt-num { color: var(--brand-400); } .dt-name { color: #fff; } }
 }
 
 /* Day panel */
@@ -27,7 +27,7 @@
   display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px;
   background: var(--ink-100); color: var(--ink-600); font-size: 0.78rem; font-weight: 600;
   mat-icon { font-size: 15px; width: 15px; height: 15px; }
-  &.kcal { background: var(--brand-50); color: #c2480b; }
+  &.kcal { background: var(--brand-50); color: var(--brand-fg); }
 }
 
 /* Meals */

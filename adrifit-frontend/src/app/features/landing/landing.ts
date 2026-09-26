@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { ThemeToggle } from '../../shared/components/theme-toggle';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,7 +33,7 @@ interface Step {
 
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, MatIconModule, DecimalPipe],
+  imports: [RouterLink, MatIconModule, DecimalPipe, ThemeToggle],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
 })

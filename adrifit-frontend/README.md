@@ -36,6 +36,17 @@ npm run start:pwa   # build + http://localhost:4300 con proxy de /api a :8080 (A
 
 `ng serve` no activa el service worker, así que las notificaciones solo funcionan con la build.
 
+### Modo claro / oscuro
+
+Selector **Claro · Auto · Oscuro** en el menú lateral (también en el menú del móvil), en *Perfil* /
+*Ajustes* y un botón en la web pública y el login. *Auto* sigue la preferencia del dispositivo en vivo.
+La elección se guarda en el navegador y se aplica antes de cargar la app (sin destello blanco).
+
+Cómo funciona: `ThemeService` pone `<html data-theme="light|dark">` y `styles.scss` redefine los tokens
+en `html[data-theme='dark']`. Para estilos nuevos usa siempre tokens (`--surface`, `--text`, `--border`,
+`--success-fg`…); sobre superficies que son oscuras en ambos temas usa `--on-dark-1…4`, y para chips
+seleccionados oscuros `--inverse`.
+
 ### Marca
 
 Logo en `public/brand/` (cabecera, login, landing, emails) y en `public/icons/` (iconos de la PWA,

@@ -170,8 +170,8 @@
   i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
   span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   b { font-weight: 700; flex-shrink: 0; }
-  &.pay { background: var(--success-bg); color: #117a38; }
-  &.rev { background: var(--brand-50); color: #c2480b; }
+  &.pay { background: var(--success-bg); color: var(--success-fg); }
+  &.rev { background: var(--brand-50); color: var(--brand-fg); }
 }
 .cal-legend {
   display: flex; gap: 16px; margin-top: 12px; font-size: 0.78rem; color: var(--text-muted);

@@ -1,6 +1,6 @@
 :host { display: block; }
 
-.landing { --brand-ink: #C2480B; background: var(--canvas); color: var(--text); overflow-x: clip; }
+.landing { --brand-ink: var(--brand-fg); background: var(--canvas); color: var(--text); overflow-x: clip; }
 .container { width: min(1180px, 100% - 40px); margin-inline: auto; }
 section[id] { scroll-margin-top: 80px; }
 
@@ -104,7 +104,7 @@ section[id] { scroll-margin-top: 80px; }
   font-size: 0.8rem; font-weight: 600; padding: 7px 4px; border-radius: 9px; background: var(--ink-50); color: var(--ink-600);
 }
 .set-head { background: none; font-size: 0.64rem; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 4px; }
-.set-row.done { background: var(--success-bg); color: #117a38; }
+.set-row.done { background: var(--success-bg); color: var(--success-fg); }
 .set-row.current { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--brand); }
 .fake-btn { margin-top: 10px; text-align: center; padding: 9px; border-radius: 999px; background: var(--brand-gradient); color: #fff; font-size: 0.8rem; font-weight: 600; }
 .mini-chart { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 12px; }
@@ -163,7 +163,7 @@ section[id] { scroll-margin-top: 80px; }
 
 .stars { display: flex; gap: 1px; color: #F5A524; }
 .stars mat-icon { font-size: 19px; width: 19px; height: 19px; }
-.stars mat-icon.off { color: var(--ink-200); }
+.stars mat-icon.off { color: var(--ink-300); }
 
 /* Cards */
 .review-card, .bento-card, .plan-card { transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s; }
@@ -222,7 +222,7 @@ section[id] { scroll-margin-top: 80px; }
 .bento-demo em { font-style: normal; color: var(--brand-ink); }
 .bento-demo mat-icon { font-size: 16px; width: 16px; height: 16px; }
 .bento-demo .hot { background: var(--brand-50); border-color: var(--brand-100); }
-.bento-demo .ok { background: var(--success-bg); border-color: #cdeedb; color: #117a38; }
+.bento-demo .ok { background: var(--success-bg); border-color: var(--success-border); color: var(--success-fg); }
 @media (max-width: 980px) { .bento { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) {
   .bento { grid-template-columns: 1fr; gap: 12px; }
@@ -261,7 +261,7 @@ section[id] { scroll-margin-top: 80px; }
 .period-toggle {
   flex-wrap: nowrap; background: var(--surface); box-shadow: var(--shadow-xs); border-color: var(--border);
   button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 16px; font-size: 0.88rem; }
-  button.active { background: var(--ink-900); color: #fff; }
+  button.active { background: var(--inverse); color: #fff; }
 }
 .seg-save {
   font-size: 0.7rem; font-weight: 700; padding: 1px 6px; border-radius: 999px;
@@ -311,11 +311,11 @@ section[id] { scroll-margin-top: 80px; }
   flex-shrink: 0; font-size: 14px; width: 20px; height: 20px; display: grid; place-items: center;
   border-radius: 50%; background: var(--success-bg); color: var(--success);
 }
-.featured .price span { color: var(--ink-400); }
+.featured .price span { color: var(--on-dark-4); }
 .featured ul { border-color: rgba(255, 255, 255, 0.1); }
-.featured li { color: var(--ink-200); }
+.featured li { color: var(--on-dark-2); }
 .featured li strong { color: #fff; }
-.featured .f-detail, .featured .plan-desc, .featured .price-meta, .featured .review-line { color: var(--ink-300); }
+.featured .f-detail, .featured .plan-desc, .featured .price-meta, .featured .review-line { color: var(--on-dark-3); }
 .featured .price-meta strong { color: #fff; }
 .featured .save-badge { background: rgba(34, 197, 94, 0.16); color: #4ade80; }
 .featured .more-btn { color: var(--brand-400); }
@@ -344,7 +344,7 @@ section[id] { scroll-margin-top: 80px; }
   box-shadow: var(--shadow-lg);
 }
 .cta h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); font-weight: 800; letter-spacing: -0.035em; max-width: 560px; }
-.cta p { margin: 12px 0 0; color: var(--ink-300); font-size: 1.02rem; }
+.cta p { margin: 12px 0 0; color: var(--on-dark-3); font-size: 1.02rem; }
 .cta-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 @media (max-width: 640px) {
   .cta { padding: 32px 24px; }

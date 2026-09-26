@@ -82,14 +82,14 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
 }
-.tag.green { background: var(--success-bg); color: #117a38; }
-.tag.orange { background: var(--brand-50); color: #c2480b; }
+.tag.green { background: var(--success-bg); color: var(--success-fg); }
+.tag.orange { background: var(--brand-50); color: var(--brand-fg); }
 .tag.gray { background: var(--ink-100); color: var(--ink-600); }
 
 .empty, .loading {
   text-align: center; color: var(--text-muted); padding: 44px 20px;
 }
-.empty mat-icon {
+.empty > mat-icon {
   font-size: 28px; width: 56px; height: 56px; line-height: 56px; border-radius: 18px;
   background: var(--ink-100); color: var(--ink-400); display: inline-grid; place-items: center; margin-bottom: 6px;
 }

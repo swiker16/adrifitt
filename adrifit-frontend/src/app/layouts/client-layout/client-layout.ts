@@ -6,10 +6,11 @@ import { filter, interval, merge, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DeviceSetupPrompt } from '../../shared/components/device-setup-prompt';
+import { ThemeToggle } from '../../shared/components/theme-toggle';
 
 @Component({
   selector: 'app-client-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, DeviceSetupPrompt],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, DeviceSetupPrompt, ThemeToggle],
   templateUrl: './client-layout.html',
   styleUrl: './client-layout.scss',
 })

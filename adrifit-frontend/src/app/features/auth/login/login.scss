@@ -40,7 +40,7 @@
 }
 .point-icon mat-icon { font-size: 20px; width: 20px; height: 20px; }
 .points strong { display: block; font-size: 0.96rem; }
-.points span { font-size: 0.86rem; color: var(--ink-300); }
+.points span { font-size: 0.86rem; color: var(--on-dark-3); }
 
 .quote {
   margin: 0; padding: 20px 22px; border-radius: var(--radius);
@@ -50,10 +50,10 @@
 .stars { display: flex; gap: 1px; color: #F5A524; }
 .stars mat-icon { font-size: 17px; width: 17px; height: 17px; }
 .stars mat-icon.off { color: var(--ink-600); }
-.quote blockquote { margin: 10px 0 12px; font-size: 0.98rem; line-height: 1.6; color: var(--ink-100); }
+.quote blockquote { margin: 10px 0 12px; font-size: 0.98rem; line-height: 1.6; color: var(--on-dark-1); }
 .quote figcaption { font-size: 0.86rem; font-weight: 600; }
-.quote figcaption span { font-weight: 400; color: var(--ink-400); }
-.foot { margin: 0; font-size: 0.82rem; color: var(--ink-400); }
+.quote figcaption span { font-weight: 400; color: var(--on-dark-4); }
+.foot { margin: 0; font-size: 0.82rem; color: var(--on-dark-4); }
 
 /* Right panel */
 .form-panel { display: grid; place-items: center; padding: 40px 24px; }
@@ -123,3 +123,7 @@ form { display: grid; gap: 18px; }
 .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .passkey-btn { gap: 8px; }
 .passkey-btn mat-icon { color: var(--brand); }
+
+/* Theme switch (top-right of the form panel) */
+.form-panel { position: relative; }
+.theme-corner { position: absolute; top: 16px; right: 16px; z-index: 2; }

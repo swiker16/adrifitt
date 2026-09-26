@@ -25,9 +25,9 @@
     content: ''; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 107, 26, 0.45), transparent 70%); pointer-events: none;
   }
-  .overline { color: var(--ink-400); }
+  .overline { color: var(--on-dark-4); }
   strong { font-family: 'Sora', sans-serif; font-size: 2.3rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
-  span:not(.overline) { color: var(--ink-300); font-weight: 600; margin-left: 4px; }
+  span:not(.overline) { color: var(--on-dark-3); font-weight: 600; margin-left: 4px; }
 }
 
 .feature-grid { display: grid; grid-template-columns: 1fr 1fr; }

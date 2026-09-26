@@ -53,7 +53,7 @@ import { ProgressPhoto } from '../../../shared/models/photo.model';
     .lb-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
     .lb-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .lb-title strong { font-size: 0.95rem; }
-    .lb-title span { font-size: 0.8rem; color: var(--ink-300); }
+    .lb-title span { font-size: 0.8rem; color: var(--on-dark-3); }
     .lb-stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 64px; }
     .lb-img { height: 100%; width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: center; }
     .lb-img app-secure-img { width: 100%; height: 100%; }

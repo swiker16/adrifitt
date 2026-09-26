@@ -49,7 +49,7 @@
 }
 .analysis-comment { font-size: 0.84rem; color: var(--text-muted); margin-top: 6px; }
 .analysis-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.icon-btn.danger:hover { color: var(--danger); border-color: #fbd9db; background: var(--danger-bg); }
+.icon-btn.danger:hover { color: var(--danger); border-color: var(--danger-border); background: var(--danger-bg); }
 .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .spin { animation: spin 1s linear infinite; }

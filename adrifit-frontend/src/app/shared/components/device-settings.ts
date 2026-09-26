@@ -5,12 +5,24 @@ import { firstValueFrom } from 'rxjs';
 import { NotifyService } from '../../core/services/notify.service';
 import { isPasskeyCancel, Passkey, PasskeyService } from '../../core/services/passkey.service';
 import { PushAvailability, PushService } from '../../core/services/push.service';
+import { ThemeToggle } from './theme-toggle';
 
 /** "Acceso y notificaciones": manage passkeys and push notifications on this device. */
 @Component({
   selector: 'app-device-settings',
-  imports: [MatIconModule, DatePipe],
+  imports: [MatIconModule, DatePipe, ThemeToggle],
   template: `
+    <section class="block">
+      <header class="block-head">
+        <div class="ico"><mat-icon>contrast</mat-icon></div>
+        <div>
+          <h3>Apariencia</h3>
+          <p>Modo claro, oscuro o automático (como tu dispositivo).</p>
+        </div>
+      </header>
+      <app-theme-toggle />
+    </section>
+
     <section class="block">
       <header class="block-head">
         <div class="ico"><mat-icon>fingerprint</mat-icon></div>
@@ -92,7 +104,7 @@ import { PushAvailability, PushService } from '../../core/services/push.service'
   `,
   styles: `
     :host { display: grid; gap: 16px; }
-    .block { padding: 20px; display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+    .block { min-width: 0; padding: 20px; display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
     .block-head { display: flex; gap: 14px; align-items: center; }
     .block-head h3 { margin: 0; font-size: 1.05rem; }
     .block-head p { margin: 2px 0 0; color: var(--text-muted); font-size: 0.9rem; }
@@ -106,7 +118,7 @@ import { PushAvailability, PushService } from '../../core/services/push.service'
     .meta { flex: 1; min-width: 0; display: grid; }
     .meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .meta span { color: var(--text-subtle); font-size: 0.8rem; }
-    .block > .btn { justify-self: start; }
+    .block > .btn { justify-self: start; max-width: 100%; white-space: normal; text-align: left; }
     .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .switch { width: 50px; height: 30px; border-radius: 99px; border: 0; background: var(--ink-200); position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
     .switch span { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }

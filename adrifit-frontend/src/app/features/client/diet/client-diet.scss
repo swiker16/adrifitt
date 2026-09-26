@@ -62,7 +62,7 @@
   &:hover:not(.active) { border-color: var(--ink-300); }
   &:active { transform: scale(0.97); }
   &.active {
-    background: var(--ink-900); border-color: var(--ink-900); box-shadow: var(--shadow-md);
+    background: var(--inverse); border-color: var(--inverse); box-shadow: var(--shadow-md);
     .day-num { color: var(--brand-400); }
     .day-label { color: #fff; }
   }
@@ -79,10 +79,10 @@
   display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px;
   font-size: 0.78rem; font-weight: 600; background: var(--ink-100); color: var(--ink-700); white-space: nowrap;
   mat-icon { font-size: 15px; width: 15px; height: 15px; }
-  &.kcal { background: var(--brand-50); color: #c2480b; }
-  &.p { background: var(--info-bg); color: #1d4fb8; }
-  &.c { background: var(--warning-bg); color: #9a4b00; }
-  &.f { background: var(--violet-bg); color: #5b3fd6; }
+  &.kcal { background: var(--brand-50); color: var(--brand-fg); }
+  &.p { background: var(--info-bg); color: var(--info-fg); }
+  &.c { background: var(--warning-bg); color: var(--warning-fg); }
+  &.f { background: var(--violet-bg); color: var(--violet-fg); }
 }
 
 /* ── Meal cards ── */

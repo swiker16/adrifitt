@@ -10,7 +10,8 @@ html {
   color-scheme: light;
   @include mat.theme((
     color: (
-      theme-type: light,
+      /* Material follows color-scheme: light by default, dark with [data-theme='dark']. */
+      theme-type: color-scheme,
       primary: mat.$orange-palette,
       tertiary: mat.$blue-palette,
     ),
@@ -55,6 +56,28 @@ html {
   --info-bg: #EDF3FF;
   --violet: #7C5CFA;
   --violet-bg: #F2EEFF;
+  /* Text/border on the soft semantic backgrounds (badges, alerts) */
+  --success-fg: #117A38;
+  --warning-fg: #9A4B00;
+  --danger-fg: #B4262B;
+  --info-fg: #1D4FB8;
+  --violet-fg: #5B3FD6;
+  --brand-fg: #C2480B;
+  --success-border: #CDEEDB;
+  --warning-border: #FFE7BF;
+  --danger-border: #FBD9DB;
+  --info-border: #DBE6FF;
+  --violet-border: #CBBEFD;
+  /* Text on surfaces that are always dark (sidebar, hero cards): same in both themes */
+  --on-dark-1: #F1F2F5;
+  --on-dark-2: #DDE0E6;
+  --on-dark-3: #B8BDC7;
+  --on-dark-4: #8A91A0;
+  /* Selected dark chip (e.g. active day tab) and incoming chat bubble */
+  --inverse: #0C0F14;
+  --bubble-in: #FFFFFF;
+  /* Overlays */
+  --backdrop: rgba(7, 9, 13, 0.5);
 
   /* Surfaces */
   --canvas: #F6F7F9;
@@ -91,6 +114,73 @@ html {
   --text-dark: var(--text);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Dark theme — ThemeService sets <html data-theme="dark"> (user choice or
+   the device preference). Only tokens change: pages keep using the same names.
+   The already-dark pieces (sidebar, hero cards) keep their look.
+   ═══════════════════════════════════════════════════════════════════════ */
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Light end of the ink scale = fills and lines; mid/high = text and icons. */
+  --ink-50:  #12161D;
+  --ink-100: #1A1F28;
+  --ink-150: #222834;
+  --ink-200: #2C3340;
+  --ink-300: #5B6476;
+  --ink-400: #737C8D;
+  --ink-500: #9AA2B1;
+  --ink-600: #B4BBC7;
+  --ink-700: #D2D7DF;
+
+  --brand-100: rgba(255, 122, 45, 0.24);
+  --brand-50:  rgba(255, 122, 45, 0.13);
+  --brand-glow: 0 10px 30px -8px rgba(255, 107, 26, 0.45);
+
+  --success-bg: rgba(34, 197, 94, 0.14);
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --info-bg: rgba(59, 130, 246, 0.16);
+  --violet-bg: rgba(139, 92, 246, 0.18);
+  --success-fg: #5EE08F;
+  --warning-fg: #FBBF4C;
+  --danger-fg: #FF8A8E;
+  --info-fg: #8DB4FF;
+  --violet-fg: #BCA8FF;
+  --brand-fg: #FFA066;
+  --success-border: rgba(34, 197, 94, 0.3);
+  --warning-border: rgba(245, 158, 11, 0.3);
+  --danger-border: rgba(239, 68, 68, 0.32);
+  --info-border: rgba(59, 130, 246, 0.32);
+  --violet-border: rgba(139, 92, 246, 0.36);
+
+  --canvas: #0B0E13;
+  --surface: #141820;
+  --surface-2: #181D26;
+  --border: #242A35;
+  --border-strong: #303745;
+
+  --text: #ECEFF3;
+  --text-muted: #A3AAB8;
+  --text-subtle: #7B8494;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px -2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+  --ring: 0 0 0 4px rgba(255, 122, 45, 0.28);
+
+  --backdrop: rgba(0, 0, 0, 0.62);
+  --inverse: #2A3242;
+  --bubble-in: #232A36;
+  --white: #141820;
+}
+
+/* Smooth switch between themes (not on first paint). */
+html.theme-anim, html.theme-anim * {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease !important;
+}
+
 * { box-sizing: border-box; }
 
 html, body { height: 100%; }
@@ -116,7 +206,7 @@ h1, h2, h3, h4 {
 
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
-::selection { background: var(--brand-100); color: var(--ink-900); }
+::selection { background: var(--brand-100); color: var(--text); }
 :focus-visible { outline: none; box-shadow: var(--ring); border-radius: 8px; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -311,25 +401,25 @@ input[type='checkbox'], input[type='radio'], input[type='range'] { accent-color:
 /* Alerts */
 .alert { display: flex; align-items: flex-start; gap: 10px; border-radius: 14px; padding: 13px 16px; font-size: 0.9rem; line-height: 1.5; border: 1px solid transparent; }
 .alert mat-icon { flex-shrink: 0; font-size: 20px; width: 20px; height: 20px; }
-.alert.info { background: var(--info-bg); color: #1d4fb8; border-color: #dbe6ff; }
-.alert.warn { background: var(--warning-bg); color: #9a4b00; border-color: #ffe7bf; }
-.alert.error { background: var(--danger-bg); color: #b4262b; border-color: #fbd9db; }
-.alert.success { background: var(--success-bg); color: #117a38; border-color: #cdeedb; }
+.alert.info { background: var(--info-bg); color: var(--info-fg); border-color: var(--info-border); }
+.alert.warn { background: var(--warning-bg); color: var(--warning-fg); border-color: var(--warning-border); }
+.alert.error { background: var(--danger-bg); color: var(--danger-fg); border-color: var(--danger-border); }
+.alert.success { background: var(--success-bg); color: var(--success-fg); border-color: var(--success-border); }
 
 /* Badges */
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; white-space: nowrap; line-height: 1.4; }
 .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.8; }
-.badge.green { background: var(--success-bg); color: #117a38; }
-.badge.orange { background: var(--brand-50); color: #c2480b; }
-.badge.red { background: var(--danger-bg); color: #b4262b; }
-.badge.blue { background: var(--info-bg); color: #1d4fb8; }
+.badge.green { background: var(--success-bg); color: var(--success-fg); }
+.badge.orange { background: var(--brand-50); color: var(--brand-fg); }
+.badge.red { background: var(--danger-bg); color: var(--danger-fg); }
+.badge.blue { background: var(--info-bg); color: var(--info-fg); }
 .badge.gray { background: var(--ink-100); color: var(--ink-600); }
-.badge.violet { background: var(--violet-bg); color: #5b3fd6; }
+.badge.violet { background: var(--violet-bg); color: var(--violet-fg); }
 
 /* Modal (desktop dialog, phone bottom sheet) */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 1000;
-  background: rgba(7, 9, 13, 0.5);
+  background: var(--backdrop);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   display: grid; place-items: center; padding: 16px;
   animation: modalFade 0.2s ease;
@@ -385,8 +475,8 @@ input[type='checkbox'], input[type='radio'], input[type='range'] { accent-color:
 
 /* Test-mode pill */
 .test-mode {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; font-weight: 600; color: #5b3fd6;
-  background: var(--violet-bg); border: 1px dashed #cbbefd; padding: 4px 10px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; font-weight: 600; color: var(--violet-fg);
+  background: var(--violet-bg); border: 1px dashed var(--violet-border); padding: 4px 10px; border-radius: 999px;
 }
 
 /* Skeleton loader utility */

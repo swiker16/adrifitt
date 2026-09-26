@@ -8,7 +8,7 @@ import { DeviceSettings } from '../../../shared/components/device-settings';
     <div class="topbar">
       <div>
         <div class="page-title">Ajustes</div>
-        <div class="subtitle">Acceso con passkey y notificaciones de este dispositivo</div>
+        <div class="subtitle">Apariencia, acceso con passkey y notificaciones de este dispositivo</div>
       </div>
     </div>
     <div class="content">

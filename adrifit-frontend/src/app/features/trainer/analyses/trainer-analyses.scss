@@ -33,7 +33,7 @@
   mat-icon { font-size: 16px; width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
 }
 .an-comment { background: var(--surface-2); border: 1px solid var(--ink-100); color: var(--ink-600); font-style: italic; }
-.an-note { background: var(--violet-bg); color: #5b3fd6; }
+.an-note { background: var(--violet-bg); color: var(--violet-fg); }
 .an-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
 .an-actions .btn { justify-content: flex-start; }
 .modal-intro { margin: 0 0 16px; font-size: 0.9rem; color: var(--text-muted); strong { color: var(--text); } }
