@@ -28,8 +28,10 @@ a.cell-user:hover .name { color: var(--orange); }
 .table td .badge.red { margin-top: 4px; }
 .table tbody tr:hover { cursor: default; }
 
-td.actions { white-space: nowrap; text-align: right; }
-td.actions .btn + .btn { margin-left: 6px; }
+td.actions { text-align: right; width: 1%; }
+td.actions .btn { display: flex; width: 100%; white-space: nowrap; }
+td.actions .btn + .btn { margin-top: 6px; }
+.table th, .table td { padding-left: 14px; padding-right: 14px; }
 .danger-outline:hover { border-color: var(--danger); color: var(--danger); }
 
 .modal-summary { margin: 0 0 16px; color: var(--text-gray); }

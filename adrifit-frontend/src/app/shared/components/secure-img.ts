@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
@@ -41,12 +41,16 @@ export class SecureImg implements OnDestroy {
 
   constructor() {
     effect(() => {
+      // Only `src` is a dependency: reading/writing url/failed must not re-trigger the effect
+      // (that would re-download the image in a loop).
       const path = this.src();
-      this.release();
-      this.failed.set(false);
-      this.sub = this.http.get(path, { responseType: 'blob' }).subscribe({
-        next: (blob) => this.url.set(URL.createObjectURL(blob)),
-        error: () => this.failed.set(true),
+      untracked(() => {
+        this.release();
+        this.failed.set(false);
+        this.sub = this.http.get(path, { responseType: 'blob' }).subscribe({
+          next: (blob) => this.url.set(URL.createObjectURL(blob)),
+          error: () => this.failed.set(true),
+        });
       });
     });
   }
